@@ -1,16 +1,23 @@
 
 import { useState } from 'react';
+import {
+  validatePassword,
+  getPasswordStrength,
+} from '../utils/passwordValidation';
 
 export default function PasswordStrength() {
   const [password, setPassword] = useState('');
 
-  const requirements = [
-    { label: 'Mínimo 8 caracteres', valid: password.length >= 8 },
-    { label: 'Al menos una letra mayúscula', valid: /[A-Z]/.test(password) },
-    { label: 'Al menos un símbolo especial', valid: /[^A-Za-z0-9]/.test(password) },
-  ];
 
-  const strength = requirements.filter((item) => item.valid).length;
+const validation = validatePassword(password);
+
+const requirements = [
+  { label: 'Mínimo 8 caracteres', valid: validation.minLength },
+  { label: 'Al menos una letra mayúscula', valid: validation.hasUppercase },
+  { label: 'Al menos un símbolo especial', valid: validation.hasSymbol },
+];
+
+const strength = getPasswordStrength(password);
 
   const labels = ['Muy débil', 'Débil', 'Media', 'Fuerte'];
   const colors = ['#dc2626', '#ef4444', '#eab308', '#16a34a'];
