@@ -1,6 +1,10 @@
-import UserProfileDropdown from './UserProfileDropdown';
 
-export default function Header({ user }) {
+import UserProfileDropdown from './UserProfileDropdown';
+import useUser from '../hooks/useUser';
+
+export default function Header() {
+  const { user } = useUser();
+
   return (
     <header className="main-header">
       <div className="header-brand">

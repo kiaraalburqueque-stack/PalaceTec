@@ -1,23 +1,19 @@
 import Header from './components/Header';
 import PasswordStrength from './components/PasswordStrength';
+import UserProvider from './context/UserProvider';
 import './App.css';
-
-const demoUser = {
-  id: 1,
-  name: 'Jugador de Prueba',
-  nickname: 'JugadorDemo',
-  email: 'jugador@palacetec.test',
-};
 
 function App() {
   return (
-    <div className="app-layout">
-      <Header user={demoUser} />
+    <UserProvider>
+      <div className="app-layout">
+        <Header />
 
-      <main className="app-content">
-        <PasswordStrength />
-      </main>
-    </div>
+        <main className="app-content">
+          <PasswordStrength />
+        </main>
+      </div>
+    </UserProvider>
   );
 }
 
