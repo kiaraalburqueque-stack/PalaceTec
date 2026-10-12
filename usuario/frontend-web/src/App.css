@@ -160,3 +160,63 @@
     display: none;
   }
 }
+
+/* HU07 - Saldo pre-apuesta */
+
+.main-sections {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+}
+
+.prebet-balance {
+  width: 360px;
+  max-width: 90vw;
+  box-sizing: border-box;
+  padding: 24px;
+  border-radius: 16px;
+  background: #1f2937;
+  color: white;
+}
+
+.prebet-balance h3 {
+  color: #facc15;
+}
+
+.balance-display {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 10px;
+  background: #374151;
+}
+
+.balance-display strong {
+  color: #facc15;
+}
+
+.balance-info-button {
+  border: none;
+  background: transparent;
+  color: #facc15;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.balance-tooltip {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 5;
+  width: 260px;
+  max-width: calc(90vw - 40px);
+  padding: 14px;
+  border: 1px solid #d4af37;
+  border-radius: 10px;
+  background: #111827;
+  box-shadow: 0 6px 18px #0006;
+}
