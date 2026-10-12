@@ -4,6 +4,11 @@ from rest_framework import serializers
 from .models import User
 
 
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField(max_length=254)
+    password = serializers.CharField(write_only=True, trim_whitespace=False)
+
+
 class RegisterSerializer(serializers.ModelSerializer):
     # La vista gestiona duplicados con HTTP 409, no con el validador único de DRF.
     email = serializers.EmailField(max_length=254)
