@@ -1,9 +1,44 @@
 
 import { useState } from 'react';
 import InsufficientBalanceModal from './InsufficientBalanceModal';
+import RouletteBoard from './RouletteBoard';
 import { formatCredits } from '../utils/walletUtils';
 import { checkPreBet } from '../services/walletService';
 import { getRoomState, placeRouletteBet } from '../services/roomService';
+
+function playChipSound() {
+  const AudioContextClass =
+    window.AudioContext || window.webkitAudioContext;
+
+  if (!AudioContextClass) return;
+
+  try {
+    const audioContext = new AudioContextClass();
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(650, audioContext.currentTime);
+
+    gain.gain.setValueAtTime(0.08, audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(
+      0.001,
+      audioContext.currentTime + 0.08
+    );
+
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + 0.08);
+
+    oscillator.onended = () => {
+      audioContext.close();
+    };
+  } catch {
+    // Si el navegador no permite audio, la selección sigue funcionando.
+  }
+}
 
 export default function BetControls({
   balance,
@@ -20,6 +55,16 @@ export default function BetControls({
   const [isChecking, setIsChecking] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+
+  const handleNumberSelect = (selectedNumber) => {
+  const value = String(selectedNumber);
+
+  setBetKind('STRAIGHT_UP');
+  setNumber(value);
+  setSelection(value);
+  setError('');
+  setMessage('');
+};
 
   const handleKindChange = (kind) => {
     setBetKind(kind);
@@ -199,6 +244,12 @@ export default function BetControls({
         </div>
       )}
 
+      <RouletteBoard
+        selectedNumber={betKind === 'STRAIGHT_UP' ? Number(number) : null}
+        onSelectNumber={handleNumberSelect}
+        disabled={isChecking}
+      />
+      
       <p>Selecciona una ficha:</p>
 
       <div
@@ -216,6 +267,7 @@ export default function BetControls({
               setBetAmount(amount);
               setError('');
               setMessage('');
+              playChipSound();
             }}
             aria-pressed={betAmount === amount}
           >

@@ -309,27 +309,97 @@
   color: #facc15;
 }
 
+
+/* HU12 - Selector visual de fichas */
+
 .bet-chips {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
   margin-top: 15px;
   flex-wrap: wrap;
 }
 
 .bet-chip {
-  padding: 12px;
-  border: 2px solid #facc15;
+  width: 58px;
+  height: 58px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 4px dashed #facc15;
   border-radius: 50%;
   background: #374151;
-  color: white;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
   cursor: pointer;
+  box-shadow:
+    inset 0 0 0 3px #1f2937,
+    0 4px 8px rgba(0, 0, 0, 0.3);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+.bet-chip:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 0 0 3px #1f2937,
+    0 6px 12px rgba(250, 204, 21, 0.25);
 }
 
 .bet-chip.selected {
   background: #facc15;
   color: #111827;
-  font-weight: bold;
+  border-color: #ffffff;
+  box-shadow:
+    inset 0 0 0 3px #ca8a04,
+    0 0 0 3px rgba(250, 204, 21, 0.3);
+  transform: scale(1.08);
 }
+
+.bet-chip:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 4px;
+}
+
+/* HU08 - Animación por saldo insuficiente */
+
+.shake {
+  animation: chip-shake 0.4s ease-in-out;
+}
+
+@keyframes chip-shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+
+  20%, 60% {
+    transform: translateX(-7px);
+  }
+
+  40%, 80% {
+    transform: translateX(7px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bet-chip {
+    transition: none;
+  }
+
+  .bet-chip:hover,
+  .bet-chip.selected {
+    transform: none;
+  }
+
+  .shake {
+    animation: none;
+  }
+}
+
 
 .place-bet-button {
   margin-top: 15px;
