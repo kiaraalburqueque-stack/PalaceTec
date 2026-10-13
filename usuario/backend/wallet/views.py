@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.authentication import CookieJWTAuthentication
-from .models import Wallet
+from .models import Wallet, WalletBalance
 
 
 class BalanceView(APIView):
@@ -17,7 +17,7 @@ class BalanceView(APIView):
 
 class WalletSummaryView(BalanceView):
     def get(self, request):
-        wallet = Wallet.objects.get(user=request.user)
+        wallet = WalletBalance.objects.get(user_id=request.user.pk)
         return Response({
             "balance": format(wallet.balance, ".2f"),
             "bonus_balance": format(wallet.bonus_balance, ".2f"),
