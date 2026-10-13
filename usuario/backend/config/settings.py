@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'accounts',
     'wallet',
+    'roulette',
 ]
 
 MIDDLEWARE = [
