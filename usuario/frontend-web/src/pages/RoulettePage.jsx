@@ -6,6 +6,7 @@ import { getRoomBets, getRoomState } from '../services/roomService';
 import { connectRoom } from '../services/roomSocket';
 import PreBetBalance from '../components/PreBetBalance';
 import BetControls from '../components/BetControls';
+import RouletteWheel from '../components/RouletteWheel';
 
 export default function RoulettePage() {
   const { roomId } = useParams();
@@ -19,6 +20,7 @@ export default function RoulettePage() {
   const [offset, setOffset] = useState(0);
   const [result, setResult] = useState(null);
   const [prize, setPrize] = useState(null);
+  const [outcome, setOutcome] = useState(null);
   useEffect(() => {
     if (!roomId || !user) return;
     let active = true;
@@ -28,7 +30,7 @@ export default function RoulettePage() {
         if (!active) return;
         setState(snapshot); setWallet(summary); setHistory(bets); setError('');
         setOffset(Date.parse(snapshot.server_time) - Date.now());
-        if (snapshot.round?.winning_number != null) setResult(snapshot.round.winning_number);
+        if (snapshot.round?.winning_number != null) { setResult(snapshot.round.winning_number); setOutcome({ roundId: snapshot.round.id, number: snapshot.round.winning_number }); }
       } catch (err) { if (active) setError(err.message); }
     }
     void sync();
@@ -39,7 +41,7 @@ export default function RoulettePage() {
       if (event === 'timer:tick') setState((old) => old?.round?.id === data.round_id ? { ...old, round: { ...old.round, status: 'OPEN', closes_at: data.closes_at } } : old);
       if (event === 'bets:closed') setState((old) => old?.round?.id === data.round_id ? { ...old, round: { ...old.round, status: 'CLOSED' } } : old);
       if (event === 'wallet:update') setWallet(data);
-      if (event === 'round:result') { setResult(data.winning_number); void sync(); }
+      if (event === 'round:result') { setResult(data.winning_number); setOutcome({ roundId: data.round_id, number: data.winning_number }); void sync(); }
       if (event === 'round:winnings') { setPrize(data); void sync(); }
     }, (value) => { if (active) setStatus(value); });
     const tick = setInterval(() => setNow(Date.now()), 250);
@@ -66,6 +68,7 @@ export default function RoulettePage() {
       {state && <p>Mínimo por apuesta: {state.min_bet} CRD · Máximo acumulado: {state.max_bet} CRD</p>}
       {result !== null && <h3>Último número ganador: {result}</h3>}
     </section>
+    <RouletteWheel key={roomId} spinning={round?.status === 'CLOSED' || (round?.status === 'OPEN' && seconds === 0)} outcome={outcome} />
     {wallet ? <><PreBetBalance balance={Number(wallet.balance)} /><p>Bono: {wallet.bonus_balance} CRD · Ganancias: {wallet.winnings_balance} CRD</p>
       <BetControls key={roomId} balance={Number(wallet.balance)} roomId={roomId} onBetPlaced={refresh} roundOpen={open} currentRound={round ? { ...round, remaining_seconds: seconds } : null} winningNumber={result} />
     </> : <p role="status">Consultando saldo...</p>}
