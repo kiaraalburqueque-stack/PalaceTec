@@ -1,6 +1,6 @@
 # Motor de ruleta europea
 
-Esta app contiene logica pura: no consulta la base de datos, no modifica billeteras y no publica endpoints.
+El motor puro (rng.py, constants.py y payout.py) conserva funciones sin acceso a base de datos. La app ahora tambien integra salas, apuestas, rondas persistidas, billeteras y WebSockets; consulta ../README.md para ejecucion, endpoints y eventos.
 
 ## Archivos para sustentar
 
@@ -32,6 +32,6 @@ Se recomienda entregar montos como Decimal o texto decimal para preservar la pre
 
 ## Pruebas
 
-Desde usuario/backend: `python manage.py test roulette`.
+Desde usuario/backend: `python manage.py test roulette --settings=config.test_settings`.
 Tambien se pueden ejecutar sin configurar Django ni una base: `python -m unittest discover -s . -p "test_hu1*.py"` (este patron incluye las cuatro historias de roulette).
-No hay modelos ni cambios de esquema, por lo que esta app no necesita migraciones.
+La integracion agrega modelos y migraciones para salas, rondas, apuestas y conexiones. Las migraciones estan generadas; no se aplicaron a la base de desarrollo en esta entrega.
