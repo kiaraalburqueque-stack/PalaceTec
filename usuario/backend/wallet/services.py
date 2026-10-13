@@ -3,6 +3,7 @@ from decimal import Decimal, InvalidOperation
 from django.db import IntegrityError, transaction
 
 from .models import Wallet, WalletTransaction
+from realtime.events import after_commit
 
 
 class InsufficientBalance(ValueError):
@@ -60,10 +61,16 @@ class WalletService:
                     if kind == WalletTransaction.Type.BET:
                         wallet.bonus_balance = max(Decimal("0"), wallet.bonus_balance - amount)
                     wallet.save(update_fields=["balance", "bonus_balance"])
-                    return WalletTransaction.objects.create(
+                    entry = WalletTransaction.objects.create(
                         wallet=wallet, type=kind, amount=amount,
                         balance_after=balance, reference=reference,
                     )
+                    after_commit(f"user.{user.pk}", "wallet:update", {
+                        "balance": format(wallet.balance, ".2f"),
+                        "bonus_balance": format(wallet.bonus_balance, ".2f"),
+                        "winnings_balance": format(wallet.winnings_balance, ".2f"),
+                    })
+                    return entry
             except IntegrityError:
                 existing = cls._existing(reference, wallet, amount, kind)
                 if existing:
