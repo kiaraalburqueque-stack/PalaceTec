@@ -8,6 +8,7 @@ from django.utils import timezone
 from rest_framework.test import APITestCase
 from accounts.models import User
 from wallet.models import Wallet, WalletTransaction
+from wallet.services import WalletService
 from .models import Bet, GameRound, Room
 from .services import RouletteService
 
@@ -142,7 +143,7 @@ class HU18HU19SettlementTests(GameTestBase):
         self.client.post(self.url, self.data(), format="json")
         self.client.post(self.url, self.data(kind="COLOR", selection="rojo"), format="json")
         self.close()
-        real_credit = __import__("wallet.services", fromlist=["WalletService"]).WalletService.credit
+        real_credit = WalletService.credit
         def fail_second(user, amount, reference):
             if amount == 20:
                 raise RuntimeError("fallo durante premio")

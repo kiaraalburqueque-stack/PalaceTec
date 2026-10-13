@@ -3,6 +3,10 @@ from io import StringIO
 from unittest.mock import patch
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from channels.db import database_sync_to_async
+from uuid import uuid4
+from wallet.models import Wallet
+from .services import RouletteService
 from channels.testing import WebsocketCommunicator
 from django.conf import settings
 from django.core.management import call_command
@@ -82,6 +86,46 @@ class HU10WebsocketTests(APITransactionTestCase):
             self.assertEqual((await owner.receive_json_from())["event"], "room:user_left")
             await owner.disconnect()
         async_to_sync(scenario)()
+
+    def test_entire_round_publishes_balance_and_private_winnings(self):
+        Wallet.objects.create(user=self.user, balance=1000, bonus_balance=1000)
+        round = RouletteService.tick(self.room.pk)
+        data = {"round_id": round.pk, "kind": "STRAIGHT_UP", "selection": "1", "chips": [10], "reference": str(uuid4())}
+        async def scenario():
+            socket = self.communicator(self.token)
+            await socket.connect()
+            await socket.receive_json_from()
+            await socket.receive_json_from()
+            await database_sync_to_async(RouletteService.place_bet)(self.user, self.room.pk, data)
+            debit = await socket.receive_json_from()
+            self.assertEqual(debit["event"], "wallet:update")
+            self.assertEqual(debit["data"]["balance"], "990.00")
+            with patch("roulette.services.timezone.now", return_value=round.closes_at):
+                await database_sync_to_async(RouletteService.tick)(self.room.pk)
+            self.assertEqual((await socket.receive_json_from())["event"], "bets:closed")
+            self.assertEqual((await socket.receive_json_from())["event"], "timer:stop")
+            with patch("roulette.services.rng.spin", return_value=1):
+                await database_sync_to_async(RouletteService.tick)(self.room.pk)
+            events = [await socket.receive_json_from() for _ in range(3)]
+            by_name = {event["event"]: event["data"] for event in events}
+            self.assertEqual(by_name["wallet:update"]["balance"], "1350.00")
+            self.assertEqual(by_name["round:result"]["winning_number"], 1)
+            self.assertEqual(by_name["round:winnings"]["payout"], "360.00")
+            await socket.disconnect()
+        async_to_sync(scenario)()
+
+    def test_multiple_simultaneous_clients(self):
+        import asyncio
+        async def scenario():
+            sockets = [self.communicator(self.token) for _ in range(12)]
+            results = await asyncio.gather(*(socket.connect() for socket in sockets))
+            self.assertTrue(all(connected for connected, _ in results))
+            for socket in sockets:
+                self.assertEqual((await socket.receive_json_from())["event"], "room:state")
+            self.assertEqual(await database_sync_to_async(RoomConnection.objects.count)(), 12)
+            await asyncio.gather(*(socket.disconnect() for socket in sockets))
+        async_to_sync(scenario)()
+        self.assertFalse(RoomConnection.objects.exists())
 
 
 class HU16ClockCommandTests(APITransactionTestCase):
