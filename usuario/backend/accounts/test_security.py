@@ -25,7 +25,7 @@ class HU01HU02SecurityTests(APITestCase):
     def test_ip_throttle_also_limits_unknown_emails(self):
         for _ in range(2):
             self.assertEqual(self.client.post("/api/v1/auth/login", {"email": "unknown@example.com", "password": "wrong"}).status_code, 401)
-        self.assertEqual(self.client.post("/api/v1/auth/login", {"email": "other@example.com", "password": "wrong"}).status_code, 429)
+        self.assertEqual(self.client.post("/api/v1/auth/login", {"email": "other@example.com", "password": "wrong"}, HTTP_X_FORWARDED_FOR="203.0.113.99").status_code, 429)
 
     def test_browser_requires_csrf_for_registration_login_and_profile(self):
         browser = APIClient(enforce_csrf_checks=True)
