@@ -3,6 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
+import {
+  MemoryRouter,
+  Routes,
+  Route,
+  useParams,
+} from 'react-router-dom';
 
 import CasinoRoomCatalog from './CasinoRoomCatalog';
 import { getCasinoRooms } from '../services/roomService';
@@ -35,6 +41,26 @@ const mockRooms = [
   },
 ];
 
+function TestRoomPage() {
+  const { roomId } = useParams();
+
+  return <p>Sala abierta: {roomId}</p>;
+}
+
+function renderCatalog() {
+  return render(
+    <MemoryRouter initialEntries={['/']}>
+      <Routes>
+        <Route path="/" element={<CasinoRoomCatalog />} />
+        <Route
+          path="/ruleta/:roomId"
+          element={<TestRoomPage />}
+        />
+      </Routes>
+    </MemoryRouter>
+  );
+}
+
 describe('HU09 - Catálogo de salas conectado con Django', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -46,13 +72,13 @@ describe('HU09 - Catálogo de salas conectado con Django', () => {
   });
 
   it('muestra el título del catálogo', () => {
-    render(<CasinoRoomCatalog />);
+    renderCatalog();
 
     expect(screen.getByText('Salas de Casino')).toBeInTheDocument();
   });
 
   it('consulta el servicio de salas', async () => {
-    render(<CasinoRoomCatalog />);
+    renderCatalog();
 
     await screen.findByText('Ruleta baja');
 
@@ -60,7 +86,7 @@ describe('HU09 - Catálogo de salas conectado con Django', () => {
   });
 
   it('muestra las tres salas recibidas del backend', async () => {
-    render(<CasinoRoomCatalog />);
+    renderCatalog();
 
     expect(await screen.findByText('Ruleta baja')).toBeInTheDocument();
     expect(screen.getByText('Ruleta media')).toBeInTheDocument();
@@ -68,7 +94,7 @@ describe('HU09 - Catálogo de salas conectado con Django', () => {
   });
 
   it('muestra los límites de apuesta de las salas', async () => {
-    render(<CasinoRoomCatalog />);
+    renderCatalog();
 
     expect(
       await screen.findByText(/Apuesta mínima: 10.00 CRD/)
@@ -79,10 +105,10 @@ describe('HU09 - Catálogo de salas conectado con Django', () => {
     ).toBeInTheDocument();
   });
 
-  it('permite seleccionar una sala disponible', async () => {
+  it('permite entrar a la sala seleccionada', async () => {
     const user = userEvent.setup();
 
-    render(<CasinoRoomCatalog />);
+    renderCatalog();
 
     const buttons = await screen.findAllByRole('button', {
       name: 'Entrar a la sala',
@@ -91,34 +117,28 @@ describe('HU09 - Catálogo de salas conectado con Django', () => {
     await user.click(buttons[0]);
 
     expect(
-      screen.getByText('Sala seleccionada: Ruleta baja')
+      screen.getByText('Sala abierta: 1')
     ).toBeInTheDocument();
   });
 
-  it('permite cambiar la sala seleccionada', async () => {
+  it('navega a la sala correcta según su identificador', async () => {
     const user = userEvent.setup();
 
-    render(<CasinoRoomCatalog />);
+    renderCatalog();
 
     const buttons = await screen.findAllByRole('button', {
       name: 'Entrar a la sala',
     });
-
-    await user.click(buttons[0]);
-
-    expect(
-      screen.getByText('Sala seleccionada: Ruleta baja')
-    ).toBeInTheDocument();
 
     await user.click(buttons[1]);
 
     expect(
-      screen.getByText('Sala seleccionada: Ruleta media')
+      screen.getByText('Sala abierta: 2')
     ).toBeInTheDocument();
   });
 
   it('no muestra una sala seleccionada inicialmente', async () => {
-    render(<CasinoRoomCatalog />);
+    renderCatalog();
 
     await screen.findByText('Ruleta baja');
 
@@ -132,7 +152,7 @@ describe('HU09 - Catálogo de salas conectado con Django', () => {
       new Error('No se pudieron cargar las salas del casino.')
     );
 
-    render(<CasinoRoomCatalog />);
+    renderCatalog();
 
     expect(
       await screen.findByRole('alert')
@@ -142,7 +162,7 @@ describe('HU09 - Catálogo de salas conectado con Django', () => {
   it('muestra un mensaje cuando no existen salas', async () => {
     getCasinoRooms.mockResolvedValue([]);
 
-    render(<CasinoRoomCatalog />);
+    renderCatalog();
 
     expect(
       await screen.findByText('No hay salas disponibles actualmente.')

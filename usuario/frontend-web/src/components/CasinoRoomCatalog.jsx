@@ -2,8 +2,10 @@
 import { useEffect, useState } from 'react';
 import CasinoRoomCard from './CasinoRoomCard';
 import { getCasinoRooms } from '../services/roomService';
+import { useNavigate } from 'react-router-dom';
 
 export default function CasinoRoomCatalog() {
+  const navigate = useNavigate();
   const [rooms, setRooms] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -46,6 +48,7 @@ export default function CasinoRoomCatalog() {
 
   const handleSelectRoom = (room) => {
     setSelectedRoom(room);
+    navigate(`/ruleta/${room.id}`);
   };
 
   return (
