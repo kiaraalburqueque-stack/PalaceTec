@@ -3,6 +3,7 @@ from contextlib import suppress
 from datetime import timedelta
 from http.cookies import SimpleCookie
 import time
+from json import JSONDecodeError
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
@@ -10,6 +11,7 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework_simplejwt.exceptions import TokenError
 
 from .models import Room, RoomConnection
 from .state import room_state
@@ -28,7 +30,11 @@ class RouletteConsumer(AsyncJsonWebsocketConsumer):
         self.user_group = f"user.{user.pk}"
         cookies = SimpleCookie()
         cookies.load(dict(self.scope.get("headers", [])).get(b"cookie", b"").decode("latin1"))
-        self.token_expiry = AccessToken(cookies[settings.JWT_ACCESS_COOKIE].value)["exp"]
+        try:
+            self.token_expiry = AccessToken(cookies[settings.JWT_ACCESS_COOKIE].value)["exp"]
+        except (KeyError, TokenError):
+            await self.close(code=4401)
+            return
         if not await self.join_room():
             await self.close(code=4404)
             return
@@ -72,6 +78,15 @@ class RouletteConsumer(AsyncJsonWebsocketConsumer):
             await self.channel_layer.group_discard(self.user_group, self.channel_name)
             await database_sync_to_async(lambda: RoomConnection.objects.filter(channel_name=self.channel_name).delete())()
             await self.channel_layer.group_send(self.room_group, {"type": "push.event", "event": "room:user_left", "data": {"user_id": self.scope["user"].pk}})
+
+    async def receive(self, text_data=None, bytes_data=None, **kwargs):
+        if text_data is None or len(text_data) > 4096:
+            await self.close(code=1009)
+            return
+        try:
+            await super().receive(text_data=text_data, **kwargs)
+        except JSONDecodeError:
+            await self.send_json({"event": "error", "data": {"detail": "JSON invalido."}})
 
     async def receive_json(self, content, **kwargs):
         if time.time() >= self.token_expiry:

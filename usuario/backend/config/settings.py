@@ -179,16 +179,9 @@ CACHES = {
         "LOCATION": REDIS_URL,
     }
 }
-# Solo para pruebas automatizadas aisladas; el servidor y el reloj usan Redis compartido.
-if os.getenv("BACKEND_TEST_MODE") == "1":
-    CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
-    CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
-
 WEBSOCKET_ALLOWED_ORIGINS = CORS_ALLOWED_ORIGINS + ["http://localhost:8000", "http://127.0.0.1:8000"]
 
 
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 CSRF_COOKIE_SECURE = not DEBUG
 LOGIN_RATE_LIMIT = "30/min"
-if os.getenv("BACKEND_TEST_MODE") == "1":
-    LOGIN_RATE_LIMIT = "1000/min"

@@ -38,6 +38,8 @@ class HU10WebsocketTests(APITransactionTestCase):
             self.assertEqual(state["event"], "room:state")
             self.assertEqual(state["data"]["room_id"], self.room.pk)
             self.assertEqual((await socket.receive_json_from())["event"], "room:user_joined")
+            await socket.send_to(text_data="{invalid")
+            self.assertEqual((await socket.receive_json_from())["event"], "error")
             await socket.send_json_to({"event": "ping"})
             self.assertEqual((await socket.receive_json_from())["event"], "pong")
             await socket.send_json_to({"event": "room:sync"})
