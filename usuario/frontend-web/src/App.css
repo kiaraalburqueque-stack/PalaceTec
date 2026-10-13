@@ -452,3 +452,34 @@
   background: #facc15;
   color: #111827;
 }
+
+/* Formulario de autenticación */
+
+.bet-controls form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.bet-controls form label {
+  font-weight: 600;
+}
+
+.bet-controls form input {
+  padding: 12px;
+  border: 1px solid #6b7280;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 15px;
+}
+
+.bet-controls form input:focus {
+  outline: 2px solid #facc15;
+}
+
+.bet-controls form [role="alert"] {
+  color: #f87171;
+  font-size: 14px;
+}
