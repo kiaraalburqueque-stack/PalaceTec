@@ -44,7 +44,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
-        wallet = Wallet.objects.create(user=user, balance=Decimal("1000.00"))
+        wallet = Wallet.objects.create(user=user, balance=Decimal("1000.00"), bonus_balance=Decimal("1000.00"))
         WalletTransaction.objects.create(
             wallet=wallet, type=WalletTransaction.Type.WELCOME_BONUS,
             amount=Decimal("1000.00"), balance_after=wallet.balance,

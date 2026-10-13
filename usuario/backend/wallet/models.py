@@ -6,9 +6,17 @@ class Wallet(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="wallet")
     balance = models.DecimalField(max_digits=18, decimal_places=2, default=0)
 
+    bonus_balance = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+
+    @property
+    def winnings_balance(self):
+        return self.balance - self.bonus_balance
+
     class Meta:
         db_table = "wallets"
-        constraints = [models.CheckConstraint(condition=models.Q(balance__gte=0), name="wallet_balance_nonnegative")]
+        constraints = [models.CheckConstraint(condition=models.Q(balance__gte=0), name="wallet_balance_nonnegative"),
+            models.CheckConstraint(condition=models.Q(bonus_balance__gte=0) & models.Q(bonus_balance__lte=models.F("balance")), name="wallet_bonus_within_balance"),
+        ]
 
 
 class WalletTransaction(models.Model):

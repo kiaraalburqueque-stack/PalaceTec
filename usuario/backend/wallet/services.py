@@ -57,7 +57,9 @@ class WalletService:
                 # El savepoint permite consultar la referencia si otra billetera la uso a la vez.
                 with transaction.atomic():
                     wallet.balance = balance
-                    wallet.save(update_fields=["balance"])
+                    if kind == WalletTransaction.Type.BET:
+                        wallet.bonus_balance = max(Decimal("0"), wallet.bonus_balance - amount)
+                    wallet.save(update_fields=["balance", "bonus_balance"])
                     return WalletTransaction.objects.create(
                         wallet=wallet, type=kind, amount=amount,
                         balance_after=balance, reference=reference,
@@ -67,3 +69,15 @@ class WalletService:
                 if existing:
                     return existing
                 raise
+
+
+    @staticmethod
+    def pre_bet_check(user, amount):
+        try:
+            amount = Decimal(str(amount))
+            if not amount.is_finite() or amount <= 0 or amount >= Decimal("1e16") or amount != amount.quantize(Decimal("0.01")):
+                raise ValueError("Monto invalido.")
+        except (InvalidOperation, TypeError) as exc:
+            raise ValueError("Monto invalido.") from exc
+        wallet = Wallet.objects.get(user=user)
+        return {"balance": format(wallet.balance, ".2f"), "can_bet": wallet.balance >= amount}
