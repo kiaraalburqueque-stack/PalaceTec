@@ -12,7 +12,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 from .authentication import CookieJWTAuthentication
 from .models import User
-from .serializers import LoginSerializer, RegisterSerializer
+from .serializers import LoginSerializer, RegisterSerializer, ProfileSerializer
 
 
 class LoginView(APIView):
@@ -102,3 +102,21 @@ class RegisterView(APIView):
                 status=status.HTTP_409_CONFLICT,
             )
         return Response({"id": user.pk, "email": user.email}, status=status.HTTP_201_CREATED)
+
+
+class ProfileView(APIView):
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response(ProfileSerializer(request.user).data)
+
+    def put(self, request):
+        serializer = ProfileSerializer(request.user, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            with transaction.atomic():
+                serializer.save()
+        except IntegrityError:
+            return Response({"nickname": ["Este apodo ya esta registrado."]}, status=409)
+        return Response(serializer.data)

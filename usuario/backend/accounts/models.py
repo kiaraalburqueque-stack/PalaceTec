@@ -28,6 +28,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     dni = models.CharField(max_length=8, unique=True, validators=[
         RegexValidator(r"\A[0-9]{8}\Z", "El DNI debe tener 8 dígitos.")])
     birth_date = models.DateField()
+    nickname = models.CharField(max_length=30, unique=True, null=True, blank=True)
+    avatar_url = models.CharField(max_length=100, default="/avatars/avatar-1.svg")
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
