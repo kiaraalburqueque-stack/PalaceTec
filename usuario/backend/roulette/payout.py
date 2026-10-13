@@ -43,3 +43,13 @@ def color(amount, selection, winning_number):
     winning_number = _number(winning_number)
     numbers = RED_NUMBERS if selection == "rojo" else BLACK_NUMBERS
     return _total(amount, 2) if winning_number in numbers else Decimal("0")
+
+
+def paridad(amount, selection, winning_number):
+    """Paga el doble por par o impar; el cero siempre pierde."""
+    amount = _amount(amount)
+    if selection not in ("par", "impar"):
+        raise ValueError("La paridad debe ser par o impar.")
+    winning_number = _number(winning_number)
+    wins = winning_number != 0 and winning_number % 2 == (0 if selection == "par" else 1)
+    return _total(amount, 2) if wins else Decimal("0")
