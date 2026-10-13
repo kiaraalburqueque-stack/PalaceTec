@@ -55,13 +55,14 @@ describe('HU08 - Control de saldo insuficiente', () => {
   it('muestra la alerta cuando el saldo es cero', async () => {
     const user = userEvent.setup();
 
-    render(<BetControls balance={0} />);
+    render(<BetControls balance={1000} />);
+    checkPreBet.mockResolvedValue({ balance: '0.00', can_bet: false });
 
     await user.click(screen.getByRole('button', { name: 'Apostar' }));
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText('Saldo Insuficiente')).toBeInTheDocument();
-    expect(checkPreBet).not.toHaveBeenCalled();
+    expect(checkPreBet).toHaveBeenCalled();
   });
 
   it('no muestra alerta si el saldo es suficiente', async () => {
@@ -81,21 +82,23 @@ describe('HU08 - Control de saldo insuficiente', () => {
   it('permite cerrar la alerta', async () => {
     const user = userEvent.setup();
 
-    render(<BetControls balance={0} />);
+    render(<BetControls balance={1000} />);
+    checkPreBet.mockResolvedValue({ balance: '0.00', can_bet: false });
 
     await user.click(screen.getByRole('button', { name: 'Apostar' }));
-    await user.click(screen.getByRole('button', { name: 'Cerrar' }));
+    await user.click(await screen.findByRole('button', { name: 'Cerrar' }));
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('activa la animación cuando el saldo es insuficiente', async () => {
     const user = userEvent.setup();
-    const { container } = render(<BetControls balance={0} />);
+    const { container } = render(<BetControls balance={1000} />);
+    checkPreBet.mockResolvedValue({ balance: '0.00', can_bet: false });
 
     await user.click(screen.getByRole('button', { name: 'Apostar' }));
 
-    expect(container.querySelector('.bet-chips')).toHaveClass('shake');
+    await waitFor(() => expect(container.querySelector('.bet-chips')).toHaveClass('shake'));
   });
 
   it('consulta a Django cuando el saldo local es suficiente', async () => {

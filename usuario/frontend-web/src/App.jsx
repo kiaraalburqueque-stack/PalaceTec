@@ -8,6 +8,7 @@ import HomePage from './pages/HomePage';
 import RoulettePage from './pages/RoulettePage';
 import RegisterPage from './pages/RegisterPage';
 import LoginPage from './pages/LoginPage';
+import ProfilePage from './pages/ProfilePage';
 
 import './App.css';
 
@@ -42,6 +43,7 @@ function App() {
             <Route path="/ruleta/:roomId" element={<RoulettePage />} />
             <Route path="/registro" element={<RegisterPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/perfil" element={<ProfilePage />} />
             <Route path="*" element={<HomePage />} />
           </Routes>
         </div>

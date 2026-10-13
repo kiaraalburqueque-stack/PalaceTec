@@ -6,6 +6,18 @@
   justify-content: center;
 }
 
+.auth-form { width: min(480px, 90vw); box-sizing: border-box; }
+.auth-form a { color: #facc15; }
+.password-field input { width: 100%; box-sizing: border-box; }
+
+.roulette-page { width: 100%; }
+.roulette-page .bet-controls { width: 100%; max-width: 1000px; box-sizing: border-box; }
+.roulette-page .prebet-balance { width: 100%; max-width: 1000px; }
+.roulette-board-container { width: 100%; overflow-x: auto; }
+.roulette-board-container svg { min-width: 760px; }
+.app-content a { color: #facc15; }
+.place-bet-button:disabled { opacity: .45; cursor: not-allowed; }
+
 .password-container {
   width: 360px;
   max-width: 90vw;
@@ -552,4 +564,22 @@
 .bet-controls form [role="alert"] {
   color: #f87171;
   font-size: 14px;
+}
+
+/* Flujo completo en móvil y escritorio. */
+.main-sections { box-sizing: border-box; max-width: 1100px; margin: auto; padding: 20px; }
+.prebet-balance { max-width: 100%; box-sizing: border-box; overflow-x: auto; }
+.prebet-balance table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.prebet-balance th, .prebet-balance td { padding: 8px; text-align: left; border-bottom: 1px solid #64748b; }
+.auth-form form { display: grid; gap: 10px; }
+.auth-form input, .auth-form select, .bet-controls select { min-height: 44px; max-width: 100%; font-size: 16px; }
+.profile-menu a { color: #facc15; }
+@media (max-width: 600px) {
+  .main-header { padding: 12px; gap: 8px; flex-wrap: wrap; }
+  .header-navigation { display: none; }
+  .app-page-navigation { flex-wrap: wrap; gap: 8px; padding: 12px; }
+  .main-sections { padding: 12px; }
+  .bet-controls, .auth-form, .password-container { width: 100%; max-width: 100%; padding: 18px; box-sizing: border-box; }
+  .profile-menu { max-width: calc(100vw - 24px); right: 0; }
+  .bet-chips { flex-wrap: wrap; }
 }

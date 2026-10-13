@@ -15,6 +15,7 @@ export default function RouletteBoard({
   selectedNumber = null,
   onSelectNumber,
   disabled = false,
+  winningNumber = null,
 }) {
   const cellWidth = 62;
   const cellHeight = 52;
@@ -32,12 +33,12 @@ export default function RouletteBoard({
       <p>Selecciona un número del 0 al 36.</p>
 
       <svg
-        viewBox="0 0 214 836"
+        viewBox="0 0 866 172"
         role="group"
         aria-label="Tapete numérico de ruleta"
         style={{
           width: '100%',
-          maxWidth: '350px',
+          maxWidth: '860px',
           height: 'auto',
           display: 'block',
           margin: '0 auto',
@@ -45,14 +46,13 @@ export default function RouletteBoard({
       >
         {NUMBERS.map((number) => {
           const isZero = number === 0;
-          const column = isZero ? 0 : (number - 1) % 3;
-          const row = isZero ? 0 : Math.floor((number - 1) / 3) + 1;
+          const column = isZero ? 0 : Math.floor((number - 1) / 3) + 1;
+          const row = isZero ? 0 : 2 - (number - 1) % 3;
 
           const x = isZero ? 4 : 4 + column * (cellWidth + gap);
           const y = 4 + row * (cellHeight + gap);
-          const width = isZero
-            ? cellWidth * 3 + gap * 2
-            : cellWidth;
+          const width = cellWidth;
+          const height = isZero ? cellHeight * 3 + gap * 2 : cellHeight;
 
           const selected = selectedNumber === number;
 
@@ -80,17 +80,17 @@ export default function RouletteBoard({
                 x={x}
                 y={y}
                 width={width}
-                height={cellHeight}
+                height={height}
                 rx="6"
                 fill={getNumberColor(number)}
-                stroke={selected ? '#ffd21a' : '#c9a227'}
-                strokeWidth={selected ? 5 : 2}
+                stroke={winningNumber === number ? '#4ade80' : selected ? '#ffd21a' : '#c9a227'}
+                strokeWidth={winningNumber === number || selected ? 5 : 2}
                 opacity={disabled ? 0.5 : 1}
               />
 
               <text
                 x={x + width / 2}
-                y={y + cellHeight / 2}
+                y={y + height / 2}
                 fill="white"
                 fontSize="20"
                 fontWeight="bold"
