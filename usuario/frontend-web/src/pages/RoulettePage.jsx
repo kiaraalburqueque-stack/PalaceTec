@@ -60,7 +60,7 @@ export default function RoulettePage() {
     <h1>Ruleta europea · Sala {roomId}</h1>
     <p>Conexión: {status}</p><Link to="/">Volver a salas</Link>
     {error && <p role="alert">{error}</p>}
-    <section className="prebet-balance"><h2>Ronda {round?.id || 'pendiente'}</h2>
+    <section className="prebet-balance round-panel"><h2>Ronda {round?.id || 'pendiente'}</h2>
       <p role="timer" aria-label="Tiempo para apostar">{seconds} segundos</p>
       <strong>{open ? 'Apuestas abiertas' : 'NO VA MÁS · Apuestas cerradas'}</strong>
       {state && <p>Mínimo por apuesta: {state.min_bet} CRD · Máximo acumulado: {state.max_bet} CRD</p>}
@@ -73,7 +73,7 @@ export default function RoulettePage() {
       <h2>{Number(prize.payout) > 0 ? '¡Ganaste!' : 'Ronda terminada'}</h2><p>Ronda {prize.round_id}: pago total {prize.payout} CRD</p>
       <button onClick={() => setPrize(null)}>Cerrar resultado</button>
     </section>}
-    <section className="prebet-balance"><h2>Mis apuestas</h2>
+    <section className="prebet-balance history-panel"><h2>Mis apuestas</h2>
       {history.length === 0 ? <p>Todavía no hay apuestas en esta sala.</p> : <table><thead><tr><th>Ronda</th><th>Tipo</th><th>Selección</th><th>Apuesta</th><th>Pago</th></tr></thead><tbody>{history.map((bet) => <tr key={bet.id}><td>{bet.round_id}</td><td>{bet.kind}</td><td>{bet.selection}</td><td>{bet.amount}</td><td>{bet.payout ?? 'Pendiente'}</td></tr>)}</tbody></table>}
     </section>
   </main>;

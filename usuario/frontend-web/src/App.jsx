@@ -47,6 +47,7 @@ function App() {
             <Route path="*" element={<HomePage />} />
           </Routes>
         </div>
+        <footer className="app-footer"><span>♛ PalaceTec · Casino virtual</span><span>Créditos simulados. Sin dinero real. Solo mayores de 18 años.</span></footer>
       </div>
     </UserProvider>
   );

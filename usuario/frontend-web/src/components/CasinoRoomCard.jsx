@@ -2,9 +2,7 @@
 export default function CasinoRoomCard({ room, onSelect }) {
   return (
     <article className="casino-room-card">
-      <div className="room-icon" aria-hidden="true">
-        🎰
-      </div>
+      <div className="room-art" aria-hidden="true"><span className="room-live">● EN VIVO</span><div className="mini-wheel">♛</div><span className="room-edition">EUROPEAN ROULETTE</span></div>
 
       <h3>{room.name}</h3>
       <p>{room.description}</p>
