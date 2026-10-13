@@ -1,30 +1,82 @@
 
-import { describe, it, expect, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
 
 import CasinoRoomCatalog from './CasinoRoomCatalog';
+import { getCasinoRooms } from '../services/roomService';
 
-afterEach(() => {
-  cleanup();
-});
+vi.mock('../services/roomService', () => ({
+  getCasinoRooms: vi.fn(),
+}));
 
-describe('HU09 - Catálogo de salas de casino', () => {
+const mockRooms = [
+  {
+    id: 1,
+    name: 'Ruleta baja',
+    min_bet: '10.00',
+    max_bet: '500.00',
+    players: 0,
+  },
+  {
+    id: 2,
+    name: 'Ruleta media',
+    min_bet: '50.00',
+    max_bet: '2000.00',
+    players: 0,
+  },
+  {
+    id: 3,
+    name: 'Ruleta alta',
+    min_bet: '100.00',
+    max_bet: '5000.00',
+    players: 0,
+  },
+];
+
+describe('HU09 - Catálogo de salas conectado con Django', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getCasinoRooms.mockResolvedValue(mockRooms);
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
   it('muestra el título del catálogo', () => {
     render(<CasinoRoomCatalog />);
 
-    expect(
-      screen.getByRole('heading', { name: 'Salas de Casino' })
-    ).toBeInTheDocument();
+    expect(screen.getByText('Salas de Casino')).toBeInTheDocument();
   });
 
-  it('muestra las tres salas disponibles en el catálogo', () => {
+  it('consulta el servicio de salas', async () => {
     render(<CasinoRoomCatalog />);
 
-    expect(screen.getByText('Ruleta Clásica')).toBeInTheDocument();
-    expect(screen.getByText('Ruleta VIP')).toBeInTheDocument();
-    expect(screen.getByText('Sala Premium')).toBeInTheDocument();
+    await screen.findByText('Ruleta baja');
+
+    expect(getCasinoRooms).toHaveBeenCalledTimes(1);
+  });
+
+  it('muestra las tres salas recibidas del backend', async () => {
+    render(<CasinoRoomCatalog />);
+
+    expect(await screen.findByText('Ruleta baja')).toBeInTheDocument();
+    expect(screen.getByText('Ruleta media')).toBeInTheDocument();
+    expect(screen.getByText('Ruleta alta')).toBeInTheDocument();
+  });
+
+  it('muestra los límites de apuesta de las salas', async () => {
+    render(<CasinoRoomCatalog />);
+
+    expect(
+      await screen.findByText(/Apuesta mínima: 10.00 CRD/)
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText(/Apuesta mínima: 50.00 CRD/)
+    ).toBeInTheDocument();
   });
 
   it('permite seleccionar una sala disponible', async () => {
@@ -32,45 +84,68 @@ describe('HU09 - Catálogo de salas de casino', () => {
 
     render(<CasinoRoomCatalog />);
 
-    const buttons = screen.getAllByRole('button', {
+    const buttons = await screen.findAllByRole('button', {
       name: 'Entrar a la sala',
     });
 
     await user.click(buttons[0]);
 
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'Sala seleccionada: Ruleta Clásica'
-    );
+    expect(
+      screen.getByText('Sala seleccionada: Ruleta baja')
+    ).toBeInTheDocument();
   });
 
-  it('permite cambiar de sala seleccionada', async () => {
+  it('permite cambiar la sala seleccionada', async () => {
     const user = userEvent.setup();
 
     render(<CasinoRoomCatalog />);
 
-    const buttons = screen.getAllByRole('button', {
+    const buttons = await screen.findAllByRole('button', {
       name: 'Entrar a la sala',
     });
 
     await user.click(buttons[0]);
+
+    expect(
+      screen.getByText('Sala seleccionada: Ruleta baja')
+    ).toBeInTheDocument();
+
     await user.click(buttons[1]);
 
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'Sala seleccionada: Ruleta VIP'
-    );
+    expect(
+      screen.getByText('Sala seleccionada: Ruleta media')
+    ).toBeInTheDocument();
   });
 
-  it('deshabilita el acceso a una sala no disponible', () => {
+  it('no muestra una sala seleccionada inicialmente', async () => {
+    render(<CasinoRoomCatalog />);
+
+    await screen.findByText('Ruleta baja');
+
+    expect(
+      screen.queryByText(/Sala seleccionada:/)
+    ).not.toBeInTheDocument();
+  });
+
+  it('muestra un mensaje cuando el servidor falla', async () => {
+    getCasinoRooms.mockRejectedValue(
+      new Error('No se pudieron cargar las salas del casino.')
+    );
+
     render(<CasinoRoomCatalog />);
 
     expect(
-      screen.getByRole('button', { name: 'No disponible' })
-    ).toBeDisabled();
+      await screen.findByRole('alert')
+    ).toHaveTextContent('No se pudieron cargar las salas');
   });
 
-  it('no muestra una sala seleccionada inicialmente', () => {
+  it('muestra un mensaje cuando no existen salas', async () => {
+    getCasinoRooms.mockResolvedValue([]);
+
     render(<CasinoRoomCatalog />);
 
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(
+      await screen.findByText('No hay salas disponibles actualmente.')
+    ).toBeInTheDocument();
   });
 });
