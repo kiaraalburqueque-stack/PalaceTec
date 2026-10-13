@@ -1,6 +1,8 @@
 """Pagos totales: incluyen la devolucion de la apuesta original."""
 from decimal import Decimal, InvalidOperation, localcontext
 
+from .constants import BLACK_NUMBERS, RED_NUMBERS
+
 
 def _amount(value):
     try:
@@ -31,3 +33,13 @@ def pleno(amount, number, winning_number):
     number = _number(number)
     winning_number = _number(winning_number)
     return _total(amount, 36) if number == winning_number else Decimal("0")
+
+
+def color(amount, selection, winning_number):
+    """Paga el doble por rojo o negro; el cero siempre pierde."""
+    amount = _amount(amount)
+    if selection not in ("rojo", "negro"):
+        raise ValueError("El color debe ser rojo o negro.")
+    winning_number = _number(winning_number)
+    numbers = RED_NUMBERS if selection == "rojo" else BLACK_NUMBERS
+    return _total(amount, 2) if winning_number in numbers else Decimal("0")
