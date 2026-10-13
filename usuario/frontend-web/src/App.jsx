@@ -3,6 +3,7 @@ import PasswordStrength from './components/PasswordStrength';
 import PreBetBalance from './components/PreBetBalance';
 import BetControls from './components/BetControls';
 import UserProvider from './context/UserProvider';
+import CasinoRoomCatalog from './components/CasinoRoomCatalog';
 import './App.css';
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
 
         <main className="app-content">
           <div className="main-sections">
+            <CasinoRoomCatalog />
             <PreBetBalance balance={1000} />
             <BetControls balance={0} />
             <PasswordStrength />
