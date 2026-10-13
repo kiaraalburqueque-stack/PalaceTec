@@ -2,6 +2,7 @@ from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.core.validators import RegexValidator
 from django.db import models
+from django.db.models.functions import ExtractYear, ExtractMonth, ExtractDay, Lower
 
 
 class UserManager(BaseUserManager):
@@ -42,6 +43,16 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     class Meta:
         db_table = "users"
+        constraints = [
+            models.UniqueConstraint(Lower("nickname"), name="unique_nickname_case_insensitive"),
+            models.CheckConstraint(
+                condition=(models.Q(birth_date__year__lt=ExtractYear("created_at") - 18)
+                    | (models.Q(birth_date__year=ExtractYear("created_at") - 18)
+                       & (models.Q(birth_date__month__lt=ExtractMonth("created_at"))
+                          | models.Q(birth_date__month=ExtractMonth("created_at"), birth_date__day__lte=ExtractDay("created_at"))))),
+                name="user_adult_at_registration",
+            ),
+        ]
 
     def __str__(self):
         return self.email
