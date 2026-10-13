@@ -3,7 +3,7 @@ export function validatePassword(password) {
   return {
     minLength: password.length >= 8,
     hasUppercase: /[A-Z]/.test(password),
-    hasSymbol: /[^A-Za-z0-9]/.test(password),
+    hasSymbol: /[^A-Za-z0-9\s]/.test(password),
   };
 }
 

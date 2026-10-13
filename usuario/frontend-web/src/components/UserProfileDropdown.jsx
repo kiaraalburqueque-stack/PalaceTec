@@ -1,8 +1,14 @@
 
-import { useState } from 'react';
+import { useContext, useState } from 'react';
+import { logout } from '../services/authService';
+import { UserContext } from '../context/UserContext';
 
 export default function UserProfileDropdown({ user }) {
   const [isOpen, setIsOpen] = useState(false);
+  const context = useContext(UserContext);
+  const [error, setError] = useState('');
+
+  if (!user) return <span className="profile-button">Sin sesión</span>;
 
   return (
     <div className="profile-dropdown">
@@ -14,7 +20,7 @@ export default function UserProfileDropdown({ user }) {
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className="profile-avatar">
-          {user.nickname.charAt(0).toUpperCase()}
+          {user.avatar_url ? <img src={user.avatar_url} alt="Avatar" width="32" height="32" /> : user.nickname.charAt(0).toUpperCase()}
         </span>
         <span>{user.nickname}</span>
         <span>{isOpen ? '▲' : '▼'}</span>
@@ -29,12 +35,14 @@ export default function UserProfileDropdown({ user }) {
           <p>Nombre: {user.name}</p>
           <p>Correo: {user.email}</p>
           <hr />
-          <button type="button" disabled>
-            Configuración (próximamente)
+          <a href="/perfil">Editar apodo y avatar</a>
+          <button type="button" onClick={async () => {
+            try { await logout(); context?.setUser(null); window.location.assign('/login'); }
+            catch (err) { setError(err.message); }
+          }}>
+            Cerrar sesión
           </button>
-          <button type="button" disabled>
-            Cerrar sesión (próximamente)
-          </button>
+          {error && <p role="alert">{error}</p>}
         </div>
       )}
     </div>
