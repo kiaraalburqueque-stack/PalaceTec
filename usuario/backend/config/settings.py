@@ -36,6 +36,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -162,3 +163,28 @@ PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
     "django.contrib.auth.hashers.PBKDF2PasswordHasher",
 ]
+
+
+ASGI_APPLICATION = "config.asgi.application"
+REDIS_URL = os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {"hosts": [REDIS_URL]},
+    }
+}
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": REDIS_URL,
+    }
+}
+WEBSOCKET_ALLOWED_ORIGINS = CORS_ALLOWED_ORIGINS + ["http://localhost:8000", "http://127.0.0.1:8000"]
+
+
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
+CSRF_COOKIE_SECURE = not DEBUG
+LOGIN_RATE_LIMIT = "30/min"
+
+# Conexion directa: no confiar en X-Forwarded-For enviado por el cliente.
+REST_FRAMEWORK = {"NUM_PROXIES": 0}

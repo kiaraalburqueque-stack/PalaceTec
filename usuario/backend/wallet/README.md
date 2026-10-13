@@ -25,5 +25,10 @@ SQLite ignora select_for_update y usa bloqueos mas amplios para escritura: no ga
 
 ## Validacion
 
-Desde usuario/backend: `python manage.py test accounts wallet`.
+Desde usuario/backend: `python manage.py test accounts wallet --settings=config.test_settings`.
 El ejecutor de pruebas prepara y destruye una base temporal; no aplica cambios a la base de desarrollo. No se ejecuto migrate ni git push para esta entrega.
+
+
+## Integracion del Sprint 1
+
+La billetera ahora guarda bonus_balance, descuenta el bono primero y publica wallet:update al confirmar cada movimiento. /api/v1/wallet/summary usa la vista SQL wallet_balances para el desglose. /api/v1/wallet/pre-bet-check permite consultar si alcanza el saldo; la apuesta definitiva vuelve a verificarlo con bloqueo. Las migraciones nuevas reconstruyen el bono historico y crean la vista. Consulta ../README.md para el contrato HTTP, CSRF y eventos.

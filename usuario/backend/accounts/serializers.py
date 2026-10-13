@@ -44,9 +44,28 @@ class RegisterSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
-        wallet = Wallet.objects.create(user=user, balance=Decimal("1000.00"))
+        wallet = Wallet.objects.create(user=user, balance=Decimal("1000.00"), bonus_balance=Decimal("1000.00"))
         WalletTransaction.objects.create(
             wallet=wallet, type=WalletTransaction.Type.WELCOME_BONUS,
             amount=Decimal("1000.00"), balance_after=wallet.balance,
         )
         return user
+
+
+AVATARS = tuple(f"/avatars/avatar-{index}.svg" for index in range(1, 7))
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    nickname = serializers.RegexField(r"\A[a-zA-Z0-9_]{3,30}\Z", required=True)
+    avatar_url = serializers.ChoiceField(choices=AVATARS)
+
+    class Meta:
+        model = User
+        fields = ["id", "email", "nickname", "avatar_url"]
+        read_only_fields = ["id", "email"]
+
+    def validate_nickname(self, value):
+        value = value.lower()
+        if User.objects.filter(nickname=value).exclude(pk=self.instance.pk).exists():
+            raise serializers.ValidationError("Este apodo ya esta registrado.")
+        return value
