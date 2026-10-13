@@ -1,4 +1,9 @@
+from decimal import Decimal
+
+from django.db import transaction
 from django.utils import timezone
+
+from wallet.models import Wallet, WalletTransaction
 from rest_framework import serializers
 
 from .models import User
@@ -36,5 +41,12 @@ class RegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Debes tener al menos 18 años cumplidos.")
         return value
 
+    @transaction.atomic
     def create(self, validated_data):
-        return User.objects.create_user(**validated_data)
+        user = User.objects.create_user(**validated_data)
+        wallet = Wallet.objects.create(user=user, balance=Decimal("1000.00"))
+        WalletTransaction.objects.create(
+            wallet=wallet, type=WalletTransaction.Type.WELCOME_BONUS,
+            amount=Decimal("1000.00"), balance_after=wallet.balance,
+        )
+        return user
