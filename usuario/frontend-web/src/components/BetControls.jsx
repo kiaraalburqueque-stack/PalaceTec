@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import InsufficientBalanceModal from './InsufficientBalanceModal';
 import RouletteBoard from './RouletteBoard';
 import { formatCredits } from '../utils/walletUtils';
@@ -44,7 +44,11 @@ export default function BetControls({
   balance,
   roomId,
   onBetPlaced,
+  roundOpen = true,
+  currentRound,
+  winningNumber,
 }) {
+  const pendingBet = useRef(null);
   const [betAmount, setBetAmount] = useState(10);
   const [betKind, setBetKind] = useState('COLOR');
   const [selection, setSelection] = useState('rojo');
@@ -81,7 +85,7 @@ export default function BetControls({
   };
 
   const handleBet = async () => {
-    if (isChecking) return;
+    if (isChecking || (!roundOpen && !pendingBet.current)) return;
 
     setError('');
     setMessage('');
@@ -113,7 +117,7 @@ export default function BetControls({
       }
 
       // Consulta la ronda justo antes de apostar.
-      const state = await getRoomState(roomId);
+      const state = currentRound ? { round: currentRound } : await getRoomState(roomId);
       const round = state.round;
 
       if (
@@ -127,7 +131,7 @@ export default function BetControls({
         return;
       }
 
-      const betData = {
+      const betData = pendingBet.current || {
         round_id: round.id,
         kind: betKind,
         selection:
@@ -136,7 +140,11 @@ export default function BetControls({
         reference: crypto.randomUUID(),
       };
 
+      pendingBet.current = betData;
+
       await placeRouletteBet(roomId, betData);
+
+      pendingBet.current = null;
 
       setMessage('¡Apuesta registrada correctamente!');
 
@@ -144,6 +152,7 @@ export default function BetControls({
         await onBetPlaced();
       }
     } catch (err) {
+      if (err.status) pendingBet.current = null;
       if (err?.code === 'insufficient_balance') {
         setShowModal(true);
         setIsShaking(true);
@@ -246,8 +255,9 @@ export default function BetControls({
 
       <RouletteBoard
         selectedNumber={betKind === 'STRAIGHT_UP' ? Number(number) : null}
+        winningNumber={winningNumber}
         onSelectNumber={handleNumberSelect}
-        disabled={isChecking}
+        disabled={isChecking || !roundOpen}
       />
       
       <p>Selecciona una ficha:</p>
@@ -265,6 +275,7 @@ export default function BetControls({
             }`}
             onClick={() => {
               setBetAmount(amount);
+              if (amount > balance) { setShowModal(true); setIsShaking(true); }
               setError('');
               setMessage('');
               playChipSound();
@@ -284,11 +295,12 @@ export default function BetControls({
         type="button"
         className="place-bet-button"
         onClick={handleBet}
-        disabled={isChecking}
+        disabled={isChecking || !roundOpen || betAmount > balance}
       >
         {isChecking ? 'Procesando...' : 'Apostar'}
       </button>
 
+      {betAmount > balance && <p role="alert">Saldo insuficiente para esta ficha.</p>}
       {error && <p role="alert">{error}</p>}
 
       {message && <p role="status">{message}</p>}

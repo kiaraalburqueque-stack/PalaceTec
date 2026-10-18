@@ -133,3 +133,14 @@ class CSRFView(APIView):
 
     def get(self, request):
         return Response({"csrfToken": get_token(request)})
+
+
+class LogoutView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        enforce_csrf(request)
+        response = Response({"detail": "Sesion cerrada."})
+        response.delete_cookie(settings.JWT_ACCESS_COOKIE, samesite="Lax")
+        return response

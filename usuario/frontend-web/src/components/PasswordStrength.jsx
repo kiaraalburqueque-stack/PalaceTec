@@ -5,8 +5,9 @@ import {
   getPasswordStrength,
 } from '../utils/passwordValidation';
 
-export default function PasswordStrength() {
-  const [password, setPassword] = useState('');
+export default function PasswordStrength({ value, onChange, embedded = false }) {
+  const [localPassword, setPassword] = useState('');
+  const password = value ?? localPassword;
 
 
 const validation = validatePassword(password);
@@ -23,16 +24,17 @@ const strength = getPasswordStrength(password);
   const colors = ['#dc2626', '#ef4444', '#eab308', '#16a34a'];
 
   return (
-    <div className="password-container">
-      <h2>Crear cuenta en PalaceTec</h2>
-      <p>Ingresa una contraseña segura para tu cuenta.</p>
+    <div className={embedded ? 'password-field' : 'password-container'}>
+      {!embedded && <><h2>Crear cuenta en PalaceTec</h2><p>Ingresa una contraseña segura para tu cuenta.</p></>}
 
       <label htmlFor="password">Contraseña</label>
       <input
         id="password"
         type="password"
         value={password}
-        onChange={(event) => setPassword(event.target.value)}
+        onChange={(event) => onChange ? onChange(event.target.value) : setPassword(event.target.value)}
+        autoComplete="new-password"
+        required
         placeholder="Ingresa tu contraseña"
       />
 
