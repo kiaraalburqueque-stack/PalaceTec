@@ -29,6 +29,7 @@ export default function RoulettePage() {
         const [snapshot, summary, bets] = await Promise.all([getRoomState(roomId), getWalletSummary(), getRoomBets(roomId)]);
         if (!active) return;
         setState(snapshot); setWallet(summary); setHistory(bets); setError('');
+        window.dispatchEvent(new CustomEvent('palacetec:wallet-update', { detail: { userId: user.id, wallet: summary } }));
         setOffset(Date.parse(snapshot.server_time) - Date.now());
         if (snapshot.round?.winning_number != null) { setResult(snapshot.round.winning_number); setOutcome({ roundId: snapshot.round.id, number: snapshot.round.winning_number }); }
       } catch (err) { if (active) setError(err.message); }
@@ -40,7 +41,10 @@ export default function RoulettePage() {
       if (event === 'timer:start') setState((old) => ({ ...old, round: data }));
       if (event === 'timer:tick') setState((old) => old?.round?.id === data.round_id ? { ...old, round: { ...old.round, status: 'OPEN', closes_at: data.closes_at } } : old);
       if (event === 'bets:closed') setState((old) => old?.round?.id === data.round_id ? { ...old, round: { ...old.round, status: 'CLOSED' } } : old);
-      if (event === 'wallet:update') setWallet(data);
+      if (event === 'wallet:update') {
+        setWallet(data);
+        window.dispatchEvent(new CustomEvent('palacetec:wallet-update', { detail: { userId: user.id, wallet: data } }));
+      }
       if (event === 'round:result') { setResult(data.winning_number); setOutcome({ roundId: data.round_id, number: data.winning_number }); void sync(); }
       if (event === 'round:winnings') { setPrize(data); void sync(); }
     }, (value) => { if (active) setStatus(value); });
@@ -51,6 +55,7 @@ export default function RoulettePage() {
   const refresh = async () => {
     const [summary, bets] = await Promise.all([getWalletSummary(), getRoomBets(roomId)]);
     setWallet(summary); setHistory(bets);
+    window.dispatchEvent(new CustomEvent('palacetec:wallet-update', { detail: { userId: user.id, wallet: summary } }));
   };
   if (sessionLoading) return <p role="status">Consultando sesión...</p>;
   if (!user) return <Navigate to="/login" replace />;

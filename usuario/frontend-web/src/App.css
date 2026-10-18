@@ -714,3 +714,13 @@ a { text-decoration: none; }
 .wheel-rotor { transform-origin: 200px 200px; }
 .wheel-pointer { position: absolute; top: -2px; left: calc(50% - 12px); border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 25px solid #ffe2a7; z-index: 1; filter: drop-shadow(0 3px 2px #0009); }
 @media(max-width: 760px) { .wheel-panel { grid-template-columns: minmax(0,1fr); padding: 22px; gap: 20px; } .wheel-copy h2 { font-size: 25px; } .wheel-frame { max-width: 300px; } }
+
+.header-account { display: flex; align-items: center; gap: 18px; }
+.header-wallet { display: flex; flex-direction: column; gap: 4px; text-align: right; }
+.header-wallet > span { color: #93a1b3; font-size: 9px; letter-spacing: 1.5px; }
+.header-wallet strong { color: #ffb477; font-size: 17px; white-space: nowrap; }
+.profile-wallet { padding: 12px; margin: 12px 0; background: #10171e; border: 1px solid #354234; border-radius: 8px; }
+.profile-wallet p { margin: 0 0 8px; }
+.profile-wallet strong { color: #ffb477; }
+.profile-wallet small { color: #a7b6c7; line-height: 1.7; }
+@media(max-width: 500px) { .header-account { gap: 9px; } .header-wallet strong { font-size: 13px; } .main-header { gap: 10px; } }

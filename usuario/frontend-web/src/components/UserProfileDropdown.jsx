@@ -3,7 +3,7 @@ import { useContext, useState } from 'react';
 import { logout } from '../services/authService';
 import { UserContext } from '../context/UserContext';
 
-export default function UserProfileDropdown({ user }) {
+export default function UserProfileDropdown({ user, wallet }) {
   const [isOpen, setIsOpen] = useState(false);
   const context = useContext(UserContext);
   const [error, setError] = useState('');
@@ -34,6 +34,7 @@ export default function UserProfileDropdown({ user }) {
           <p><strong>Mi perfil</strong></p>
           <p>Nombre: {user.name}</p>
           <p>Correo: {user.email}</p>
+          {wallet && <div className="profile-wallet"><p>Saldo disponible: <strong>{Number(wallet.balance).toLocaleString('en-US', { maximumFractionDigits: 2 })} CRD</strong></p><small>Bono: {wallet.bonus_balance} CRD · Ganancias: {wallet.winnings_balance} CRD</small></div>}
           <hr />
           <a href="/perfil">Editar apodo y avatar</a>
           <button type="button" onClick={async () => {
