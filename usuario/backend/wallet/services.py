@@ -4,6 +4,7 @@ from django.db import IntegrityError, transaction
 
 from .models import Wallet, WalletTransaction
 from realtime.events import after_commit
+from .presentation import low_balance_data
 
 
 class InsufficientBalance(ValueError):
@@ -69,6 +70,7 @@ class WalletService:
                         "balance": format(wallet.balance, ".2f"),
                         "bonus_balance": format(wallet.bonus_balance, ".2f"),
                         "winnings_balance": format(wallet.winnings_balance, ".2f"),
+                        **low_balance_data(wallet.balance),
                     })
                     return entry
             except IntegrityError:

@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 
 from accounts.authentication import CookieJWTAuthentication
 from .models import Wallet, WalletBalance
+from .presentation import low_balance_data
 
 
 class BalanceView(APIView):
@@ -12,7 +13,7 @@ class BalanceView(APIView):
 
     def get(self, request):
         wallet = Wallet.objects.get(user=request.user)
-        return Response({"balance": format(wallet.balance, ".2f")})
+        return Response({"balance": format(wallet.balance, ".2f"), **low_balance_data(wallet.balance)})
 
 
 class WalletSummaryView(BalanceView):
@@ -22,6 +23,7 @@ class WalletSummaryView(BalanceView):
             "balance": format(wallet.balance, ".2f"),
             "bonus_balance": format(wallet.bonus_balance, ".2f"),
             "winnings_balance": format(wallet.winnings_balance, ".2f"),
+            **low_balance_data(wallet.balance),
         })
 
 
