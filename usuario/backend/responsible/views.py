@@ -114,6 +114,16 @@ class PauseView(ResponsibleView):
         return Response({"pause_until": user.pause_until.isoformat() if user.pause_until else None})
 
 
+class RiskAlertsView(ResponsibleView):
+    def get(self, request):
+        from .models import RiskIncident
+        return Response({"pause_until": request.user.pause_until.isoformat() if request.user.pause_until else None,
+            "results": [{"incident_id": incident.pk, "created_at": incident.created_at.isoformat(),
+                "pause_started_at": incident.pause_started_at.isoformat() if incident.pause_started_at else None,
+                "suggested_pause_seconds": 600}
+                for incident in RiskIncident.objects.filter(user=request.user).order_by("-id")[:20]]})
+
+
 class ExcludedPersonInput(serializers.Serializer):
     dni = serializers.RegexField(r"\A[0-9]{8}\Z", trim_whitespace=False, write_only=True)
     source = serializers.CharField(max_length=120)

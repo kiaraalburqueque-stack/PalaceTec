@@ -28,6 +28,8 @@ class HU29RiskPatternTests(GameTestBase):
         alerts = [call for call in publish.call_args_list if call.args[1] == 'responsible:risk-alert']
         self.assertEqual(len(alerts), 1)
         self.assertEqual(alerts[0].args[0], f'user.{self.user.pk}')
+        recovered = self.client.get('/api/v1/responsible-gaming/risk-alerts')
+        self.assertEqual(recovered.data['results'][0]['incident_id'], incident.pk)
         self.assertEqual(self.client.post('/api/v1/responsible-gaming/pause', {'incident_id': incident.pk}, format='json').status_code, 200)
         self.user.refresh_from_db()
         until = self.user.pause_until
@@ -49,3 +51,4 @@ class HU29RiskPatternTests(GameTestBase):
         other = User.objects.create_user(email='other-risk@example.com', dni='87654321', birth_date='2000-01-01')
         incident = RiskIncident.objects.create(user=other, round=self.round)
         self.assertEqual(self.client.post('/api/v1/responsible-gaming/pause', {'incident_id': incident.pk}, format='json').status_code, 404)
+        self.assertEqual(self.client.get('/api/v1/responsible-gaming/risk-alerts').data['results'], [])
