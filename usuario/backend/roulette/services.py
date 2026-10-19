@@ -13,6 +13,7 @@ from . import payout, rng
 from .models import Bet, GameRound, Room
 from .serializers import BetInputSerializer
 from .state import round_data
+from .constants import RED_NUMBERS
 
 
 class BetsClosed(ValueError):
@@ -108,6 +109,9 @@ class RouletteService:
         round.winning_number = number
         round.settled_at = timezone.now()
         round.save(update_fields=["status", "winning_number", "settled_at"])
-        after_commit(f"room.{round.room_id}", "round:result", {"round_id": round.pk, "winning_number": number, "settled_at": round.settled_at.isoformat()})
+        after_commit(f"room.{round.room_id}", "round:result", {"round_id": round.pk, "winning_number": number,
+            "color": "verde" if number == 0 else "rojo" if number in RED_NUMBERS else "negro",
+            "parity": None if number == 0 else "par" if number % 2 == 0 else "impar",
+            "settled_at": round.settled_at.isoformat()})
         for user_id, total in totals.items():
             after_commit(f"user.{user_id}", "round:winnings", {"round_id": round.pk, "payout": format(total, ".2f")})
