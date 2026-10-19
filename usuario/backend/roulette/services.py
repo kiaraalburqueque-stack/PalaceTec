@@ -50,6 +50,9 @@ class RouletteService:
             return existing, False
         if round is None or round.status != GameRound.Status.OPEN or timezone.now() >= round.closes_at:
             raise BetsClosed("No va mas: la ronda no acepta apuestas.")
+        if user.pause_until and user.pause_until > timezone.now():
+            from responsible.services import DailyLimitError
+            raise DailyLimitError("pause_active", "Tu pausa de juego todavia esta activa.")
         amount = Decimal(sum(values["chips"]))
         accumulated = Bet.objects.filter(user=user, round=round).aggregate(total=Sum("amount"))["total"] or Decimal("0")
         if amount < room.min_bet or accumulated + amount > room.max_bet:
@@ -105,6 +108,10 @@ class RouletteService:
         # Solo lo llama tick con sala y ronda bloqueadas. Nunca recibe un numero del cliente.
         number = rng.spin()
         totals = {}
+        from accounts.models import User
+        from responsible.pattern_detector import detect_loss_escalation
+        # Orden global de usuarios antes de billeteras: evita carreras entre salas.
+        users = list(User.objects.select_for_update().filter(pk__in=round.bets.values("user_id")).order_by("pk"))
         for bet in round.bets.select_related("user").order_by("user_id", "pk"):
             bet.payout = cls.calculate(bet, number)
             if bet.payout:
@@ -115,6 +122,8 @@ class RouletteService:
         round.winning_number = number
         round.settled_at = timezone.now()
         round.save(update_fields=["status", "winning_number", "settled_at"])
+        for user in users:
+            detect_loss_escalation(user, round)
         after_commit(f"room.{round.room_id}", "round:result", {"round_id": round.pk, "winning_number": number,
             "color": "verde" if number == 0 else "rojo" if number in RED_NUMBERS else "negro",
             "parity": None if number == 0 else "par" if number % 2 == 0 else "impar",

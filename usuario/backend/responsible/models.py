@@ -20,6 +20,18 @@ class SelfExclusion(models.Model):
         constraints = [models.CheckConstraint(condition=Q(days__in=[7, 30, 90]), name="self_exclusion_valid_days")]
 
 
+class RiskIncident(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    round = models.ForeignKey("roulette.GameRound", on_delete=models.PROTECT)
+    created_at = models.DateTimeField(auto_now_add=True)
+    kind = models.CharField(max_length=40, default="LOSS_ESCALATION")
+    evidence = models.JSONField(default=list)
+    pause_started_at = models.DateTimeField(null=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["user", "round", "kind"], name="unique_risk_incident_round")]
+
+
 class DailyLimit(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="daily_limit")
     amount = models.DecimalField(max_digits=12, decimal_places=2, null=True)

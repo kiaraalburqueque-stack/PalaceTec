@@ -79,6 +79,33 @@ class SessionSummaryView(ResponsibleView):
             "scope": "settled_session_bets"})
 
 
+class PauseInput(serializers.Serializer):
+    incident_id = serializers.IntegerField(min_value=1)
+
+
+class PauseView(ResponsibleView):
+    def post(self, request):
+        from datetime import timedelta
+        from django.db import transaction
+        from django.shortcuts import get_object_or_404
+        from django.utils import timezone
+        from accounts.models import User
+        from .models import RiskIncident
+        serializer = PauseInput(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            user = User.objects.select_for_update().get(pk=request.user.pk)
+            if request.auth:
+                CookieJWTAuthentication().get_user(request.auth)
+            incident = get_object_or_404(RiskIncident, pk=serializer.validated_data["incident_id"], user=user)
+            if incident.pause_started_at is None:
+                incident.pause_started_at = timezone.now()
+                incident.save(update_fields=["pause_started_at"])
+                user.pause_until = max(user.pause_until or timezone.now(), timezone.now()+timedelta(minutes=10))
+                user.save(update_fields=["pause_until"])
+        return Response({"pause_until": user.pause_until.isoformat() if user.pause_until else None})
+
+
 class ExcludedPersonInput(serializers.Serializer):
     dni = serializers.RegexField(r"\A[0-9]{8}\Z", trim_whitespace=False, write_only=True)
     source = serializers.CharField(max_length=120)
