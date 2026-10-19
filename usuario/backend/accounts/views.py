@@ -148,6 +148,28 @@ class CSRFView(APIView):
         return Response({"csrfToken": get_token(request)})
 
 
+class ChangePasswordView(MeView):
+    def put(self, request):
+        from .serializers import ChangePasswordSerializer
+        from realtime.events import after_commit
+        with transaction.atomic():
+            user = User.objects.select_for_update().get(pk=request.user.pk)
+            if request.auth:
+                CookieJWTAuthentication().get_user(request.auth)
+            serializer = ChangePasswordSerializer(data=request.data, context={"user": user})
+            serializer.is_valid(raise_exception=True)
+            user.set_password(serializer.validated_data["new_password"])
+            user.auth_version += 1
+            user.save(update_fields=["password", "auth_version"])
+            sessions = list(AuthSession.objects.filter(user=user, revoked_at__isnull=True).values_list("jti", flat=True))
+            AuthSession.objects.filter(user=user, revoked_at__isnull=True).update(revoked_at=timezone.now())
+            for jti in sessions:
+                after_commit(f"session.{jti}", "session:revoked", {})
+        response = Response({"detail": "Contraseña actualizada. Inicia sesion nuevamente."})
+        response.delete_cookie(settings.JWT_ACCESS_COOKIE, samesite="Lax")
+        return response
+
+
 class LogoutView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]

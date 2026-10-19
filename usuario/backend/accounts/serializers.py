@@ -14,6 +14,26 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True, trim_whitespace=False)
 
 
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True, trim_whitespace=False, max_length=256)
+    new_password = serializers.CharField(write_only=True, trim_whitespace=False, max_length=256)
+
+    def validate(self, attrs):
+        from django.contrib.auth.password_validation import validate_password
+        from django.core.exceptions import ValidationError
+        user = self.context["user"]
+        if not user.check_password(attrs["current_password"]):
+            raise serializers.ValidationError({"current_password": "La contraseña actual es incorrecta."})
+        if user.check_password(attrs["new_password"]):
+            raise serializers.ValidationError({"new_password": "La nueva contraseña debe ser diferente."})
+        try:
+            RegisterSerializer().validate_password(attrs["new_password"])
+            validate_password(attrs["new_password"], user=user)
+        except (ValidationError, serializers.ValidationError) as exc:
+            raise serializers.ValidationError({"new_password": getattr(exc, "messages", getattr(exc, "detail", str(exc)))}) from exc
+        return attrs
+
+
 class RegisterSerializer(serializers.ModelSerializer):
     # La vista gestiona duplicados con HTTP 409, no con el validador único de DRF.
     email = serializers.EmailField(max_length=254)
