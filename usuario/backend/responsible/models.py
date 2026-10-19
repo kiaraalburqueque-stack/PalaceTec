@@ -10,6 +10,16 @@ class ExcludedPerson(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 
+class SelfExclusion(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    days = models.PositiveSmallIntegerField(choices=[(7, "7"), (30, "30"), (90, "90")])
+    created_at = models.DateTimeField(auto_now_add=True)
+    excluded_until = models.DateTimeField()
+
+    class Meta:
+        constraints = [models.CheckConstraint(condition=Q(days__in=[7, 30, 90]), name="self_exclusion_valid_days")]
+
+
 class DailyLimit(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="daily_limit")
     amount = models.DecimalField(max_digits=12, decimal_places=2, null=True)

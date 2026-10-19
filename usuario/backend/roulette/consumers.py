@@ -64,7 +64,11 @@ class RouletteConsumer(AsyncJsonWebsocketConsumer):
     def refresh_connection(self):
         from accounts.models import AuthSession
         from responsible.services import ExclusionService
-        if ExclusionService.is_excluded(self.scope["user"].dni):
+        from accounts.models import User
+        from rest_framework.exceptions import PermissionDenied
+        try:
+            ExclusionService.ensure_user_allowed(User.objects.get(pk=self.scope["user"].pk))
+        except (User.DoesNotExist, PermissionDenied):
             return 0
         if not AuthSession.objects.filter(jti=self.token_jti, revoked_at__isnull=True, expires_at__gt=timezone.now()).exists():
             return 0

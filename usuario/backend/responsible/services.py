@@ -29,6 +29,12 @@ class ExclusionService:
         if cls.is_excluded(dni):
             raise PermissionDenied({"code": "access_not_allowed", "detail": "No es posible habilitar el acceso."})
 
+    @classmethod
+    def ensure_user_allowed(cls, user):
+        cls.ensure_allowed(user.dni)
+        if not user.is_active or (user.self_excluded_until and user.self_excluded_until > timezone.now()):
+            raise PermissionDenied({"code": "access_not_allowed", "detail": "No es posible habilitar el acceso."})
+
 
 class DailyLimitError(APIException):
     status_code = 400

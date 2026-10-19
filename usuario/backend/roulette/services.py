@@ -32,7 +32,7 @@ class RouletteService:
         from accounts.models import User
         from responsible.services import ExclusionService
         user = User.objects.select_for_update().get(pk=user.pk)
-        ExclusionService.ensure_allowed(user.dni)
+        ExclusionService.ensure_user_allowed(user)
         Wallet.objects.select_for_update().get(user=user)
         existing = Bet.objects.filter(user=user, reference=values["reference"]).select_related("round").first()
         if existing:

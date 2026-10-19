@@ -60,7 +60,7 @@ class LoginView(APIView):
                     return self.locked_response(user, now)
                 return Response(invalid, status=status.HTTP_401_UNAUTHORIZED)
             from responsible.services import ExclusionService
-            ExclusionService.ensure_allowed(user.dni)
+            ExclusionService.ensure_user_allowed(user)
             user.failed_attempts = 0
             user.locked_until = None
             user.save(update_fields=["failed_attempts", "locked_until"])

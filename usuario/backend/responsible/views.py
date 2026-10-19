@@ -29,6 +29,37 @@ class DailyLimitView(ResponsibleView):
         return Response(LimitService.set_limit(request.user, serializer.validated_data["amount"]))
 
 
+class SelfExclusionInput(serializers.Serializer):
+    days = serializers.ChoiceField(choices=[7, 30, 90])
+
+
+class SelfExcludeView(ResponsibleView):
+    def post(self, request):
+        from datetime import timedelta
+        from django.conf import settings
+        from django.db import transaction
+        from django.utils import timezone
+        from accounts.models import User, AuthSession
+        from realtime.events import after_commit
+        from .models import SelfExclusion
+        serializer = SelfExclusionInput(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            user = User.objects.select_for_update().get(pk=request.user.pk)
+            if request.auth:
+                CookieJWTAuthentication().get_user(request.auth)
+            ExclusionService.ensure_user_allowed(user)
+            user.self_excluded_until = timezone.now()+timedelta(days=serializer.validated_data["days"])
+            user.auth_version += 1
+            user.save(update_fields=["self_excluded_until", "auth_version"])
+            SelfExclusion.objects.create(user=user, days=serializer.validated_data["days"], excluded_until=user.self_excluded_until)
+            AuthSession.objects.filter(user=user, revoked_at__isnull=True).update(revoked_at=timezone.now())
+            after_commit(f"user.{user.pk}", "session:revoked", {})
+        response = Response({"self_excluded_until": user.self_excluded_until.isoformat(), "detail": "Autoexclusion confirmada. No se puede cancelar anticipadamente."})
+        response.delete_cookie(settings.JWT_ACCESS_COOKIE, samesite="Lax")
+        return response
+
+
 class ExcludedPersonInput(serializers.Serializer):
     dni = serializers.RegexField(r"\A[0-9]{8}\Z", trim_whitespace=False, write_only=True)
     source = serializers.CharField(max_length=120)

@@ -40,6 +40,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=80, blank=True)
     last_name = models.CharField(max_length=80, blank=True)
     phone = models.CharField(max_length=20, blank=True)
+    self_excluded_until = models.DateTimeField(null=True, blank=True)
+    pause_until = models.DateTimeField(null=True, blank=True)
 
     objects = UserManager()
     USERNAME_FIELD = "email"
