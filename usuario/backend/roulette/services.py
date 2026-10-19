@@ -29,6 +29,10 @@ class RouletteService:
         # Todas las rutas bloquean sala -> ronda -> billetera, en ese orden.
         room = Room.objects.select_for_update().get(pk=room_id, is_active=True)
         round = GameRound.objects.select_for_update().filter(pk=values["round_id"], room=room).first()
+        from accounts.models import User
+        from responsible.services import ExclusionService
+        user = User.objects.select_for_update().get(pk=user.pk)
+        ExclusionService.ensure_allowed(user.dni)
         Wallet.objects.select_for_update().get(user=user)
         existing = Bet.objects.filter(user=user, reference=values["reference"]).select_related("round").first()
         if existing:

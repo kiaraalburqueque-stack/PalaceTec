@@ -3,7 +3,7 @@ from http.cookies import SimpleCookie, CookieError
 from channels.db import database_sync_to_async
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
-from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.exceptions import AuthenticationFailed, PermissionDenied
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from accounts.authentication import CookieJWTAuthentication
 
@@ -18,7 +18,7 @@ def cookie_user(headers):
             return AnonymousUser()
         auth = CookieJWTAuthentication()
         return auth.get_user(auth.get_validated_token(token.value))
-    except (CookieError, AuthenticationFailed, InvalidToken, TokenError):
+    except (CookieError, AuthenticationFailed, PermissionDenied, InvalidToken, TokenError):
         return AnonymousUser()
 
 

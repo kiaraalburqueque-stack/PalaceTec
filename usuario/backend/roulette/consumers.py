@@ -63,6 +63,9 @@ class RouletteConsumer(AsyncJsonWebsocketConsumer):
     @database_sync_to_async
     def refresh_connection(self):
         from accounts.models import AuthSession
+        from responsible.services import ExclusionService
+        if ExclusionService.is_excluded(self.scope["user"].dni):
+            return 0
         if not AuthSession.objects.filter(jti=self.token_jti, revoked_at__isnull=True, expires_at__gt=timezone.now()).exists():
             return 0
         return RoomConnection.objects.filter(channel_name=self.channel_name, room__is_active=True, user__is_active=True).update(expires_at=timezone.now()+timedelta(seconds=60))

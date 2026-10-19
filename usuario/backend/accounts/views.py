@@ -59,6 +59,8 @@ class LoginView(APIView):
                 if user.locked_until:
                     return self.locked_response(user, now)
                 return Response(invalid, status=status.HTTP_401_UNAUTHORIZED)
+            from responsible.services import ExclusionService
+            ExclusionService.ensure_allowed(user.dni)
             user.failed_attempts = 0
             user.locked_until = None
             user.save(update_fields=["failed_attempts", "locked_until"])
@@ -104,6 +106,8 @@ class RegisterView(APIView):
         data = serializer.validated_data
         email = User.objects.normalize_email(data["email"])
         conflicts = {}
+        from responsible.services import ExclusionService
+        ExclusionService.ensure_allowed(data["dni"])
         if User.objects.filter(email=email).exists():
             conflicts["email"] = ["Este correo ya está registrado."]
         if User.objects.filter(dni=data["dni"]).exists():

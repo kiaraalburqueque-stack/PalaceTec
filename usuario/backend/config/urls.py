@@ -19,6 +19,7 @@ from django.urls import include, path
 from accounts.views import AdminStatusView
 
 urlpatterns = [
+    path('api/v1/responsible-gaming/', include('responsible.urls')),
     path('api/v1/admin/status', AdminStatusView.as_view(), name='admin-status'),
     path('api/v1/auth/', include('accounts.urls')),
     path('api/v1/wallet/', include('wallet.urls')),
