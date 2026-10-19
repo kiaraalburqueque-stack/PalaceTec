@@ -70,3 +70,32 @@ class GameListView(AuthenticatedView):
         return Response([{"id": game.pk, "slug": game.slug, "title": game.title,
             "min_bet": format(game.min_bet, ".2f"), "max_bet": format(game.max_bet, ".2f"),
             "rooms_url": f"/api/v1/rooms?game={game.pk}"} for game in games])
+
+
+class PreviousBetsView(AuthenticatedView):
+    def get(self, request, room_id):
+        from .repeat import previous_round
+        from .models import Bet
+        from .serializers import BetSerializer
+        get_object_or_404(Room.objects.available(), pk=room_id)
+        source = previous_round(request.user, room_id)
+        return Response({"source_round_id": source.pk if source else None,
+            "bets": BetSerializer(Bet.objects.filter(user=request.user, round=source).order_by("id"), many=True).data if source else []})
+
+
+class RepeatBetsView(AuthenticatedView):
+    def post(self, request, room_id):
+        from .repeat import repeat_bets
+        from .services import BetsClosed
+        from .serializers import BetSerializer
+        from wallet.services import InsufficientBalance, ReferenceConflict
+        get_object_or_404(Room.objects.available(), pk=room_id)
+        try:
+            operation, created = repeat_bets(request.user, room_id, request.data, request.auth)
+        except Room.DoesNotExist:
+            return Response({"detail": "Sala no disponible."}, status=404)
+        except (InsufficientBalance, BetsClosed, ReferenceConflict) as exc:
+            code = "insufficient_balance" if isinstance(exc, InsufficientBalance) else "bets_closed" if isinstance(exc, BetsClosed) else "reference_conflict"
+            return Response({"code": code, "detail": str(exc)}, status=409 if code == "reference_conflict" else 400)
+        return Response({"source_round_id": operation.source_round_id, "round_id": operation.target_round_id,
+            "reference": str(operation.reference), "bets": BetSerializer(operation.bets.order_by("id"), many=True).data}, status=201 if created else 200)

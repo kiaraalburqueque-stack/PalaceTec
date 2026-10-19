@@ -60,6 +60,7 @@ class Bet(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="bets")
     session = models.ForeignKey("accounts.AuthSession", null=True, blank=True, on_delete=models.SET_NULL, related_name="bets")
+    repeat_operation = models.ForeignKey("RepeatOperation", null=True, blank=True, on_delete=models.PROTECT, related_name="bets")
     round = models.ForeignKey(GameRound, on_delete=models.PROTECT, related_name="bets")
     kind = models.CharField(max_length=11, choices=Kind.choices)
     selection = models.CharField(max_length=5)
@@ -86,3 +87,15 @@ class RoomConnection(models.Model):
 
     class Meta:
         db_table = "room_connections"
+
+
+class RepeatOperation(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    room = models.ForeignKey(Room, on_delete=models.PROTECT)
+    source_round = models.ForeignKey(GameRound, on_delete=models.PROTECT, related_name="repetitions_from")
+    target_round = models.ForeignKey(GameRound, on_delete=models.PROTECT, related_name="repetitions_to")
+    reference = models.UUIDField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["user", "reference"], name="unique_user_repeat_reference")]
