@@ -1,6 +1,6 @@
-# Backend del Sprint 1 ? Kiara
+# Backend de PalaceTec
 
-Django REST Framework, cookie JWT, billetera y ruleta europea con WebSockets. Todo el trabajo de esta entrega queda en la rama Kiara; no se ejecutaron migrate ni git push.
+Django REST Framework, sesiones JWT revocables, billetera y ruleta europea con WebSockets. El Sprint 2 agrega juego responsable, catálogo de juegos, historial, estadísticas y perfil ampliado. Consulta [SPRINT2_API.md](SPRINT2_API.md) para instalar las migraciones y conectar todas las funciones nuevas. Los contratos ampliados de esa guía prevalecen sobre los ejemplos históricos del Sprint 1 que siguen abajo.
 
 ## Ejecutar y probar
 
@@ -13,9 +13,9 @@ python manage.py test accounts wallet roulette --settings=config.test_settings
 python manage.py makemigrations --check --dry-run --settings=config.test_settings
 ```
 
-Las pruebas preparan y destruyen una base temporal, sin aplicar cambios a la base de desarrollo. `config/test_settings.py` reemplaza Redis por memoria solo durante las pruebas. La ultima ejecucion encontro 95 pruebas: 91 aprobaron y cuatro se omitieron por SQLite.
+Las pruebas preparan y destruyen una base temporal, sin aplicar cambios a la base de desarrollo. `config/test_settings.py` reemplaza Redis por memoria solo durante las pruebas. Ejecutar también con PostgreSQL: SQLite omite las pruebas que requieren bloqueo por fila.
 
-Para ejecutar el sistema, la persona que prepare el entorno debe aplicar primero las migraciones pendientes en un paso autorizado. Esta entrega solo las genero y verifico en bases temporales.
+Antes de ejecutar el sistema, aplicar las migraciones existentes con `python manage.py migrate` en la base seleccionada. No generar migraciones adicionales para instalar el proyecto.
 
 Redis es compartido por Channels, el reloj, la cache y el limitador de intentos. Si tienes Docker, puedes iniciarlo con:
 
@@ -23,7 +23,7 @@ Redis es compartido por Channels, el reloj, la cache y el limitador de intentos.
 docker compose -f compose.redis.yml up -d
 ```
 
-Si Redis ya esta instalado, basta usar ese servicio. La URL predeterminada es `redis://127.0.0.1:6379/0`; puede cambiarse con la variable `REDIS_URL`. No se modifico tu .env. Redis no estaba disponible en el equipo al realizar esta entrega; las pruebas de sockets usaron el adaptador en memoria.
+Si Redis ya está instalado, basta usar ese servicio. La URL predeterminada es `redis://127.0.0.1:6379/0`; puede cambiarse con la variable `REDIS_URL`. Las pruebas aisladas usan memoria; la ejecución integrada necesita Redis compartido.
 
 Despues de preparar la base y Redis, abre dos terminales con el mismo entorno:
 
@@ -39,7 +39,7 @@ python manage.py runroulette
 
 `runroulette --once` procesa un tick y termina. Las rondas tienen 15 segundos para apostar, pasan a CLOSED y se liquidan en el siguiente tick; despues comienza una ronda nueva. Si el proceso se interrumpe, retoma la ronda persistida sin reiniciar su plazo. Las salas desactivadas terminan sus rondas pendientes y no abren nuevas.
 
-Para la validacion concurrente, activa PostgreSQL y usa DB_ENGINE distinto de sqlite con las variables DB_NAME, DB_USER, DB_PASSWORD, DB_HOST y DB_PORT habituales. El ejecutor necesita permiso para crear una base de pruebas. Ejecuta el mismo comando de pruebas con `--settings=config.test_settings`. El servicio PostgreSQL local estaba detenido; las cuatro pruebas concurrentes no se ejecutaron en esta entrega.
+Para la validación concurrente, activa PostgreSQL y usa DB_ENGINE distinto de sqlite con las variables DB_NAME, DB_USER, DB_PASSWORD, DB_HOST y DB_PORT habituales. El ejecutor necesita permiso para crear una base de pruebas. Ejecuta las pruebas con `--settings=config.test_settings`; las carreras del Sprint 2 se verifican en PostgreSQL.
 
 SQLite ignora select_for_update. Sirve para desarrollo y pruebas funcionales, pero no demuestra que operaciones simultaneas respeten el bloqueo por fila. Los CHECK siguen impidiendo saldos negativos. Las pruebas con hilos usan skipIf y requieren PostgreSQL.
 
