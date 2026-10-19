@@ -39,7 +39,8 @@ class RouletteService:
             from accounts.authentication import CookieJWTAuthentication
             from accounts.models import AuthSession
             CookieJWTAuthentication().get_user(auth_token)
-            session = AuthSession.objects.get(jti=auth_token["jti"], user=user)
+            from accounts.sessions import session_key
+            session = AuthSession.objects.get(jti=session_key(auth_token), user=user)
         Wallet.objects.select_for_update().get(user=user)
         existing = Bet.objects.filter(user=user, reference=values["reference"]).select_related("round").first()
         if existing:

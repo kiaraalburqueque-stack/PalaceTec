@@ -70,4 +70,5 @@ class AuthSession(models.Model):
     jti = models.CharField(max_length=64, unique=True)
     started_at = models.DateTimeField()
     expires_at = models.DateTimeField(db_index=True)
+    refresh_expires_at = models.DateTimeField(null=True, blank=True)
     revoked_at = models.DateTimeField(null=True, blank=True)

@@ -15,6 +15,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 
 from .models import Room, RoomConnection
 from .state import room_state
+from accounts.sessions import session_key
 
 
 class RouletteConsumer(AsyncJsonWebsocketConsumer):
@@ -33,8 +34,8 @@ class RouletteConsumer(AsyncJsonWebsocketConsumer):
         try:
             token = AccessToken(cookies[settings.JWT_ACCESS_COOKIE].value)
             self.token_expiry = token["exp"]
-            self.session_group = f"session.{token['jti']}"
-            self.token_jti = token["jti"]
+            self.session_group = f"session.{session_key(token)}"
+            self.token_jti = session_key(token)
         except (KeyError, TokenError):
             await self.close(code=4401)
             return

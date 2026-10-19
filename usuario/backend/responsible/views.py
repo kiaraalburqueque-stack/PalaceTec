@@ -56,7 +56,8 @@ class SelfExcludeView(ResponsibleView):
             AuthSession.objects.filter(user=user, revoked_at__isnull=True).update(revoked_at=timezone.now())
             after_commit(f"user.{user.pk}", "session:revoked", {})
         response = Response({"self_excluded_until": user.self_excluded_until.isoformat(), "detail": "Autoexclusion confirmada. No se puede cancelar anticipadamente."})
-        response.delete_cookie(settings.JWT_ACCESS_COOKIE, samesite="Lax")
+        from accounts.sessions import clear_session_cookies
+        clear_session_cookies(response)
         return response
 
 
@@ -69,7 +70,8 @@ class SessionSummaryView(ResponsibleView):
         from rest_framework.exceptions import NotAuthenticated
         if not request.auth:
             raise NotAuthenticated("Inicia sesion para consultar el resumen.")
-        session = AuthSession.objects.get(jti=request.auth["jti"], user=request.user)
+        from accounts.sessions import session_key
+        session = AuthSession.objects.get(jti=session_key(request.auth), user=request.user)
         pending = session.bets.filter(payout__isnull=True)
         return Response({**settled_summary(session.bets.all()),
             "session_started_at": session.started_at.isoformat(),

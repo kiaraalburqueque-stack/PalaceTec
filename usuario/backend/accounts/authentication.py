@@ -6,6 +6,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from django.utils import timezone
 from datetime import datetime, timezone as datetime_timezone
 from .models import AuthSession
+from .sessions import session_key
 
 
 class CookieJWTAuthentication(JWTAuthentication):
@@ -18,7 +19,7 @@ class CookieJWTAuthentication(JWTAuthentication):
         if validated_token.get("version", 0) != user.auth_version:
             raise AuthenticationFailed("Sesion no disponible.")
         session, _ = AuthSession.objects.get_or_create(
-            jti=validated_token["jti"], defaults={"user": user,
+            jti=session_key(validated_token), defaults={"user": user,
             "started_at": datetime.fromtimestamp(validated_token["iat"], datetime_timezone.utc),
             "expires_at": datetime.fromtimestamp(validated_token["exp"], datetime_timezone.utc)})
         if session.user_id != user.pk or session.revoked_at or session.expires_at <= timezone.now():

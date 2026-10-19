@@ -157,6 +157,8 @@ CORS_ALLOW_CREDENTIALS = True
 
 SIMPLE_JWT = {"ACCESS_TOKEN_LIFETIME": timedelta(minutes=15)}
 JWT_ACCESS_COOKIE = "access_token"
+JWT_REFRESH_COOKIE = "refresh_token"
+AUTH_SESSION_LIFETIME = timedelta(hours=8)
 
 AUTH_USER_MODEL = "accounts.User"
 

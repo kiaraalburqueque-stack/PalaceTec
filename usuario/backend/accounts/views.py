@@ -8,13 +8,14 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
 from .authentication import CookieJWTAuthentication, enforce_csrf
 from .throttles import LoginRateThrottle
 from django.middleware.csrf import get_token
 from .models import User, AuthSession
 from .serializers import LoginSerializer, RegisterSerializer, ProfileSerializer
+from .sessions import session_key, set_access_cookie, clear_session_cookies
 
 
 class LoginView(APIView):
@@ -66,15 +67,20 @@ class LoginView(APIView):
             user.save(update_fields=["failed_attempts", "locked_until"])
             token = AccessToken.for_user(user)
             token["version"] = user.auth_version
+            token["sid"] = token["jti"]
+            refresh = RefreshToken.for_user(user)
+            refresh.set_exp(lifetime=settings.AUTH_SESSION_LIFETIME)
+            refresh["sid"] = token["sid"]
+            refresh["version"] = user.auth_version
             from datetime import datetime, timezone as datetime_timezone
             AuthSession.objects.create(user=user, jti=token["jti"], started_at=now,
-                expires_at=datetime.fromtimestamp(token["exp"], datetime_timezone.utc))
+                expires_at=datetime.fromtimestamp(token["exp"], datetime_timezone.utc),
+                refresh_expires_at=datetime.fromtimestamp(refresh["exp"], datetime_timezone.utc))
         response = Response({"id": user.pk, "email": user.email})
-        response.set_cookie(
-            settings.JWT_ACCESS_COOKIE, str(token),
-            max_age=int(settings.SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"].total_seconds()),
-            httponly=True, samesite="Lax", secure=not settings.DEBUG,
-        )
+        set_access_cookie(response, token)
+        response.set_cookie(settings.JWT_REFRESH_COOKIE, str(refresh), path="/api/v1/auth/",
+            max_age=int(settings.AUTH_SESSION_LIFETIME.total_seconds()),
+            httponly=True, samesite="Lax", secure=not settings.DEBUG)
         return response
 
 
@@ -170,7 +176,7 @@ class ChangePasswordView(MeView):
             for jti in sessions:
                 after_commit(f"session.{jti}", "session:revoked", {})
         response = Response({"detail": "Contraseña actualizada. Inicia sesion nuevamente."})
-        response.delete_cookie(settings.JWT_ACCESS_COOKIE, samesite="Lax")
+        clear_session_cookies(response)
         return response
 
 
@@ -188,15 +194,62 @@ class LogoutView(APIView):
             token = AccessToken(raw) if raw else None
         except TokenError:
             token = None
+        if token is None:
+            try:
+                raw_refresh = request.COOKIES.get(settings.JWT_REFRESH_COOKIE)
+                token = RefreshToken(raw_refresh) if raw_refresh else None
+            except TokenError:
+                token = None
         if token and User.objects.filter(pk=token["user_id"]).exists():
             with transaction.atomic():
                 # El mismo bloqueo de usuario serializa logout y escrituras privadas.
                 User.objects.select_for_update().get(pk=token["user_id"])
-                AuthSession.objects.update_or_create(jti=token["jti"], defaults={
-                    "user_id": token["user_id"], "revoked_at": timezone.now(),
+                session, _ = AuthSession.objects.get_or_create(jti=session_key(token), defaults={
+                    "user_id": token["user_id"],
                     "started_at": datetime.fromtimestamp(token["iat"], datetime_timezone.utc),
                     "expires_at": datetime.fromtimestamp(token["exp"], datetime_timezone.utc)})
-                after_commit(f"session.{token['jti']}", "session:revoked", {})
+                session.revoked_at = timezone.now()
+                session.save(update_fields=["revoked_at"])
+                after_commit(f"session.{session_key(token)}", "session:revoked", {})
         response = Response({"detail": "Sesion cerrada."})
-        response.delete_cookie(settings.JWT_ACCESS_COOKIE, samesite="Lax")
+        clear_session_cookies(response)
+        return response
+
+
+class RefreshSessionView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    throttle_classes = [LoginRateThrottle]
+
+    def get_authenticate_header(self, request):
+        return 'Bearer realm="api"'
+
+    def post(self, request):
+        from datetime import datetime, timezone as datetime_timezone
+        from rest_framework_simplejwt.exceptions import TokenError
+        from rest_framework.exceptions import AuthenticationFailed
+        from responsible.services import ExclusionService
+        enforce_csrf(request)
+        try:
+            raw = request.COOKIES.get(settings.JWT_REFRESH_COOKIE)
+            if not raw:
+                raise AuthenticationFailed("Inicia sesion nuevamente.")
+            refresh = RefreshToken(raw)
+        except TokenError as exc:
+            raise AuthenticationFailed("Inicia sesion nuevamente.") from exc
+        with transaction.atomic():
+            user = User.objects.select_for_update().filter(pk=refresh["user_id"]).first()
+            if user is None or refresh.get("version", 0) != user.auth_version:
+                raise AuthenticationFailed("Inicia sesion nuevamente.")
+            ExclusionService.ensure_user_allowed(user)
+            session = AuthSession.objects.filter(jti=session_key(refresh), user=user,
+                revoked_at__isnull=True, refresh_expires_at__gt=timezone.now()).first()
+            if session is None:
+                raise AuthenticationFailed("Inicia sesion nuevamente.")
+            access = AccessToken.for_user(user)
+            access["sid"], access["version"] = session.jti, user.auth_version
+            session.expires_at = datetime.fromtimestamp(access["exp"], datetime_timezone.utc)
+            session.save(update_fields=["expires_at"])
+        response = Response({"detail": "Sesion renovada.", "session_started_at": session.started_at.isoformat()})
+        set_access_cookie(response, access)
         return response
