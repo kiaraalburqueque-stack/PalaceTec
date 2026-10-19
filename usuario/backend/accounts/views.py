@@ -81,7 +81,16 @@ class MeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        return Response({"id": request.user.pk, "email": request.user.email})
+        return Response({"id": request.user.pk, "email": request.user.email,
+                         "role": "ADMIN" if request.user.is_staff or request.user.is_superuser else "USER"})
+
+
+class AdminStatusView(MeView):
+    from .permissions import IsAdminRole
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def get(self, request):
+        return Response({"status": "ok", "role": "ADMIN"})
 
 
 class RegisterView(APIView):
