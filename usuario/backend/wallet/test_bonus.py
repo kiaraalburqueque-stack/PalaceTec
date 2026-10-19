@@ -31,7 +31,7 @@ class HU06HU07BonusTests(APITestCase):
 
     def test_summary_and_precheck(self):
         self.assertEqual(self.client.get("/api/v1/wallet/summary").data,
-                         {"balance": "1100.00", "bonus_balance": "1000.00", "winnings_balance": "100.00"})
+                         {"balance": "1100.00", "bonus_balance": "1000.00", "winnings_balance": "100.00", "low_balance_threshold": "10.00", "is_low_balance": False})
         for amount, expected in ((1100, True), (1101, False)):
             response = self.client.post("/api/v1/wallet/pre-bet-check", {"amount": amount})
             self.assertEqual(response.data["can_bet"], expected)
