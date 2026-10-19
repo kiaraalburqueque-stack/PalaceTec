@@ -21,3 +21,10 @@ class BetHistoryView(AuthenticatedView):
         pagination = HistoryPagination()
         page = pagination.paginate_queryset(self.get_queryset(request), request, view=self)
         return pagination.get_paginated_response(HistoryBetSerializer(page, many=True).data)
+
+
+class StatsSummaryView(AuthenticatedView):
+    def get(self, request):
+        from .queries import filter_dates, settled_summary
+        bets = filter_dates(Bet.objects.filter(user=request.user), request.query_params)
+        return Response({**settled_summary(bets), "scope": "settled_bets", "timezone": "America/Lima"})

@@ -25,3 +25,14 @@ def filter_dates(queryset, params):
     if "endDate" in dates:
         queryset = queryset.filter(created_at__lt=datetime.combine(dates["endDate"]+timedelta(days=1), time.min, tzinfo=lima))
     return queryset
+
+
+def settled_summary(queryset):
+    from decimal import Decimal
+    from django.db.models import Sum
+    values = queryset.filter(round__status="SETTLED", payout__isnull=False).aggregate(
+        total_wagered=Sum("amount"), total_paid=Sum("payout"))
+    wagered = values["total_wagered"] or Decimal("0")
+    paid = values["total_paid"] or Decimal("0")
+    return {"total_wagered": format(wagered, ".2f"), "total_paid": format(paid, ".2f"),
+            "net": format(paid-wagered, ".2f")}

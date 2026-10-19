@@ -17,9 +17,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from accounts.views import AdminStatusView
-from roulette.history import BetHistoryView
+from roulette.history import BetHistoryView, StatsSummaryView
 
 urlpatterns = [
+    path('api/v1/stats/summary', StatsSummaryView.as_view(), name='stats-summary'),
     path('api/v1/users/bets-history', BetHistoryView.as_view(), name='bets-history'),
     path('api/v1/responsible-gaming/', include('responsible.urls')),
     path('api/v1/admin/status', AdminStatusView.as_view(), name='admin-status'),
