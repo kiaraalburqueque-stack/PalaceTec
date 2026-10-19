@@ -24,6 +24,9 @@ def room_state(room_id):
         "min_bet": str(room.min_bet), "max_bet": str(room.max_bet),
         "round": round_data(round) if round else None,
         "chip_values": list(CHIP_VALUES),
+        "recent_results": [{"round_id": result.pk, "number": result.winning_number,
+            "color": "verde" if result.winning_number == 0 else "rojo" if result.winning_number in RED_NUMBERS else "negro"}
+            for result in room.rounds.filter(status="SETTLED").order_by("-settled_at", "-id")[:10]],
         "numbers": [{"number": number, "color": "rojo" if number in RED_NUMBERS else "negro" if number in BLACK_NUMBERS else "verde"} for number in range(37)],
     }
     # Cache de presentacion; las decisiones de dinero/plazo siempre consultan la BD.
