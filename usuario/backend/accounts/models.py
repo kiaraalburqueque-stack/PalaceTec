@@ -36,6 +36,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     created_at = models.DateTimeField(auto_now_add=True)
     failed_attempts = models.PositiveIntegerField(default=0)
     locked_until = models.DateTimeField(null=True, blank=True)
+    auth_version = models.PositiveIntegerField(default=0)
 
     objects = UserManager()
     USERNAME_FIELD = "email"
@@ -56,3 +57,12 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+
+class AuthSession(models.Model):
+    """Una sesión por JWT; conservar revocaciones hasta su vencimiento."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="auth_sessions")
+    jti = models.CharField(max_length=64, unique=True)
+    started_at = models.DateTimeField()
+    expires_at = models.DateTimeField(db_index=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)

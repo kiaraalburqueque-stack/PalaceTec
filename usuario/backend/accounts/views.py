@@ -13,7 +13,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 from .authentication import CookieJWTAuthentication, enforce_csrf
 from .throttles import LoginRateThrottle
 from django.middleware.csrf import get_token
-from .models import User
+from .models import User, AuthSession
 from .serializers import LoginSerializer, RegisterSerializer, ProfileSerializer
 
 
@@ -63,6 +63,10 @@ class LoginView(APIView):
             user.locked_until = None
             user.save(update_fields=["failed_attempts", "locked_until"])
             token = AccessToken.for_user(user)
+            token["version"] = user.auth_version
+            from datetime import datetime, timezone as datetime_timezone
+            AuthSession.objects.create(user=user, jti=token["jti"], started_at=now,
+                expires_at=datetime.fromtimestamp(token["exp"], datetime_timezone.utc))
         response = Response({"id": user.pk, "email": user.email})
         response.set_cookie(
             settings.JWT_ACCESS_COOKIE, str(token),
@@ -141,6 +145,23 @@ class LogoutView(APIView):
 
     def post(self, request):
         enforce_csrf(request)
+        from rest_framework_simplejwt.exceptions import TokenError
+        from datetime import datetime, timezone as datetime_timezone
+        from realtime.events import after_commit
+        raw = request.COOKIES.get(settings.JWT_ACCESS_COOKIE)
+        try:
+            token = AccessToken(raw) if raw else None
+        except TokenError:
+            token = None
+        if token and User.objects.filter(pk=token["user_id"]).exists():
+            with transaction.atomic():
+                # El mismo bloqueo de usuario serializa logout y escrituras privadas.
+                User.objects.select_for_update().get(pk=token["user_id"])
+                AuthSession.objects.update_or_create(jti=token["jti"], defaults={
+                    "user_id": token["user_id"], "revoked_at": timezone.now(),
+                    "started_at": datetime.fromtimestamp(token["iat"], datetime_timezone.utc),
+                    "expires_at": datetime.fromtimestamp(token["exp"], datetime_timezone.utc)})
+                after_commit(f"session.{token['jti']}", "session:revoked", {})
         response = Response({"detail": "Sesion cerrada."})
         response.delete_cookie(settings.JWT_ACCESS_COOKIE, samesite="Lax")
         return response

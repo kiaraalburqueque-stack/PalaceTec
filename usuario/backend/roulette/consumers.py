@@ -31,7 +31,10 @@ class RouletteConsumer(AsyncJsonWebsocketConsumer):
         cookies = SimpleCookie()
         cookies.load(dict(self.scope.get("headers", [])).get(b"cookie", b"").decode("latin1"))
         try:
-            self.token_expiry = AccessToken(cookies[settings.JWT_ACCESS_COOKIE].value)["exp"]
+            token = AccessToken(cookies[settings.JWT_ACCESS_COOKIE].value)
+            self.token_expiry = token["exp"]
+            self.session_group = f"session.{token['jti']}"
+            self.token_jti = token["jti"]
         except (KeyError, TokenError):
             await self.close(code=4401)
             return
@@ -40,6 +43,7 @@ class RouletteConsumer(AsyncJsonWebsocketConsumer):
             return
         await self.channel_layer.group_add(self.room_group, self.channel_name)
         await self.channel_layer.group_add(self.user_group, self.channel_name)
+        await self.channel_layer.group_add(self.session_group, self.channel_name)
         self.joined = True
         await self.accept()
         await self.send_json({"event": "room:state", "data": await database_sync_to_async(room_state)(self.room_id)})
@@ -58,6 +62,9 @@ class RouletteConsumer(AsyncJsonWebsocketConsumer):
 
     @database_sync_to_async
     def refresh_connection(self):
+        from accounts.models import AuthSession
+        if not AuthSession.objects.filter(jti=self.token_jti, revoked_at__isnull=True, expires_at__gt=timezone.now()).exists():
+            return 0
         return RoomConnection.objects.filter(channel_name=self.channel_name, room__is_active=True, user__is_active=True).update(expires_at=timezone.now()+timedelta(seconds=60))
 
     async def heartbeat(self):
@@ -76,6 +83,7 @@ class RouletteConsumer(AsyncJsonWebsocketConsumer):
         if self.joined:
             await self.channel_layer.group_discard(self.room_group, self.channel_name)
             await self.channel_layer.group_discard(self.user_group, self.channel_name)
+            await self.channel_layer.group_discard(self.session_group, self.channel_name)
             await database_sync_to_async(lambda: RoomConnection.objects.filter(channel_name=self.channel_name).delete())()
             await self.channel_layer.group_send(self.room_group, {"type": "push.event", "event": "room:user_left", "data": {"user_id": self.scope["user"].pk}})
 
@@ -89,7 +97,7 @@ class RouletteConsumer(AsyncJsonWebsocketConsumer):
             await self.send_json({"event": "error", "data": {"detail": "JSON invalido."}})
 
     async def receive_json(self, content, **kwargs):
-        if time.time() >= self.token_expiry:
+        if time.time() >= self.token_expiry or not await self.refresh_connection():
             await self.close(code=4401)
             return
         if not isinstance(content, dict):
@@ -102,7 +110,7 @@ class RouletteConsumer(AsyncJsonWebsocketConsumer):
             await self.send_json({"event": "error", "data": {"detail": "Evento no permitido. Envia apuestas por HTTP."}})
 
     async def push_event(self, message):
-        if time.time() >= self.token_expiry:
+        if message["event"] == "session:revoked" or time.time() >= self.token_expiry or not await self.refresh_connection():
             await self.close(code=4401)
             return
         await self.send_json({"event": message["event"], "data": message["data"]})
