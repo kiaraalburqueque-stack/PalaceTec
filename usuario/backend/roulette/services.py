@@ -23,7 +23,7 @@ class BetsClosed(ValueError):
 class RouletteService:
     @staticmethod
     @transaction.atomic
-    def place_bet(user, room_id, data):
+    def place_bet(user, room_id, data, auth_token=None):
         serializer = BetInputSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         values = serializer.validated_data
@@ -34,6 +34,12 @@ class RouletteService:
         from responsible.services import ExclusionService
         user = User.objects.select_for_update().get(pk=user.pk)
         ExclusionService.ensure_user_allowed(user)
+        session = None
+        if auth_token is not None:
+            from accounts.authentication import CookieJWTAuthentication
+            from accounts.models import AuthSession
+            CookieJWTAuthentication().get_user(auth_token)
+            session = AuthSession.objects.get(jti=auth_token["jti"], user=user)
         Wallet.objects.select_for_update().get(user=user)
         existing = Bet.objects.filter(user=user, reference=values["reference"]).select_related("round").first()
         if existing:
@@ -52,7 +58,7 @@ class RouletteService:
         LimitService.check_and_reserve(user, amount)
         # La referencia monetaria usa el ID propio de la apuesta, no texto del cliente.
         bet = Bet.objects.create(user=user, round=round, kind=values["kind"],
-            selection=values["selection"], chips=values["chips"], amount=amount, reference=values["reference"])
+            selection=values["selection"], chips=values["chips"], amount=amount, reference=values["reference"], session=session)
         WalletService.debit(user, amount, f"roulette:bet:{bet.pk}")
         return bet, True
 

@@ -50,7 +50,7 @@ class BetView(AuthenticatedView):
         from .serializers import BetSerializer
         get_object_or_404(Room.objects.available(), pk=room_id)
         try:
-            bet, created = RouletteService.place_bet(request.user, room_id, request.data)
+            bet, created = RouletteService.place_bet(request.user, room_id, request.data, request.auth)
         except Room.DoesNotExist:
             return Response({"detail": "Sala no disponible."}, status=404)
         except InsufficientBalance as exc:

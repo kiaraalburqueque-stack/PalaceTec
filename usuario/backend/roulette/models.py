@@ -59,6 +59,7 @@ class Bet(models.Model):
         COLUMN = "COLUMN", "Columna"
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="bets")
+    session = models.ForeignKey("accounts.AuthSession", null=True, blank=True, on_delete=models.SET_NULL, related_name="bets")
     round = models.ForeignKey(GameRound, on_delete=models.PROTECT, related_name="bets")
     kind = models.CharField(max_length=11, choices=Kind.choices)
     selection = models.CharField(max_length=5)

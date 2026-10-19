@@ -60,6 +60,25 @@ class SelfExcludeView(ResponsibleView):
         return response
 
 
+class SessionSummaryView(ResponsibleView):
+    def get(self, request):
+        from django.utils import timezone
+        from django.db.models import Sum
+        from accounts.models import AuthSession
+        from roulette.queries import settled_summary
+        from rest_framework.exceptions import NotAuthenticated
+        if not request.auth:
+            raise NotAuthenticated("Inicia sesion para consultar el resumen.")
+        session = AuthSession.objects.get(jti=request.auth["jti"], user=request.user)
+        pending = session.bets.filter(payout__isnull=True)
+        return Response({**settled_summary(session.bets.all()),
+            "session_started_at": session.started_at.isoformat(),
+            "duration_seconds": max(0, int((timezone.now()-session.started_at).total_seconds())),
+            "pending_wagered": format(pending.aggregate(total=Sum("amount"))["total"] or 0, ".2f"),
+            "pending_count": pending.count(), "reality_check_interval_seconds": 3600,
+            "scope": "settled_session_bets"})
+
+
 class ExcludedPersonInput(serializers.Serializer):
     dni = serializers.RegexField(r"\A[0-9]{8}\Z", trim_whitespace=False, write_only=True)
     source = serializers.CharField(max_length=120)
