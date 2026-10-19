@@ -24,9 +24,15 @@ class DailyLimitView(ResponsibleView):
 
     def post(self, request):
         from .services import LimitService
+        from django.db import transaction
+        from accounts.models import User
         serializer = DailyLimitInput(data=request.data)
         serializer.is_valid(raise_exception=True)
-        return Response(LimitService.set_limit(request.user, serializer.validated_data["amount"]))
+        with transaction.atomic():
+            user = User.objects.select_for_update().get(pk=request.user.pk)
+            if request.auth:
+                CookieJWTAuthentication().get_user(request.auth)
+            return Response(LimitService.set_limit(user, serializer.validated_data["amount"]))
 
 
 class SelfExclusionInput(serializers.Serializer):

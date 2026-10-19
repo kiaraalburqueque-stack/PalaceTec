@@ -16,7 +16,7 @@ class CookieJWTAuthentication(JWTAuthentication):
         user = super().get_user(validated_token)
         from responsible.services import ExclusionService
         ExclusionService.ensure_user_allowed(user)
-        if validated_token.get("version", 0) != user.auth_version:
+        if validated_token.get("version", 0) != user.auth_version or validated_token["exp"] <= timezone.now().timestamp():
             raise AuthenticationFailed("Sesion no disponible.")
         session, _ = AuthSession.objects.get_or_create(
             jti=session_key(validated_token), defaults={"user": user,

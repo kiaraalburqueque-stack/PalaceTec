@@ -27,7 +27,7 @@ class RouletteService:
         serializer = BetInputSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         values = serializer.validated_data
-        # Todas las rutas bloquean sala -> ronda -> billetera, en ese orden.
+        # Orden compartido con liquidacion/repeticion: sala -> ronda -> usuario -> billetera.
         room = Room.objects.available().select_for_update(of=("self",)).get(pk=room_id)
         round = GameRound.objects.select_for_update().filter(pk=values["round_id"], room=room).first()
         from accounts.models import User

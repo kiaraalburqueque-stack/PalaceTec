@@ -29,6 +29,13 @@ class HU28HU30RefreshTests(APITestCase):
         self.client.cookies[settings.JWT_REFRESH_COOKIE] = refresh
         self.assertEqual(self.client.post('/api/v1/auth/refresh').status_code, 401)
 
+    def test_refreshed_access_cannot_outlive_absolute_session_deadline(self):
+        deadline = timezone.now()+timedelta(seconds=60)
+        AuthSession.objects.filter(user=self.user).update(refresh_expires_at=deadline)
+        self.assertEqual(self.client.post('/api/v1/auth/refresh').status_code, 200)
+        token = AccessToken(self.client.cookies[settings.JWT_ACCESS_COOKIE].value)
+        self.assertLessEqual(token['exp'], int(deadline.timestamp()))
+
     def test_logout_works_after_access_expired(self):
         expired = AccessToken(self.client.cookies[settings.JWT_ACCESS_COOKIE].value)
         expired.set_exp(lifetime=timedelta(seconds=-1))

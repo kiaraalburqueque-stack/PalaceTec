@@ -16,6 +16,7 @@ from django.middleware.csrf import get_token
 from .models import User, AuthSession
 from .serializers import LoginSerializer, RegisterSerializer, ProfileSerializer
 from .sessions import session_key, set_access_cookie, clear_session_cookies
+from .permissions import IsAdminRole
 
 
 class LoginView(APIView):
@@ -94,7 +95,6 @@ class MeView(APIView):
 
 
 class AdminStatusView(MeView):
-    from .permissions import IsAdminRole
     permission_classes = [IsAuthenticated, IsAdminRole]
 
     def get(self, request):
@@ -140,10 +140,13 @@ class ProfileView(APIView):
         return Response(ProfileSerializer(request.user).data)
 
     def put(self, request):
-        serializer = ProfileSerializer(request.user, data=request.data)
-        serializer.is_valid(raise_exception=True)
         try:
             with transaction.atomic():
+                user = User.objects.select_for_update().get(pk=request.user.pk)
+                if request.auth:
+                    CookieJWTAuthentication().get_user(request.auth)
+                serializer = ProfileSerializer(user, data=request.data)
+                serializer.is_valid(raise_exception=True)
                 serializer.save()
         except IntegrityError:
             return Response({"nickname": ["Este apodo ya esta registrado."]}, status=409)
@@ -248,6 +251,7 @@ class RefreshSessionView(APIView):
                 raise AuthenticationFailed("Inicia sesion nuevamente.")
             access = AccessToken.for_user(user)
             access["sid"], access["version"] = session.jti, user.auth_version
+            access["exp"] = min(access["exp"], int(session.refresh_expires_at.timestamp()))
             session.expires_at = datetime.fromtimestamp(access["exp"], datetime_timezone.utc)
             session.save(update_fields=["expires_at"])
         response = Response({"detail": "Sesion renovada.", "session_started_at": session.started_at.isoformat()})
