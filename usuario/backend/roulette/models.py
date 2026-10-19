@@ -42,6 +42,8 @@ class Bet(models.Model):
         STRAIGHT_UP = "STRAIGHT_UP", "Pleno"
         COLOR = "COLOR", "Color"
         PARITY = "PARITY", "Paridad"
+        DOZEN = "DOZEN", "Docena"
+        COLUMN = "COLUMN", "Columna"
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="bets")
     round = models.ForeignKey(GameRound, on_delete=models.PROTECT, related_name="bets")

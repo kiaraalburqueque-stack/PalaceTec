@@ -63,6 +63,10 @@ class RouletteService:
             return payout.color(bet.amount, bet.selection, number)
         if bet.kind == Bet.Kind.PARITY:
             return payout.paridad(bet.amount, bet.selection, number)
+        if bet.kind == Bet.Kind.DOZEN:
+            return payout.docena(bet.amount, bet.selection, number)
+        if bet.kind == Bet.Kind.COLUMN:
+            return payout.columna(bet.amount, bet.selection, number)
         raise ValueError("Tipo de apuesta invalido.")
 
     @classmethod

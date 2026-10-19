@@ -53,3 +53,19 @@ def paridad(amount, selection, winning_number):
     winning_number = _number(winning_number)
     wins = winning_number != 0 and winning_number % 2 == (0 if selection == "par" else 1)
     return _total(amount, 2) if wins else Decimal("0")
+
+
+def docena(amount, selection, winning_number):
+    amount = _amount(amount)
+    if selection not in ("1", "2", "3"):
+        raise ValueError("Docena invalida.")
+    number = _number(winning_number)
+    return _total(amount, 3) if number and (number-1)//12+1 == int(selection) else Decimal("0")
+
+
+def columna(amount, selection, winning_number):
+    amount = _amount(amount)
+    if selection not in ("1", "2", "3"):
+        raise ValueError("Columna invalida.")
+    number = _number(winning_number)
+    return _total(amount, 3) if number and (number-1)%3+1 == int(selection) else Decimal("0")

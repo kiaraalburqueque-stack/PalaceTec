@@ -25,6 +25,8 @@ class BetInputSerializer(serializers.Serializer):
             raise serializers.ValidationError({"selection": "El color debe ser rojo o negro."})
         elif kind == Bet.Kind.PARITY and value not in ("par", "impar"):
             raise serializers.ValidationError({"selection": "La paridad debe ser par o impar."})
+        elif kind in (Bet.Kind.DOZEN, Bet.Kind.COLUMN) and value not in ("1", "2", "3"):
+            raise serializers.ValidationError({"selection": "Selecciona 1, 2 o 3."})
         return attrs
 
 
