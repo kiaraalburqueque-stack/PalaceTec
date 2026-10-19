@@ -1,8 +1,9 @@
 from django.urls import path
 
-from .views import LoginView, MeView, RegisterView, CSRFView, LogoutView
+from .views import LoginView, MeView, RegisterView, CSRFView, LogoutView, RefreshSessionView
 
 urlpatterns = [
+    path("refresh", RefreshSessionView.as_view(), name="refresh-session"),
     path("logout", LogoutView.as_view(), name="logout"),
     path("csrf", CSRFView.as_view(), name="csrf"),
     path("login", LoginView.as_view(), name="login"),

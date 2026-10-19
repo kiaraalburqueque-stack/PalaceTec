@@ -25,6 +25,8 @@ class BetInputSerializer(serializers.Serializer):
             raise serializers.ValidationError({"selection": "El color debe ser rojo o negro."})
         elif kind == Bet.Kind.PARITY and value not in ("par", "impar"):
             raise serializers.ValidationError({"selection": "La paridad debe ser par o impar."})
+        elif kind in (Bet.Kind.DOZEN, Bet.Kind.COLUMN) and value not in ("1", "2", "3"):
+            raise serializers.ValidationError({"selection": "Selecciona 1, 2 o 3."})
         return attrs
 
 
@@ -34,3 +36,22 @@ class BetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bet
         fields = ["id", "round_id", "kind", "selection", "chips", "amount", "payout", "reference", "created_at"]
+
+
+class HistoryBetSerializer(BetSerializer):
+    room_id = serializers.IntegerField(source="round.room_id", read_only=True)
+    game = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
+    net = serializers.SerializerMethodField()
+
+    class Meta(BetSerializer.Meta):
+        fields = BetSerializer.Meta.fields + ["room_id", "game", "status", "net"]
+
+    def get_game(self, bet):
+        return bet.round.room.game.title if bet.round.room.game_id else "Ruleta Europea"
+
+    def get_status(self, bet):
+        return "PENDING" if bet.payout is None else "WON" if bet.payout > 0 else "LOST"
+
+    def get_net(self, bet):
+        return format(bet.payout-bet.amount, ".2f") if bet.payout is not None else None

@@ -103,7 +103,7 @@ class HU02LoginTests(APITestCase):
         self.login()
         response = self.client.get('/api/v1/auth/me')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, {'id': self.user.pk, 'email': self.user.email})
+        self.assertEqual(response.data, {'id': self.user.pk, 'email': self.user.email, 'role': 'USER'})
 
     def test_me_without_cookie(self):
         self.assertEqual(self.client.get('/api/v1/auth/me').status_code, 401)

@@ -14,6 +14,26 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True, trim_whitespace=False)
 
 
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True, trim_whitespace=False, max_length=256)
+    new_password = serializers.CharField(write_only=True, trim_whitespace=False, max_length=256)
+
+    def validate(self, attrs):
+        from django.contrib.auth.password_validation import validate_password
+        from django.core.exceptions import ValidationError
+        user = self.context["user"]
+        if not user.check_password(attrs["current_password"]):
+            raise serializers.ValidationError({"current_password": "La contraseña actual es incorrecta."})
+        if user.check_password(attrs["new_password"]):
+            raise serializers.ValidationError({"new_password": "La nueva contraseña debe ser diferente."})
+        try:
+            RegisterSerializer().validate_password(attrs["new_password"])
+            validate_password(attrs["new_password"], user=user)
+        except (ValidationError, serializers.ValidationError) as exc:
+            raise serializers.ValidationError({"new_password": getattr(exc, "messages", getattr(exc, "detail", str(exc)))}) from exc
+        return attrs
+
+
 class RegisterSerializer(serializers.ModelSerializer):
     # La vista gestiona duplicados con HTTP 409, no con el validador único de DRF.
     email = serializers.EmailField(max_length=254)
@@ -56,13 +76,24 @@ AVATARS = tuple(f"/avatars/avatar-{index}.svg" for index in range(1, 7))
 
 
 class ProfileSerializer(serializers.ModelSerializer):
-    nickname = serializers.RegexField(r"\A[a-zA-Z0-9_]{3,30}\Z", required=True)
-    avatar_url = serializers.ChoiceField(choices=AVATARS)
+    nickname = serializers.RegexField(r"\A[a-zA-Z0-9_]{3,30}\Z", required=False)
+    avatar_url = serializers.ChoiceField(choices=AVATARS, required=False)
+    phone = serializers.RegexField(r"\A\+?[0-9 ()-]{7,20}\Z", required=False, allow_blank=True)
 
     class Meta:
         model = User
-        fields = ["id", "email", "nickname", "avatar_url"]
-        read_only_fields = ["id", "email"]
+        fields = ["id", "email", "dni", "nickname", "avatar_url", "first_name", "last_name", "phone"]
+        read_only_fields = ["id", "email", "dni"]
+
+    def validate(self, attrs):
+        forbidden = {key: "Este campo no es editable." for key in ("email", "dni") if key in self.initial_data}
+        if forbidden:
+            raise serializers.ValidationError(forbidden)
+        for field in ("first_name", "last_name"):
+            value = attrs.get(field, "")
+            if any(not (char.isalpha() or char in " .'-") for char in value):
+                raise serializers.ValidationError({field: "Usa letras y separadores de nombre validos."})
+        return attrs
 
     def validate_nickname(self, value):
         value = value.lower()

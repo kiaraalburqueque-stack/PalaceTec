@@ -10,7 +10,7 @@ class HU04HU20ProfileTests(APITestCase):
     def test_get_public_profile(self):
         response = self.client.get("/api/v1/users/me")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(set(response.data), {"id", "email", "nickname", "avatar_url"})
+        self.assertEqual(set(response.data), {"id", "email", "dni", "nickname", "avatar_url", "first_name", "last_name", "phone"})
 
     def test_update_and_normalize_nickname(self):
         response = self.client.put("/api/v1/users/profile", {"nickname": "Kiara_1", "avatar_url": "/avatars/avatar-2.svg"})

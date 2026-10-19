@@ -55,7 +55,7 @@ class HU06Tests(APITestCase):
         Wallet.objects.create(user=other, balance=50)
         response = self.client.get("/api/v1/wallet/balance", {"user": other.pk})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, {"balance": "1000.00"})
+        self.assertEqual(response.data, {"balance": "1000.00", "low_balance_threshold": "10.00", "is_low_balance": False})
 
     def test_no_cookie(self):
         self.assertEqual(self.client.get("/api/v1/wallet/balance").status_code, 401)

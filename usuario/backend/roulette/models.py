@@ -3,7 +3,20 @@ from django.db import models
 from django.db.models import Q
 
 
+class Game(models.Model):
+    slug = models.SlugField(unique=True)
+    title = models.CharField(max_length=80)
+    is_published = models.BooleanField(default=False)
+
+
+class RoomQuerySet(models.QuerySet):
+    def available(self):
+        return self.filter(is_active=True).filter(Q(game__isnull=True) | Q(game__is_published=True))
+
+
 class Room(models.Model):
+    game = models.ForeignKey(Game, on_delete=models.PROTECT, related_name="rooms", null=True, blank=True)
+    objects = RoomQuerySet.as_manager()
     name = models.CharField(max_length=80)
     is_active = models.BooleanField(default=True)
     min_bet = models.DecimalField(max_digits=12, decimal_places=2, default=10)
@@ -42,8 +55,12 @@ class Bet(models.Model):
         STRAIGHT_UP = "STRAIGHT_UP", "Pleno"
         COLOR = "COLOR", "Color"
         PARITY = "PARITY", "Paridad"
+        DOZEN = "DOZEN", "Docena"
+        COLUMN = "COLUMN", "Columna"
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="bets")
+    session = models.ForeignKey("accounts.AuthSession", null=True, blank=True, on_delete=models.SET_NULL, related_name="bets")
+    repeat_operation = models.ForeignKey("RepeatOperation", null=True, blank=True, on_delete=models.PROTECT, related_name="bets")
     round = models.ForeignKey(GameRound, on_delete=models.PROTECT, related_name="bets")
     kind = models.CharField(max_length=11, choices=Kind.choices)
     selection = models.CharField(max_length=5)
@@ -70,3 +87,15 @@ class RoomConnection(models.Model):
 
     class Meta:
         db_table = "room_connections"
+
+
+class RepeatOperation(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    room = models.ForeignKey(Room, on_delete=models.PROTECT)
+    source_round = models.ForeignKey(GameRound, on_delete=models.PROTECT, related_name="repetitions_from")
+    target_round = models.ForeignKey(GameRound, on_delete=models.PROTECT, related_name="repetitions_to")
+    reference = models.UUIDField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["user", "reference"], name="unique_user_repeat_reference")]

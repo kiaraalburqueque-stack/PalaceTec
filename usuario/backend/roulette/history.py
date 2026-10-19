@@ -1,0 +1,30 @@
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
+from .models import Bet
+from .serializers import HistoryBetSerializer
+from .views import AuthenticatedView
+
+
+class HistoryPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = "page_size"
+    max_page_size = 100
+
+
+class BetHistoryView(AuthenticatedView):
+    def get_queryset(self, request):
+        from .queries import filter_dates
+        bets = Bet.objects.filter(user=request.user).select_related("round__room__game").order_by("-created_at", "-id")
+        return filter_dates(bets, request.query_params)
+
+    def get(self, request):
+        pagination = HistoryPagination()
+        page = pagination.paginate_queryset(self.get_queryset(request), request, view=self)
+        return pagination.get_paginated_response(HistoryBetSerializer(page, many=True).data)
+
+
+class StatsSummaryView(AuthenticatedView):
+    def get(self, request):
+        from .queries import filter_dates, settled_summary
+        bets = filter_dates(Bet.objects.filter(user=request.user), request.query_params)
+        return Response({**settled_summary(bets), "scope": "settled_bets", "timezone": "America/Lima"})

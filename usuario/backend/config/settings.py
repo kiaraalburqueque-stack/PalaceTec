@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'accounts',
     'wallet',
     'roulette',
+    'responsible',
 ]
 
 MIDDLEWARE = [
@@ -156,6 +157,8 @@ CORS_ALLOW_CREDENTIALS = True
 
 SIMPLE_JWT = {"ACCESS_TOKEN_LIFETIME": timedelta(minutes=15)}
 JWT_ACCESS_COOKIE = "access_token"
+JWT_REFRESH_COOKIE = "refresh_token"
+AUTH_SESSION_LIFETIME = timedelta(hours=8)
 
 AUTH_USER_MODEL = "accounts.User"
 
@@ -185,6 +188,7 @@ WEBSOCKET_ALLOWED_ORIGINS = CORS_ALLOWED_ORIGINS + ["http://localhost:8000", "ht
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 CSRF_COOKIE_SECURE = not DEBUG
 LOGIN_RATE_LIMIT = "30/min"
+EXCLUSION_HMAC_KEY = os.getenv("EXCLUSION_HMAC_KEY", SECRET_KEY)
 
 # Conexion directa: no confiar en X-Forwarded-For enviado por el cliente.
 REST_FRAMEWORK = {"NUM_PROXIES": 0}
