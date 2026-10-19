@@ -37,6 +37,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     failed_attempts = models.PositiveIntegerField(default=0)
     locked_until = models.DateTimeField(null=True, blank=True)
     auth_version = models.PositiveIntegerField(default=0)
+    first_name = models.CharField(max_length=80, blank=True)
+    last_name = models.CharField(max_length=80, blank=True)
+    phone = models.CharField(max_length=20, blank=True)
 
     objects = UserManager()
     USERNAME_FIELD = "email"
