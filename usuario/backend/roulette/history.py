@@ -13,7 +13,9 @@ class HistoryPagination(PageNumberPagination):
 
 class BetHistoryView(AuthenticatedView):
     def get_queryset(self, request):
-        return Bet.objects.filter(user=request.user).select_related("round__room__game").order_by("-created_at", "-id")
+        from .queries import filter_dates
+        bets = Bet.objects.filter(user=request.user).select_related("round__room__game").order_by("-created_at", "-id")
+        return filter_dates(bets, request.query_params)
 
     def get(self, request):
         pagination = HistoryPagination()
