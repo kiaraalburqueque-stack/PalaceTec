@@ -17,7 +17,7 @@ def round_data(round, now=None):
 
 
 def room_state(room_id):
-    room = Room.objects.get(pk=room_id, is_active=True)
+    room = Room.objects.available().get(pk=room_id)
     round = room.rounds.order_by("-id").first()
     state = {
         "room_id": room.pk, "server_time": timezone.now().isoformat(),

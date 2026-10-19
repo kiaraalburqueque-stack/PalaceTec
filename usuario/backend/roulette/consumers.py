@@ -53,7 +53,7 @@ class RouletteConsumer(AsyncJsonWebsocketConsumer):
     @database_sync_to_async
     def join_room(self):
         with transaction.atomic():
-            room = Room.objects.select_for_update().filter(pk=self.room_id, is_active=True).first()
+            room = Room.objects.available().select_for_update(of=("self",)).filter(pk=self.room_id).first()
             if room is None:
                 return False
             RoomConnection.objects.create(room=room, user=self.scope["user"], channel_name=self.channel_name,
@@ -71,6 +71,8 @@ class RouletteConsumer(AsyncJsonWebsocketConsumer):
         except (User.DoesNotExist, PermissionDenied):
             return 0
         if not AuthSession.objects.filter(jti=self.token_jti, revoked_at__isnull=True, expires_at__gt=timezone.now()).exists():
+            return 0
+        if not Room.objects.available().filter(pk=self.room_id).exists():
             return 0
         return RoomConnection.objects.filter(channel_name=self.channel_name, room__is_active=True, user__is_active=True).update(expires_at=timezone.now()+timedelta(seconds=60))
 

@@ -3,7 +3,20 @@ from django.db import models
 from django.db.models import Q
 
 
+class Game(models.Model):
+    slug = models.SlugField(unique=True)
+    title = models.CharField(max_length=80)
+    is_published = models.BooleanField(default=False)
+
+
+class RoomQuerySet(models.QuerySet):
+    def available(self):
+        return self.filter(is_active=True).filter(Q(game__isnull=True) | Q(game__is_published=True))
+
+
 class Room(models.Model):
+    game = models.ForeignKey(Game, on_delete=models.PROTECT, related_name="rooms", null=True, blank=True)
+    objects = RoomQuerySet.as_manager()
     name = models.CharField(max_length=80)
     is_active = models.BooleanField(default=True)
     min_bet = models.DecimalField(max_digits=12, decimal_places=2, default=10)

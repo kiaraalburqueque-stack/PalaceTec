@@ -28,7 +28,7 @@ class RouletteService:
         serializer.is_valid(raise_exception=True)
         values = serializer.validated_data
         # Todas las rutas bloquean sala -> ronda -> billetera, en ese orden.
-        room = Room.objects.select_for_update().get(pk=room_id, is_active=True)
+        room = Room.objects.available().select_for_update(of=("self",)).get(pk=room_id)
         round = GameRound.objects.select_for_update().filter(pk=values["round_id"], room=room).first()
         from accounts.models import User
         from responsible.services import ExclusionService
@@ -79,7 +79,7 @@ class RouletteService:
         group = f"room.{room_id}"
         # Una sala desactivada liquida lo pendiente y deja de abrir rondas nuevas.
         if round is None:
-            if not room.is_active:
+            if not room.is_active or (room.game_id and not room.game.is_published):
                 return None
             round = GameRound.objects.create(room=room, opened_at=now, closes_at=now+timedelta(seconds=15))
             after_commit(group, "timer:start", round_data(round, now))
