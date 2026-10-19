@@ -17,6 +17,8 @@ class GameTestBase(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(email="bet@example.com", dni="12345678", birth_date="2000-01-01")
         self.wallet = Wallet.objects.create(user=self.user, balance=1000, bonus_balance=1000)
+        from responsible.models import DailyLimit
+        DailyLimit.objects.create(user=self.user, amount=100000)
         self.client.force_authenticate(self.user)
         self.room = Room.objects.first()
         self.round = RouletteService.tick(self.room.pk)

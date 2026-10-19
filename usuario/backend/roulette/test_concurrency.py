@@ -20,6 +20,8 @@ class HU13HU17HU19ConcurrencyTests(APITransactionTestCase):
     def setUp(self):
         self.user = User.objects.create_user(email="parallel@example.com", dni="12345678", birth_date="2000-01-01")
         self.wallet = Wallet.objects.create(user=self.user, balance=1000, bonus_balance=1000)
+        from responsible.models import DailyLimit
+        DailyLimit.objects.create(user=self.user, amount=100000)
         self.room = Room.objects.create(name="concurrencia", max_bet=5000)
         self.round = RouletteService.tick(self.room.pk)
         # Plazo holgado para que el test mida bloqueos y no la velocidad de la maquina.

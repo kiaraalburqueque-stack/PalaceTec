@@ -47,6 +47,8 @@ class RouletteService:
         accumulated = Bet.objects.filter(user=user, round=round).aggregate(total=Sum("amount"))["total"] or Decimal("0")
         if amount < room.min_bet or accumulated + amount > room.max_bet:
             raise ValidationError({"amount": "El monto debe respetar el minimo por apuesta y el maximo acumulado por ronda."})
+        from responsible.services import LimitService
+        LimitService.check_and_reserve(user, amount)
         # La referencia monetaria usa el ID propio de la apuesta, no texto del cliente.
         bet = Bet.objects.create(user=user, round=round, kind=values["kind"],
             selection=values["selection"], chips=values["chips"], amount=amount, reference=values["reference"])

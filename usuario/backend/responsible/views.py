@@ -13,6 +13,22 @@ class ResponsibleView(APIView):
     permission_classes = [IsAuthenticated]
 
 
+class DailyLimitInput(serializers.Serializer):
+    amount = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=0)
+
+
+class DailyLimitView(ResponsibleView):
+    def get(self, request):
+        from .services import LimitService
+        return Response(LimitService.summary(request.user))
+
+    def post(self, request):
+        from .services import LimitService
+        serializer = DailyLimitInput(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response(LimitService.set_limit(request.user, serializer.validated_data["amount"]))
+
+
 class ExcludedPersonInput(serializers.Serializer):
     dni = serializers.RegexField(r"\A[0-9]{8}\Z", trim_whitespace=False, write_only=True)
     source = serializers.CharField(max_length=120)

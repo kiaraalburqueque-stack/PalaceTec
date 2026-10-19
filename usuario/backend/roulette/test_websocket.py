@@ -23,6 +23,8 @@ class HU10WebsocketTests(APITransactionTestCase):
         self.user = User.objects.create_user(email="socket@example.com", dni="12345678", birth_date="2000-01-01")
         self.room = Room.objects.create(name="socket")
         self.token = str(AccessToken.for_user(self.user))
+        from responsible.models import DailyLimit
+        DailyLimit.objects.create(user=self.user, amount=100000)
 
     def communicator(self, token=None, origin="http://localhost:5173", room=None):
         headers = [(b"origin", origin.encode())]

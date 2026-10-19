@@ -1,4 +1,6 @@
 from django.db import models
+from django.conf import settings
+from django.db.models import Q
 
 
 class ExcludedPerson(models.Model):
@@ -6,3 +8,27 @@ class ExcludedPerson(models.Model):
     reason = models.CharField(max_length=255, blank=True)
     source = models.CharField(max_length=120)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class DailyLimit(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="daily_limit")
+    amount = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+    pending_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+    effective_at = models.DateTimeField(null=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(condition=Q(amount__isnull=True) | Q(amount__gte=0), name="daily_limit_nonnegative"),
+            models.CheckConstraint(condition=(Q(pending_amount__isnull=True, effective_at__isnull=True)
+                | Q(pending_amount__gte=0, effective_at__isnull=False)), name="daily_limit_pending_valid"),
+        ]
+
+
+class DailySpending(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    date = models.DateField()
+    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["user", "date"], name="unique_daily_spending"),
+                       models.CheckConstraint(condition=Q(amount__gte=0), name="spending_nonnegative")]
