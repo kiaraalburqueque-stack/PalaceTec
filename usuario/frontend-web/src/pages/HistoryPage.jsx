@@ -2,24 +2,27 @@ import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import useUser from '../hooks/useUser';
 import { getBetHistory } from '../services/historyService';
+import DateRangeFilter from '../components/DateRangeFilter';
 const statuses = { PENDING: 'Pendiente', WON: 'Ganada', LOST: 'Perdida' };
 export default function HistoryPage() {
   const { user, loading: sessionLoading } = useUser();
   const [page, setPage] = useState(1);
+  const [filters, setFilters] = useState({});
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   useEffect(() => {
     if (!user) return;
     let active = true;
-    getBetHistory({ page, page_size: 20 }).then((value) => { if (active) { setData(value); setError(''); } })
+    getBetHistory({ page, page_size: 20, ...filters }).then((value) => { if (active) { setData(value); setError(''); } })
       .catch((err) => { if (active) setError(err.message); }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [user, page]);
+  }, [user, page, filters]);
   function go(value) { setLoading(true); setPage(value); }
   if (sessionLoading) return <p role="status">Consultando sesión...</p>;
   if (!user) return <Navigate to="/login" replace />;
   return <main className="main-sections"><section className="bet-controls history-panel"><h1>Mi historial de apuestas</h1>
+    <DateRangeFilter disabled={loading} onApply={(value) => { setLoading(true); setPage(1); setFilters(value); }} />
     {loading && <p role="status">Consultando apuestas...</p>}
     {error && <p role="alert">{error}</p>}
     {!loading && !error && data && <>
