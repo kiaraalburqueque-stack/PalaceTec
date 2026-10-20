@@ -7,6 +7,7 @@ import { connectRoom } from '../services/roomSocket';
 import PreBetBalance from '../components/PreBetBalance';
 import BetControls from '../components/BetControls';
 import RouletteWheel from '../components/RouletteWheel';
+import { secondsLeft } from '../utils/roundTime';
 
 export default function RoulettePage() {
   const { roomId } = useParams();
@@ -40,7 +41,7 @@ export default function RoulettePage() {
       if (event === 'room:state') { setState(data); setOffset(Date.parse(data.server_time) - Date.now()); }
       if (event === 'timer:start') setState((old) => ({ ...old, round: data }));
       if (event === 'timer:tick') setState((old) => old?.round?.id === data.round_id ? { ...old, round: { ...old.round, status: 'OPEN', closes_at: data.closes_at } } : old);
-      if (event === 'bets:closed') setState((old) => old?.round?.id === data.round_id ? { ...old, round: { ...old.round, status: 'CLOSED' } } : old);
+      if (event === 'bets:closed' || event === 'timer:stop') setState((old) => old?.round?.id === data.round_id ? { ...old, round: { ...old.round, status: 'CLOSED' } } : old);
       if (event === 'wallet:update') {
         setWallet(data);
         window.dispatchEvent(new CustomEvent('palacetec:wallet-update', { detail: { userId: user.id, wallet: data } }));
@@ -61,8 +62,8 @@ export default function RoulettePage() {
   if (!user) return <Navigate to="/login" replace />;
   if (!roomId) return <Navigate to="/" replace />;
   const round = state?.round;
-  const seconds = round?.status === 'OPEN' ? Math.max(0, Math.ceil((Date.parse(round.closes_at) - now - offset) / 1000)) : 0;
-  const open = round?.status === 'OPEN' && seconds > 0;
+  const seconds = secondsLeft(round, now, offset);
+  const open = status === 'En vivo' && seconds > 0;
   return <main className="main-sections roulette-page">
     <h1>Ruleta europea · Sala {roomId}</h1>
     <p>Conexión: {status}</p><Link to="/">Volver a salas</Link>
