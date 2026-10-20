@@ -1,11 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { UserContext } from './UserContext';
 import { getUserProfile } from '../services/authService';
+import { refreshSession } from '../services/api';
 export default function UserProvider({ children }) {
   const [user, setUserState] = useState(null);
   const [loading, setLoading] = useState(true);
   const changed = useRef(false);
   const setUser = useCallback((value) => { changed.current = true; setUserState(value); setLoading(false); }, []);
+  useEffect(() => {
+    const ended = () => setUser(null);
+    window.addEventListener('palacetec:session-ended', ended);
+    return () => window.removeEventListener('palacetec:session-ended', ended);
+  }, [setUser]);
+  useEffect(() => {
+    if (!user) return;
+    const timer = setInterval(() => { void refreshSession().catch(() => {}); }, 10 * 60 * 1000);
+    return () => clearInterval(timer);
+  }, [user]);
   useEffect(() => {
     let active = true;
     getUserProfile().then((profile) => {
