@@ -9,11 +9,13 @@ import BetControls from '../components/BetControls';
 import RouletteWheel from '../components/RouletteWheel';
 import { secondsLeft } from '../utils/roundTime';
 import RoundResult from '../components/RoundResult';
+import { getDailyLimit } from '../services/responsibleService';
 
 export default function RoulettePage() {
   const { roomId } = useParams();
   const { user, loading: sessionLoading } = useUser();
   const [wallet, setWallet] = useState(null);
+  const [dailyLimit, setDailyLimit] = useState(null);
   const [state, setState] = useState(null);
   const [history, setHistory] = useState([]);
   const [status, setStatus] = useState('Conectando');
@@ -30,9 +32,10 @@ export default function RoulettePage() {
     let active = true;
     async function sync() {
       try {
-        const [snapshot, summary, bets] = await Promise.all([getRoomState(roomId), getWalletSummary(), getRoomBets(roomId)]);
+        const [snapshot, summary, bets, limit] = await Promise.all([getRoomState(roomId), getWalletSummary(), getRoomBets(roomId), getDailyLimit()]);
         if (!active) return;
         setState(snapshot); setWallet(summary); setHistory(bets); setError('');
+        setDailyLimit(limit);
         window.dispatchEvent(new CustomEvent('palacetec:wallet-update', { detail: { userId: user.id, wallet: summary } }));
         setOffset(Date.parse(snapshot.server_time) - Date.now());
         if (snapshot.round?.winning_number != null) { setResult(snapshot.round.winning_number); setOutcome({ roundId: snapshot.round.id, number: snapshot.round.winning_number }); }
@@ -66,11 +69,12 @@ export default function RoulettePage() {
   if (!roomId) return <Navigate to="/" replace />;
   const round = state?.round;
   const seconds = secondsLeft(round, now, offset);
-  const open = status === 'En vivo' && seconds > 0;
+  const open = status === 'En vivo' && seconds > 0 && dailyLimit?.configured && Number(dailyLimit.remaining) > 0;
   return <main className="main-sections roulette-page">
     <h1>Ruleta europea · Sala {roomId}</h1>
     <p>Conexión: {status}</p><Link to="/">Volver a salas</Link>
     {error && <p role="alert">{error}</p>}
+    <p><Link to="/juego-responsable">Mis límites y juego responsable</Link> · {dailyLimit?.configured ? `Cupo diario disponible: ${dailyLimit.remaining} CRD` : 'Configura tu límite diario para apostar.'}</p>
     <section className="prebet-balance round-panel"><h2>Ronda {round?.id || 'pendiente'}</h2>
       <p role="timer" aria-label="Tiempo para apostar">{seconds} segundos</p>
       <strong>{open ? 'Apuestas abiertas' : 'NO VA MÁS · Apuestas cerradas'}</strong>
