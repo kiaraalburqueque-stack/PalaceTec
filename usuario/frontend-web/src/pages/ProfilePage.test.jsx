@@ -1,0 +1,20 @@
+import { it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import '@testing-library/jest-dom/vitest';
+import ProfilePage from './ProfilePage';
+import { getUserProfile, updateProfile } from '../services/authService';
+const session = { user: { id: 1 }, setUser: vi.fn() };
+vi.mock('../hooks/useUser', () => ({ default: () => session }));
+vi.mock('../services/authService', () => ({ getUserProfile: vi.fn(), updateProfile: vi.fn() }));
+it('HU37 restaura datos y envía cambios sin correo ni DNI', async () => {
+  const profile = { id: 1, email: 'test@example.com', dni: '00000000', nickname: 'sebas', avatar_url: '/avatars/avatar-1.svg', first_name: 'Sebastian', last_name: '', phone: '' };
+  getUserProfile.mockResolvedValue(profile); updateProfile.mockResolvedValue({ ...profile, phone: '+51 999999999' });
+  const user = userEvent.setup(); render(<ProfilePage />);
+  expect(await screen.findByLabelText('Correo')).toHaveAttribute('readonly');
+  expect(screen.getByLabelText('Nombres')).toHaveValue('Sebastian');
+  await user.type(screen.getByLabelText('Teléfono'), '+51 999999999');
+  await user.click(screen.getByRole('button', { name: 'Guardar perfil' }));
+  expect(updateProfile).toHaveBeenCalledWith({ phone: '+51 999999999' });
+  expect(await screen.findByRole('status')).toHaveTextContent('Perfil actualizado');
+});
