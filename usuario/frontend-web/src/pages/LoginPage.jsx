@@ -12,6 +12,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [notice] = useState(() => sessionStorage.getItem('palacetec:notice'));
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -20,6 +21,7 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
+      sessionStorage.removeItem('palacetec:notice');
 
       const userData = await getUserProfile();
 
@@ -43,6 +45,7 @@ export default function LoginPage() {
     <main className="main-sections">
       <section className="bet-controls">
         <h1>Iniciar sesión</h1>
+        {notice && <p role="status">{notice}</p>}
         <p>Ingresa a tu cuenta de PalaceTec.</p>
 
         <form onSubmit={handleSubmit}>
