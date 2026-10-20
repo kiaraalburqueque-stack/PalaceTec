@@ -727,3 +727,7 @@ a { text-decoration: none; }
 .session-modal { color: #f8f1e5; background: #17231f; border: 2px solid #b79861; border-radius: 16px; padding: 24px; max-width: min(560px, 90vw); }
 .session-modal::backdrop { background: #000b; }
 .session-modal button { margin: 8px; padding: 12px; }
+.table-scroll { overflow-x: auto; max-width: 100%; }
+.history-panel table { width: 100%; border-collapse: collapse; }
+.history-panel th, .history-panel td { padding: 10px; border-bottom: 1px solid #b7986155; text-align: left; }
+.responsible-alerts:not(:empty) { padding: 12px 5%; background: #302a19; }
