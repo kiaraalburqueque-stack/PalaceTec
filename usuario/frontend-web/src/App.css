@@ -724,3 +724,6 @@ a { text-decoration: none; }
 .profile-wallet strong { color: #ffb477; }
 .profile-wallet small { color: #a7b6c7; line-height: 1.7; }
 @media(max-width: 500px) { .header-account { gap: 9px; } .header-wallet strong { font-size: 13px; } .main-header { gap: 10px; } }
+.session-modal { color: #f8f1e5; background: #17231f; border: 2px solid #b79861; border-radius: 16px; padding: 24px; max-width: min(560px, 90vw); }
+.session-modal::backdrop { background: #000b; }
+.session-modal button { margin: 8px; padding: 12px; }

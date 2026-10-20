@@ -11,12 +11,14 @@ import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
 import ExclusionRegistryPage from './pages/ExclusionRegistryPage';
 import ResponsiblePage from './pages/ResponsiblePage';
+import SessionTools from './components/SessionTools';
 
 import './App.css';
 
 function App() {
   return (
     <UserProvider>
+      <SessionTools />
       <div className="app-layout">
         <Header />
 
