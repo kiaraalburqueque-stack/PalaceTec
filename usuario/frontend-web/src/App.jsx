@@ -14,6 +14,7 @@ import ResponsiblePage from './pages/ResponsiblePage';
 import SessionTools from './components/SessionTools';
 import HistoryPage from './pages/HistoryPage';
 import PasswordPage from './pages/PasswordPage';
+import AdminGate from './components/AdminGate';
 
 import './App.css';
 
@@ -55,7 +56,7 @@ function App() {
             <Route path="/perfil/seguridad" element={<PasswordPage />} />
             <Route path="/juego-responsable" element={<ResponsiblePage />} />
             <Route path="/historial" element={<HistoryPage />} />
-            <Route path="/administracion/exclusiones" element={<ExclusionRegistryPage />} />
+            <Route path="/administracion/exclusiones" element={<AdminGate><ExclusionRegistryPage /></AdminGate>} />
             <Route path="*" element={<HomePage />} />
           </Routes>
         </div>

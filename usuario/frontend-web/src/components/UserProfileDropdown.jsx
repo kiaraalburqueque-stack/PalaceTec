@@ -38,6 +38,7 @@ export default function UserProfileDropdown({ user, wallet }) {
           <hr />
           <a href="/perfil">Editar apodo y avatar</a>
           <a href="/perfil/seguridad">Cambiar contraseña</a>
+          {context?.role === 'ADMIN' && <a href="/administracion/exclusiones">Administrar exclusiones</a>}
           <button type="button" onClick={async () => {
             try { await logout(); context?.setUser(null); window.location.assign('/login'); }
             catch (err) { setError(err.message); }
