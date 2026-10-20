@@ -731,3 +731,6 @@ a { text-decoration: none; }
 .history-panel table { width: 100%; border-collapse: collapse; }
 .history-panel th, .history-panel td { padding: 10px; border-bottom: 1px solid #b7986155; text-align: left; }
 .responsible-alerts:not(:empty) { padding: 12px 5%; background: #302a19; }
+.recent-results ol { display: flex; gap: 12px; flex-wrap: wrap; padding: 0; list-style: none; }
+.recent-results li { padding: 8px; border: 1px solid currentColor; border-radius: 8px; }
+.result-verde { color: #83e4a4; }.result-rojo { color: #ff9da5; }.result-negro { color: #ede9e0; }

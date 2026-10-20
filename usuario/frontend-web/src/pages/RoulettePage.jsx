@@ -9,6 +9,7 @@ import BetControls from '../components/BetControls';
 import RouletteWheel from '../components/RouletteWheel';
 import { secondsLeft } from '../utils/roundTime';
 import RoundResult from '../components/RoundResult';
+import RecentResults from '../components/RecentResults';
 import { getDailyLimit, getRiskAlerts } from '../services/responsibleService';
 
 export default function RoulettePage() {
@@ -88,6 +89,7 @@ export default function RoulettePage() {
     </section>
     <RouletteWheel key={roomId} spinning={round?.status === 'CLOSED' || (round?.status === 'OPEN' && seconds === 0)} outcome={outcome} />
     <RoundResult result={confirmedResult} />
+    <RecentResults results={state?.recent_results} />
     {wallet ? <><PreBetBalance balance={Number(wallet.balance)} /><p>Bono: {wallet.bonus_balance} CRD · Ganancias: {wallet.winnings_balance} CRD</p>
       <BetControls key={roomId} balance={Number(wallet.balance)} roomId={roomId} onBetPlaced={refresh} roundOpen={open} currentRound={round ? { ...round, remaining_seconds: seconds } : null} winningNumber={result} />
     </> : <p role="status">Consultando saldo...</p>}
