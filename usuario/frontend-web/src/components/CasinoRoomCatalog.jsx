@@ -4,7 +4,7 @@ import CasinoRoomCard from './CasinoRoomCard';
 import { getCasinoRooms } from '../services/roomService';
 import { useNavigate } from 'react-router-dom';
 
-export default function CasinoRoomCatalog() {
+export default function CasinoRoomCatalog({ gameId }) {
   const navigate = useNavigate();
   const [rooms, setRooms] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
@@ -16,7 +16,7 @@ export default function CasinoRoomCatalog() {
 
     async function loadRooms() {
       try {
-        const data = await getCasinoRooms();
+        const data = await getCasinoRooms(gameId);
 
         if (!active) return;
 
@@ -44,7 +44,7 @@ export default function CasinoRoomCatalog() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [gameId]);
 
   const handleSelectRoom = (room) => {
     setSelectedRoom(room);

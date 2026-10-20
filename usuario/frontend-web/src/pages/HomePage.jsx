@@ -1,5 +1,5 @@
 
-import CasinoRoomCatalog from '../components/CasinoRoomCatalog';
+import GameCatalog from '../components/GameCatalog';
 import useUser from '../hooks/useUser';
 import { Link } from 'react-router-dom';
 
@@ -13,7 +13,7 @@ export default function HomePage() {
       </section>
       <div className="casino-features"><span>◉ Ruleta europea</span><span>↗ Saldo en tiempo real</span><span>♧ Créditos virtuales</span><span>✓ Sesión protegida</span></div>
       <div id="salas" />
-      {loading ? <p role="status">Consultando sesión...</p> : user ? <CasinoRoomCatalog /> : <section className="main-sections"><h1>Bienvenido a PalaceTec</h1><p>Crea tu cuenta y recibe 1,000 créditos virtuales.</p><Link to="/registro">Crear cuenta</Link> · <Link to="/login">Iniciar sesión</Link></section>}
+      {loading ? <p role="status">Consultando sesión...</p> : user ? <GameCatalog /> : <section className="main-sections"><h1>Bienvenido a PalaceTec</h1><p>Crea tu cuenta y recibe 1,000 créditos virtuales.</p><Link to="/registro">Crear cuenta</Link> · <Link to="/login">Iniciar sesión</Link></section>}
     </main>
   );
 }
