@@ -1,0 +1,20 @@
+import { it, expect, vi, afterEach } from 'vitest';
+import { render, screen, cleanup } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import '@testing-library/jest-dom/vitest';
+import RepeatBets from './RepeatBets';
+import { getPreviousBets, repeatBets } from '../services/roomService';
+vi.mock('../services/roomService', () => ({ getPreviousBets: vi.fn(), repeatBets: vi.fn() }));
+afterEach(cleanup);
+it('HU35 conserva referencia y ronda al reintentar una respuesta perdida', async () => {
+  getPreviousBets.mockResolvedValue({ source_round_id: 7, bets: [{ amount: '10.00' }, { amount: '50.00' }] });
+  repeatBets.mockRejectedValueOnce(new Error('Red interrumpida')).mockResolvedValueOnce({});
+  const user = userEvent.setup();
+  const view = render(<RepeatBets roomId={1} roundId={8} open balance={1000} remaining="100.00" />);
+  await user.click(await screen.findByRole('button', { name: 'Repetir conjunto anterior' }));
+  view.rerender(<RepeatBets roomId={1} roundId={9} open={false} balance={0} remaining="0.00" />);
+  await user.click(await screen.findByRole('button', { name: 'Reintentar repetición pendiente' }));
+  expect(repeatBets.mock.calls[0]).toEqual(repeatBets.mock.calls[1]);
+  expect(repeatBets.mock.calls[1][1]).toMatchObject({ round_id: 8, source_round_id: 7 });
+  expect(await screen.findByRole('status')).toHaveTextContent('repetido correctamente');
+});
