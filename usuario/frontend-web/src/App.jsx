@@ -13,6 +13,7 @@ import ExclusionRegistryPage from './pages/ExclusionRegistryPage';
 import ResponsiblePage from './pages/ResponsiblePage';
 import SessionTools from './components/SessionTools';
 import HistoryPage from './pages/HistoryPage';
+import PasswordPage from './pages/PasswordPage';
 
 import './App.css';
 
@@ -51,6 +52,7 @@ function App() {
             <Route path="/registro" element={<RegisterPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/perfil" element={<ProfilePage />} />
+            <Route path="/perfil/seguridad" element={<PasswordPage />} />
             <Route path="/juego-responsable" element={<ResponsiblePage />} />
             <Route path="/historial" element={<HistoryPage />} />
             <Route path="/administracion/exclusiones" element={<ExclusionRegistryPage />} />

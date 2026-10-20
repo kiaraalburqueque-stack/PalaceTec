@@ -6,3 +6,4 @@ export const login = (email, password) => apiRequest('/api/v1/auth/login', { met
 export const getCurrentUser = () => apiRequest('/api/v1/auth/me');
 export const getUserProfile = () => apiRequest('/api/v1/users/me');
 export const updateProfile = (data) => apiRequest('/api/v1/users/profile', { method: 'PUT', body: JSON.stringify(data) });
+export const changePassword = (data) => apiRequest('/api/v1/users/change-password', { method: 'PUT', body: JSON.stringify(data) });

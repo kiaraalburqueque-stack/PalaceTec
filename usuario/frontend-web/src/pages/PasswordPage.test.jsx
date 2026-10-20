@@ -1,0 +1,25 @@
+import { it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import '@testing-library/jest-dom/vitest';
+import PasswordPage from './PasswordPage';
+import { changePassword } from '../services/authService';
+import { endSession } from '../services/api';
+vi.mock('../hooks/useUser', () => ({ default: () => ({ user: { id: 1 } }) }));
+vi.mock('../services/authService', () => ({ changePassword: vi.fn() }));
+vi.mock('../services/api', () => ({ endSession: vi.fn() }));
+it('HU38 valida confirmación antes de guardar y cierra la sesión al cambiar', async () => {
+  changePassword.mockResolvedValue({});
+  const user = userEvent.setup(); render(<PasswordPage />);
+  await user.type(screen.getByLabelText('Contraseña actual'), 'Anterior1!');
+  await user.type(screen.getByLabelText('Nueva contraseña'), 'Nueva123!');
+  await user.type(screen.getByLabelText('Confirmar contraseña'), 'Otra123!');
+  await user.click(screen.getByRole('button'));
+  expect(screen.getByRole('alert')).toHaveTextContent('no coinciden');
+  expect(changePassword).not.toHaveBeenCalled();
+  await user.clear(screen.getByLabelText('Confirmar contraseña'));
+  await user.type(screen.getByLabelText('Confirmar contraseña'), 'Nueva123!');
+  await user.click(screen.getByRole('button'));
+  expect(changePassword).toHaveBeenCalledWith({ current_password: 'Anterior1!', new_password: 'Nueva123!' });
+  expect(endSession).toHaveBeenCalledOnce();
+});
