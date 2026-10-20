@@ -1,5 +1,5 @@
 
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import InsufficientBalanceModal from './InsufficientBalanceModal';
 import RouletteBoard from './RouletteBoard';
 import { formatCredits } from '../utils/walletUtils';
@@ -48,8 +48,13 @@ export default function BetControls({
   currentRound,
   winningNumber,
 }) {
-  const pendingBet = useRef(null);
+  const [pendingBet, setPendingBet] = useState(null);
   const [betAmount, setBetAmount] = useState(10);
+  const [draft, setDraft] = useState({ roundId: null, chips: [] });
+  const roundId = currentRound?.id ?? null;
+  const chips = draft.roundId === roundId && roundOpen ? draft.chips : [];
+  function setChips(value) { setDraft({ roundId, chips: typeof value === 'function' ? value(chips) : value }); }
+  const total = chips.length ? chips.reduce((sum, chip) => sum + chip, 0) : betAmount;
   const [betKind, setBetKind] = useState('COLOR');
   const [selection, setSelection] = useState('rojo');
   const [number, setNumber] = useState('0');
@@ -79,18 +84,20 @@ export default function BetControls({
       setSelection('rojo');
     } else if (kind === 'PARITY') {
       setSelection('par');
+    } else if (kind === 'DOZEN' || kind === 'COLUMN') {
+      setSelection('1');
     } else {
       setSelection(number);
     }
   };
 
   const handleBet = async () => {
-    if (isChecking || (!roundOpen && !pendingBet.current)) return;
+    if (isChecking || (!roundOpen && !pendingBet)) return;
 
     setError('');
     setMessage('');
 
-    if (betAmount > balance) {
+    if (total > balance && !pendingBet) {
       setShowModal(true);
       setIsShaking(true);
       return;
@@ -99,7 +106,7 @@ export default function BetControls({
     setIsChecking(true);
 
     try {
-      const check = await checkPreBet(betAmount);
+      const check = pendingBet ? { can_bet: true } : await checkPreBet(total);
 
       if (!check.can_bet) {
         setShowModal(true);
@@ -121,9 +128,9 @@ export default function BetControls({
       const round = state.round;
 
       if (
-        !round ||
+        !pendingBet && (!round ||
         round.status !== 'OPEN' ||
-        round.remaining_seconds <= 0
+        round.remaining_seconds <= 0)
       ) {
         setError(
           'La ronda está cerrada. Espera a que comience la siguiente.'
@@ -131,28 +138,28 @@ export default function BetControls({
         return;
       }
 
-      const betData = pendingBet.current || {
+      const betData = pendingBet || {
         round_id: round.id,
         kind: betKind,
         selection:
           betKind === 'STRAIGHT_UP' ? number : selection,
-        chips: [betAmount],
+        chips: chips.length ? [...chips] : [betAmount],
         reference: crypto.randomUUID(),
       };
 
-      pendingBet.current = betData;
+      setPendingBet(betData);
 
       await placeRouletteBet(roomId, betData);
 
-      pendingBet.current = null;
-
+      setPendingBet(null);
+      setChips([]);
       setMessage('¡Apuesta registrada correctamente!');
 
       if (onBetPlaced) {
         await onBetPlaced();
       }
     } catch (err) {
-      if (err.status) pendingBet.current = null;
+      if (err.status && err.status < 500) setPendingBet(null);
       if (err?.code === 'insufficient_balance') {
         setShowModal(true);
         setIsShaking(true);
@@ -179,6 +186,7 @@ export default function BetControls({
 
   return (
     <section className="bet-controls">
+      <fieldset disabled={isChecking || !!pendingBet} style={{ border: 0, padding: 0, minWidth: 0 }}>
       <h3>Realizar apuesta</h3>
 
       <p>Saldo disponible: {formatCredits(balance)}</p>
@@ -195,6 +203,7 @@ export default function BetControls({
         <option value="COLOR">Color</option>
         <option value="PARITY">Paridad</option>
         <option value="STRAIGHT_UP">Número exacto</option>
+        <option value="DOZEN">Docena</option><option value="COLUMN">Columna</option>
       </select>
 
       {betKind === 'COLOR' && (
@@ -231,6 +240,7 @@ export default function BetControls({
         </div>
       )}
 
+      {(betKind === 'DOZEN' || betKind === 'COLUMN') && <label>Selecciona {betKind === 'DOZEN' ? 'docena' : 'columna'}<select aria-label="Docena o columna" value={selection} onChange={(e) => setSelection(e.target.value)}>{['1', '2', '3'].map((value) => <option key={value} value={value}>{betKind === 'DOZEN' ? `${(Number(value)-1)*12+1}–${Number(value)*12}` : `${value}, ${Number(value)+3}, …`}</option>)}</select></label>}
       {betKind === 'STRAIGHT_UP' && (
         <div>
           <label htmlFor="bet-number">
@@ -291,16 +301,21 @@ export default function BetControls({
         Ficha seleccionada: {formatCredits(betAmount)}
       </p>
 
+      <button type="button" disabled={!roundOpen || chips.length >= 100 || (chips.length ? total : 0) + betAmount > balance} onClick={() => setChips((old) => [...old, betAmount])}>Agregar ficha</button>
+      <button type="button" onClick={() => setChips([])} disabled={!chips.length}>Limpiar fichas</button>
+      <p>Total de esta apuesta: {formatCredits(total)} · {chips.length || 1} fichas</p>
+      <small>Docenas y columnas: pago total ×3. El cero pierde.</small>
+      </fieldset>
       <button
         type="button"
         className="place-bet-button"
         onClick={handleBet}
-        disabled={isChecking || !roundOpen || betAmount > balance}
+        disabled={isChecking || (!pendingBet && (!roundOpen || total > balance))}
       >
-        {isChecking ? 'Procesando...' : 'Apostar'}
+        {isChecking ? 'Procesando...' : pendingBet ? 'Reintentar apuesta pendiente' : 'Apostar'}
       </button>
 
-      {betAmount > balance && <p role="alert">Saldo insuficiente para esta ficha.</p>}
+      {total > balance && <p role="alert">Saldo insuficiente para esta ficha.</p>}
       {error && <p role="alert">{error}</p>}
 
       {message && <p role="status">{message}</p>}

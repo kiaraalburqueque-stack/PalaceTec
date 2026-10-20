@@ -6,7 +6,7 @@ import Header from './Header';
 import UserProvider from '../context/UserProvider';
 import { getUserProfile } from '../services/authService';
 import { getWalletSummary } from '../services/walletService';
-vi.mock('../services/authService', () => ({ getUserProfile: vi.fn() }));
+vi.mock('../services/authService', () => ({ getUserProfile: vi.fn(), getCurrentUser: vi.fn().mockResolvedValue({ role: 'USER' }) }));
 vi.mock('../services/walletService', () => ({ getWalletSummary: vi.fn() }));
 beforeEach(() => { getUserProfile.mockResolvedValue({ id: 1, email: 'real@example.com', nickname: 'Kiara' }); getWalletSummary.mockResolvedValue({ balance: '1000.00', bonus_balance: '1000.00', winnings_balance: '0.00' }); });
 afterEach(() => { cleanup(); vi.clearAllMocks(); });

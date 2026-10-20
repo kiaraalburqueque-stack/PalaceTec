@@ -37,6 +37,8 @@ export default function UserProfileDropdown({ user, wallet }) {
           {wallet && <div className="profile-wallet"><p>Saldo disponible: <strong>{Number(wallet.balance).toLocaleString('en-US', { maximumFractionDigits: 2 })} CRD</strong></p><small>Bono: {wallet.bonus_balance} CRD · Ganancias: {wallet.winnings_balance} CRD</small></div>}
           <hr />
           <a href="/perfil">Editar apodo y avatar</a>
+          <a href="/perfil/seguridad">Cambiar contraseña</a>
+          {context?.role === 'ADMIN' && <a href="/administracion/exclusiones">Administrar exclusiones</a>}
           <button type="button" onClick={async () => {
             try { await logout(); context?.setUser(null); window.location.assign('/login'); }
             catch (err) { setError(err.message); }

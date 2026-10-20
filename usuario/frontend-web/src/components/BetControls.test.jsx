@@ -18,6 +18,8 @@ import '@testing-library/jest-dom/vitest';
 
 import BetControls from './BetControls';
 import { checkPreBet } from '../services/walletService';
+import { placeRouletteBet } from '../services/roomService';
+vi.mock('../services/roomService', () => ({ placeRouletteBet: vi.fn(), getRoomState: vi.fn() }));
 
 vi.mock('../services/walletService', () => ({
   checkPreBet: vi.fn(),
@@ -37,6 +39,37 @@ afterEach(() => {
 });
 
 describe('HU08 - Control de saldo insuficiente', () => {
+  it('HU24 descarta fichas borrador al cambiar de ronda', async () => {
+    const user = userEvent.setup();
+    const view = render(<BetControls balance={1000} currentRound={{ id: 1 }} />);
+    await user.click(screen.getByRole('button', { name: 'Agregar ficha' }));
+    await user.click(screen.getByRole('button', { name: 'Agregar ficha' }));
+    expect(screen.getByText(/Total de esta apuesta/)).toHaveTextContent('20 CRD');
+    view.rerender(<BetControls balance={1000} currentRound={{ id: 2 }} />);
+    expect(screen.getByText(/Total de esta apuesta/)).toHaveTextContent('10 CRD');
+  });
+  it('HU24 reintenta el mismo cargo tras un fallo de red aunque la ronda haya cerrado', async () => {
+    placeRouletteBet.mockRejectedValueOnce(new Error('Red interrumpida')).mockResolvedValueOnce({});
+    const user = userEvent.setup();
+    const view = render(<BetControls balance={1000} roomId={1} currentRound={{ id: 3, status: 'OPEN', remaining_seconds: 10 }} />);
+    await user.click(screen.getByRole('button', { name: 'Apostar' }));
+    view.rerender(<BetControls balance={0} roomId={1} roundOpen={false} currentRound={{ id: 4, status: 'CLOSED' }} />);
+    await user.click(screen.getByRole('button', { name: 'Reintentar apuesta pendiente' }));
+    expect(placeRouletteBet.mock.calls[0]).toEqual(placeRouletteBet.mock.calls[1]);
+    expect(await screen.findByText('¡Apuesta registrada correctamente!')).toBeInTheDocument();
+  });
+  it('HU24 registra una docena con varias fichas y referencia propia', async () => {
+    placeRouletteBet.mockResolvedValue({ id: 1 });
+    const user = userEvent.setup();
+    render(<BetControls balance={1000} roomId={1} currentRound={{ id: 3, status: 'OPEN', remaining_seconds: 10 }} />);
+    await user.selectOptions(screen.getByLabelText('Tipo de apuesta:'), 'DOZEN');
+    await user.selectOptions(screen.getByLabelText('Docena o columna'), '2');
+    await user.click(screen.getByRole('button', { name: 'Agregar ficha' }));
+    await user.click(screen.getByRole('button', { name: 'Agregar ficha' }));
+    await user.click(screen.getByRole('button', { name: 'Apostar' }));
+    expect(checkPreBet).toHaveBeenCalledWith(20);
+    expect(placeRouletteBet).toHaveBeenCalledWith(1, expect.objectContaining({ kind: 'DOZEN', selection: '2', chips: [10, 10], reference: expect.any(String) }));
+  });
   it('muestra el saldo disponible', () => {
     render(<BetControls balance={1000} />);
 
