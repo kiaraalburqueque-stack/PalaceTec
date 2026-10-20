@@ -734,3 +734,4 @@ a { text-decoration: none; }
 .recent-results ol { display: flex; gap: 12px; flex-wrap: wrap; padding: 0; list-style: none; }
 .recent-results li { padding: 8px; border: 1px solid currentColor; border-radius: 8px; }
 .result-verde { color: #83e4a4; }.result-rojo { color: #ff9da5; }.result-negro { color: #ede9e0; }
+.low-balance-notice { padding: 8px 16px; border: 1px solid #b79861; border-radius: 8px; max-width: 320px; font-size: 0.85rem; }
