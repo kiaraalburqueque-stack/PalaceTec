@@ -735,3 +735,7 @@ a { text-decoration: none; }
 .recent-results li { padding: 8px; border: 1px solid currentColor; border-radius: 8px; }
 .result-verde { color: #83e4a4; }.result-rojo { color: #ff9da5; }.result-negro { color: #ede9e0; }
 .low-balance-notice { padding: 8px 16px; border: 1px solid #b79861; border-radius: 8px; max-width: 320px; font-size: 0.85rem; }
+.stats-grid { display: flex; flex-wrap: wrap; gap: 24px; }
+.stats-grid dd { margin: 8px 0; font-size: 1.5rem; color: #f3d495; }
+.date-filter { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-bottom: 20px; }
+.date-filter p { width: 100%; }

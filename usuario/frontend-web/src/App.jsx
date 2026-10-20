@@ -15,6 +15,7 @@ import SessionTools from './components/SessionTools';
 import HistoryPage from './pages/HistoryPage';
 import PasswordPage from './pages/PasswordPage';
 import AdminGate from './components/AdminGate';
+import StatsPage from './pages/StatsPage';
 
 import './App.css';
 
@@ -28,6 +29,7 @@ function App() {
         <nav className="app-page-navigation" aria-label="Páginas de PalaceTec">
           <NavLink to="/juego-responsable">Mis límites</NavLink>
           <NavLink to="/historial">Mi historial</NavLink>
+          <NavLink to="/estadisticas">Mis estadísticas</NavLink>
           <NavLink to="/" end>
             Inicio
           </NavLink>
@@ -56,6 +58,7 @@ function App() {
             <Route path="/perfil/seguridad" element={<PasswordPage />} />
             <Route path="/juego-responsable" element={<ResponsiblePage />} />
             <Route path="/historial" element={<HistoryPage />} />
+            <Route path="/estadisticas" element={<StatsPage />} />
             <Route path="/administracion/exclusiones" element={<AdminGate><ExclusionRegistryPage /></AdminGate>} />
             <Route path="*" element={<HomePage />} />
           </Routes>
