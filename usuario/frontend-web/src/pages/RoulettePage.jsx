@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import useUser from '../hooks/useUser';
 import { getWalletSummary } from '../services/walletService';
@@ -8,6 +8,7 @@ import PreBetBalance from '../components/PreBetBalance';
 import BetControls from '../components/BetControls';
 import RouletteWheel from '../components/RouletteWheel';
 import { secondsLeft } from '../utils/roundTime';
+import RoundResult from '../components/RoundResult';
 
 export default function RoulettePage() {
   const { roomId } = useParams();
@@ -22,6 +23,8 @@ export default function RoulettePage() {
   const [result, setResult] = useState(null);
   const [prize, setPrize] = useState(null);
   const [outcome, setOutcome] = useState(null);
+  const [confirmedResult, setConfirmedResult] = useState(null);
+  const seenResults = useRef(new Set());
   useEffect(() => {
     if (!roomId || !user) return;
     let active = true;
@@ -46,7 +49,7 @@ export default function RoulettePage() {
         setWallet(data);
         window.dispatchEvent(new CustomEvent('palacetec:wallet-update', { detail: { userId: user.id, wallet: data } }));
       }
-      if (event === 'round:result') { setResult(data.winning_number); setOutcome({ roundId: data.round_id, number: data.winning_number }); void sync(); }
+      if (event === 'round:result' && !seenResults.current.has(data.round_id)) { seenResults.current.add(data.round_id); setConfirmedResult(data); setResult(data.winning_number); setOutcome({ roundId: data.round_id, number: data.winning_number }); void sync(); }
       if (event === 'round:winnings') { setPrize(data); void sync(); }
     }, (value) => { if (active) setStatus(value); });
     const tick = setInterval(() => setNow(Date.now()), 250);
@@ -75,6 +78,7 @@ export default function RoulettePage() {
       {result !== null && <h3>Último número ganador: {result}</h3>}
     </section>
     <RouletteWheel key={roomId} spinning={round?.status === 'CLOSED' || (round?.status === 'OPEN' && seconds === 0)} outcome={outcome} />
+    <RoundResult result={confirmedResult} />
     {wallet ? <><PreBetBalance balance={Number(wallet.balance)} /><p>Bono: {wallet.bonus_balance} CRD · Ganancias: {wallet.winnings_balance} CRD</p>
       <BetControls key={roomId} balance={Number(wallet.balance)} roomId={roomId} onBetPlaced={refresh} roundOpen={open} currentRound={round ? { ...round, remaining_seconds: seconds } : null} winningNumber={result} />
     </> : <p role="status">Consultando saldo...</p>}
