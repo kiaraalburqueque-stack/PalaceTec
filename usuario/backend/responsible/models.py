@@ -22,14 +22,17 @@ class SelfExclusion(models.Model):
 
 class RiskIncident(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    round = models.ForeignKey("roulette.GameRound", on_delete=models.PROTECT)
+    round = models.ForeignKey("roulette.GameRound", on_delete=models.PROTECT, null=True)
+    play = models.ForeignKey("casino.Play", on_delete=models.PROTECT, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     kind = models.CharField(max_length=40, default="LOSS_ESCALATION")
     evidence = models.JSONField(default=list)
     pause_started_at = models.DateTimeField(null=True)
 
     class Meta:
-        constraints = [models.UniqueConstraint(fields=["user", "round", "kind"], name="unique_risk_incident_round")]
+        constraints = [models.UniqueConstraint(fields=["user", "round", "kind"], name="unique_risk_incident_round"),
+            models.UniqueConstraint(fields=["user", "play", "kind"], name="unique_risk_incident_play"),
+            models.CheckConstraint(condition=Q(round__isnull=False, play__isnull=True) | Q(round__isnull=True, play__isnull=False), name="risk_incident_one_source")]
 
 
 class DailyLimit(models.Model):

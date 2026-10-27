@@ -16,6 +16,8 @@ import HistoryPage from './pages/HistoryPage';
 import PasswordPage from './pages/PasswordPage';
 import AdminGate from './components/AdminGate';
 import StatsPage from './pages/StatsPage';
+import BlackjackPage from './pages/BlackjackPage';
+import SportsPage from './pages/SportsPage';
 
 import './App.css';
 
@@ -27,6 +29,8 @@ function App() {
         <Header />
 
         <nav className="app-page-navigation" aria-label="Páginas de PalaceTec">
+          <NavLink to="/deportes">Deportes virtuales</NavLink>
+          <NavLink to="/blackjack">Blackjack</NavLink>
           <NavLink to="/juego-responsable">Mis límites</NavLink>
           <NavLink to="/historial">Mi historial</NavLink>
           <NavLink to="/estadisticas">Mis estadísticas</NavLink>
@@ -49,6 +53,8 @@ function App() {
 
         <div className="app-content">
           <Routes>
+            <Route path="/deportes" element={<SportsPage />} />
+            <Route path="/blackjack" element={<BlackjackPage />} />
             <Route path="/" element={<HomePage />} />
             <Route path="/ruleta" element={<RoulettePage />} />
             <Route path="/ruleta/:roomId" element={<RoulettePage />} />
