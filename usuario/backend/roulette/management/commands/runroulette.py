@@ -30,6 +30,13 @@ class Command(BaseCommand):
                         logger.exception("Fallo al procesar sala %s; se reintentara sin pagos parciales.", room_id)
                         if options["once"]:
                             raise
+                from casino.services import tick_casino
+                try:
+                    tick_casino()
+                except Exception:
+                    logger.exception('Fallo al procesar juegos y deportes simulados; se reintentara.')
+                    if options['once']:
+                        raise
                 if options["once"]:
                     return
                 time.sleep(max(0, 1-(time.monotonic()-started)))

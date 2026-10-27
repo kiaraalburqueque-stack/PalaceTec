@@ -79,11 +79,13 @@ class SessionSummaryView(ResponsibleView):
         from accounts.sessions import session_key
         session = AuthSession.objects.get(jti=session_key(request.auth), user=request.user)
         pending = session.bets.filter(payout__isnull=True)
-        return Response({**settled_summary(session.bets.all()),
+        from casino.services import play_summary, merge_summary
+        pending_games = session.game_plays.filter(payout__isnull=True)
+        return Response({**merge_summary(settled_summary(session.bets.all()), play_summary(session.game_plays.all())),
             "session_started_at": session.started_at.isoformat(),
             "duration_seconds": max(0, int((timezone.now()-session.started_at).total_seconds())),
-            "pending_wagered": format(pending.aggregate(total=Sum("amount"))["total"] or 0, ".2f"),
-            "pending_count": pending.count(), "reality_check_interval_seconds": 3600,
+            "pending_wagered": format((pending.aggregate(total=Sum("amount"))["total"] or 0)+(pending_games.aggregate(total=Sum("amount"))["total"] or 0), ".2f"),
+            "pending_count": pending.count()+pending_games.count(), "reality_check_interval_seconds": 3600,
             "scope": "settled_session_bets"})
 
 

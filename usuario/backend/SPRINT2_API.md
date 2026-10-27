@@ -2,6 +2,8 @@
 
 Guía de integración para Kiara y Sebastián. Amplía las historias HU21 a HU40 sobre el motor del Sprint 1. Los cambios de esta entrega son de backend; las pantallas y su integración corresponden al frontend.
 
+La ampliación posterior de blackjack y deportes virtuales se documenta en [casino/README.md](casino/README.md). Comparte estas sesiones y controles, y agrega sus jugadas al historial, estadísticas y resumen de sesión; no modifica la numeración de historias del Sprint 2.
+
 ## Preparación del entorno
 
 Usar PostgreSQL para la aplicación integrada y las pruebas de concurrencia. Instalar `requirements.txt`, configurar las variables de conexión locales y mantener Redis activo. Cada integrante utiliza su propio `.env`; las bases de datos y credenciales no se comparten por Git.

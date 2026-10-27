@@ -23,3 +23,18 @@ def detect_loss_escalation(user, round):
         after_commit(f"user.{user.pk}", "responsible:risk-alert", {"incident_id": incident.pk,
             "suggested_pause_seconds": 600, "detail": "Tus apuestas aumentaron tras varias perdidas. Te sugerimos una pausa de 10 minutos."})
     return incident
+
+
+def detect_play_escalation(play):
+    from casino.models import Play
+    rows = list(Play.objects.filter(user=play.user, kind=play.kind, settled_at__isnull=False).order_by('-settled_at', '-id')[:4])
+    rows.reverse()
+    if len(rows) != 4 or rows[-1].pk != play.pk or any(row.payout >= row.amount for row in rows):
+        return
+    if not all(rows[i].amount >= rows[i-1].amount*3 for i in range(1, 4)):
+        return
+    incident, created = RiskIncident.objects.get_or_create(user=play.user, play=play, defaults={
+        'evidence': [{'play_id': row.pk, 'amount': format(row.amount, '.2f'), 'paid': format(row.payout, '.2f')} for row in rows]})
+    if created:
+        after_commit(f'user.{play.user_id}', 'responsible:risk-alert', {'incident_id': incident.pk,
+            'suggested_pause_seconds': 600, 'detail': 'Tus apuestas aumentaron tras varias perdidas. Considera una pausa.'})
