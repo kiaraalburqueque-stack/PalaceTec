@@ -750,6 +750,122 @@ a { text-decoration: none; }
 .bet-controls button:disabled, .prebet-balance button:disabled { opacity: .5; cursor: not-allowed; }
 .roulette-page .roulette-board-container { overflow-x: auto; }
 .app-page-navigation { flex-wrap: wrap; }
+.games-page, .game-discovery { width: min(1240px, calc(100% - 40px)); margin: 28px auto 48px; }
+.game-discovery { margin-top: 44px; }
+.section-heading, .game-page-heading { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 22px; }
+.section-heading h2 { margin: 7px 0; }
+.virtual-badge { display: inline-block; width: fit-content; border: 1px solid #a5bc733d; color: #d8ebad; background: #11251a; border-radius: 5px; padding: 6px 9px; font-size: 10px; font-weight: 800; letter-spacing: 1px; }
+.discovery-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.discovery-card { position: relative; overflow: hidden; display: block; text-decoration: none; color: #f4f6fa; padding: 28px; min-height: 250px; border: 1px solid #ffffff1a; border-radius: 16px; background: #172225; transition: transform .18s, border-color .18s; }
+.discovery-card:hover { transform: translateY(-4px); border-color: #e9bc54; }
+.discovery-card h3 { font-size: 26px; margin: 62px 0 12px; }
+.discovery-card p { color: #c4cfd0; max-width: 28ch; line-height: 1.65; font-size: 14px; }
+.discovery-card strong { display: block; color: #ffae5a; margin-top: 22px; }
+.discovery-icon { position: absolute; right: 18px; top: 38px; font: 800 90px Georgia, serif; opacity: .5; transform: rotate(-15deg); }
+.discovery-sports { background: radial-gradient(ellipse at 100% 0%, #366c3c, transparent 75%), #12231b; }
+.discovery-blackjack { background: radial-gradient(ellipse at 100% 0%, #5a302c, transparent 75%), #241918; }
+.discovery-roulette { background: radial-gradient(ellipse at 100% 0%, #5d5234, transparent 75%), #24251c; }
+.game-page-heading h1 { font-size: clamp(30px, 4vw, 48px); margin: 10px 0; }
+.game-page-heading em, .sports-hero em { font-style: normal; color: #ff9b40; }
+.game-page-heading p, .muted { color: #acb9c3; font-size: 13px; line-height: 1.7; }
+.game-balance { background: #1c232a; padding: 18px 24px; border: 1px solid #ffffff17; border-radius: 12px; display: grid; gap: 8px; min-width: 180px; }
+.game-balance small { color: #a7b8a6; letter-spacing: 1px; font-size: 10px; }
+.game-balance strong { font-size: 24px; color: #f4cf78; }
+.game-balance a, .game-slip > a, .tickets-panel a { color: #ffb773; font-size: 13px; }
+.blackjack-layout, .sports-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; align-items: start; gap: 24px; }
+.blackjack-table { min-height: 640px; border: 9px solid #4d3929; outline: 1px solid #b98e4b; border-radius: 80px 80px 160px 160px; box-sizing: border-box; padding: 30px 30px 65px; position: relative; background: radial-gradient(ellipse at 50% 50%, #23583e, #103021 80%); box-shadow: inset 0 0 60px #0006, 0 15px 40px #0004; text-align: center; }
+.table-label { color: #c8bd8a; font-size: 10px; letter-spacing: 2px; margin-bottom: 25px; }
+.hand-zone h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: #e1d5a7; }
+.hand-zone h2 span { display: inline-block; min-width: 24px; padding: 6px 10px; background: #0005; border-radius: 6px; color: white; letter-spacing: 0; margin-left: 8px; }
+.playing-cards { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 10px 0; min-height: 130px; }
+.playing-card { width: 80px; height: 116px; background: #fffdf5; color: #17222c; border-radius: 8px; padding: 8px; box-sizing: border-box; box-shadow: 1px 5px 10px #0005; display: flex; flex-direction: column; justify-content: space-between; text-align: left; }
+.playing-card > span { font: bold 22px Georgia, serif; line-height: 1; }
+.playing-card small { display: block; font-size: 17px; }
+.playing-card b { align-self: center; font: 40px Georgia, serif; }
+.playing-card.red-card { color: #b52336; }
+.playing-card.card-back { background: repeating-linear-gradient(45deg, #263746 0px, #263746 4px, #1a2b39 4px, #1a2b39 8px); border: 5px solid #fffc; color: #d9b76b; justify-content: center; }
+.empty-hand { padding: 35px 10px; color: #b4cbba; font-size: 14px; }
+.table-medallion { font: 40px Georgia, serif; color: #d4b66f; opacity: .55; margin: 10px 0 20px; }
+.table-medallion small { display: block; font: 9px Arial, sans-serif; letter-spacing: 4px; }
+.hand-result { display: grid; gap: 7px; margin: 20px auto 0; padding: 15px; max-width: 450px; border-radius: 10px; color: #e5eac0; background: #152d1de0; border: 1px solid #b5bf6d; }
+.hand-result span { font-size: 12px; }
+.hand-result.result-lost { border-color: #b39b84; color: #f0d8c4; }
+.game-slip { border: 1px solid #ffffff1a; border-radius: 14px; padding: 24px; background: #1b222b; display: grid; gap: 14px; min-width: 0; box-sizing: border-box; }
+.game-slip h2 { font-size: 20px; margin: 0; }
+.game-slip p { margin: 0; line-height: 1.6; }
+.game-slip label { font-size: 13px; font-weight: 600; }
+.game-slip input { width: 100%; box-sizing: border-box; border: 1px solid #59626c; background: #10161e; color: #fff; border-radius: 8px; min-height: 48px; padding: 10px 14px; font: 600 20px inherit; }
+.game-slip .primary-action { border: 0; width: 100%; min-height: 48px; cursor: pointer; font-weight: 800; font-size: 15px; box-sizing: border-box; border-radius: 8px; background: #ff8a2a; color: #151515; }
+.secondary-game-action { min-height: 48px; background: #303d48; border: 1px solid #76858d; border-radius: 8px; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; }
+.quick-stakes { display: flex; gap: 6px; }
+.quick-stakes button { background: #29343d; color: #f4d28c; border: 1px solid #78815b; padding: 9px; border-radius: 7px; flex: 1; cursor: pointer; }
+.games-page button:disabled { opacity: .45; cursor: not-allowed; }
+.games-page button:focus-visible, .discovery-card:focus-visible { outline: 3px solid #ffcf72; outline-offset: 3px; }
+.stake-summary { display: flex; justify-content: space-between; gap: 10px; color: #bfccd6; font-size: 13px; }
+.stake-summary strong { color: #f3d391; }
+.game-rules { border-top: 1px solid #ffffff1a; padding-top: 16px; font-size: 12px; color: #bdc7cf; }
+.game-rules summary { font-weight: 700; cursor: pointer; color: white; margin-bottom: 12px; }
+.game-rules p + p { margin-top: 12px; }
+.game-error { padding: 12px; background: #511e28; border-radius: 8px; color: #ffd4d7; font-size: 13px; }
+.game-success { padding: 12px; background: #163f2e; border-radius: 8px; color: #cef2d8; font-size: 13px; }
+.sports-hero { position: relative; overflow: hidden; padding: 36px 40px; border-radius: 18px; border: 1px solid #55935860; background: linear-gradient(115deg, #14261b 40%, #316a3e); margin-bottom: 28px; }
+.sports-hero h1 { position: relative; z-index: 1; font-size: clamp(26px, 3.6vw, 42px); line-height: 1.2; margin: 20px 0 15px; max-width: 650px; }
+.sports-hero p { position: relative; z-index: 1; max-width: 570px; color: #d4e2d4; line-height: 1.8; font-size: 13px; }
+.sports-hero-ball { position: absolute; right: 30px; top: 25px; font-size: 190px; transform: rotate(-20deg); opacity: .25; }
+.event-count { font-size: 12px; color: #e6c477; border-radius: 4px; background: #333a28; padding: 5px; vertical-align: middle; }
+.sports-event-list { display: grid; gap: 16px; }
+.sports-event { border: 1px solid #ffffff1c; background: #1a222b; border-radius: 12px; overflow: hidden; }
+.event-topline { display: flex; justify-content: space-between; gap: 10px; padding: 13px 18px; background: #ffffff05; font-size: 9px; letter-spacing: .7px; color: #b5c4c1; }
+.event-topline strong { color: #c5e5aa; text-align: right; }
+.event-teams { display: flex; justify-content: space-between; gap: 15px; align-items: center; padding: 20px; }
+.event-teams > div { display: grid; gap: 13px; font-weight: 700; font-size: 16px; }
+.event-teams > b { color: #f1c773; font-size: 25px; white-space: nowrap; }
+.market-buttons { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 0 16px 16px; gap: 8px; }
+.market-buttons button { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 5px; color: #d6e0e8; background: #29343e; border: 1px solid #46525f; border-radius: 7px; padding: 13px 10px; cursor: pointer; }
+.market-buttons button span { font-size: 10px; }
+.market-buttons button strong { font-size: 17px; color: #ffe1a2; }
+.market-buttons button[aria-pressed="true"] { background: #453625; border-color: #ffab4f; box-shadow: inset 0 0 0 1px #ffab4f; }
+.sports-slip { position: sticky; top: 16px; }
+.sports-slip > h2 { display: flex; justify-content: space-between; align-items: center; }
+.empty-slip { text-align: center; color: #b6c0cc; padding: 20px 0; font-size: 14px; }
+.empty-slip > span { display: block; font-size: 50px; color: #d8ae6a; margin-bottom: 20px; }
+.slip-selection { border-left: 3px solid #ff983c; padding: 14px; background: #111923; border-radius: 5px; }
+.slip-selection small { font-size: 9px; color: #b5c9a7; }
+.slip-selection h3 { margin: 10px 0; font-size: 20px; }
+.slip-selection p { font-size: 12px; color: #bbc7d4; }
+.slip-selection strong { display: block; margin-top: 12px; color: #ffcf72; }
+.game-slip > small { color: #b8c3ce; font-size: 11px; line-height: 1.6; }
+.tickets-panel { margin-top: 35px; }
+.ticket-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.ticket-card { padding: 20px; border: 1px solid #ffffff1a; border-radius: 10px; background: #1a222b; font-size: 13px; }
+.ticket-card strong { line-height: 1.7; }
+.ticket-card p, .ticket-card span { color: #c7d2d2; font-size: 12px; line-height: 1.7; }
+@media(max-width: 900px) {
+  .blackjack-layout, .sports-layout { grid-template-columns: 1fr; }
+  .sports-slip { position: static; }
+  .discovery-card { padding: 20px; }
+  .discovery-card h3 { font-size: 21px; }
+  .ticket-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media(max-width: 600px) {
+  .games-page, .game-discovery { width: calc(100% - 24px); margin-top: 20px; }
+  .discovery-grid, .ticket-grid { grid-template-columns: 1fr; }
+  .discovery-card { min-height: 190px; }
+  .discovery-card h3 { margin-top: 25px; }
+  .game-page-heading, .section-heading { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .game-balance { width: 100%; box-sizing: border-box; }
+  .blackjack-table { border-radius: 35px 35px 60px 60px; padding: 25px 12px 35px; min-height: 560px; border-width: 5px; }
+  .playing-card { width: 58px; height: 90px; padding: 6px; }
+  .playing-card > span { font-size: 17px; }
+  .playing-card b { font-size: 29px; }
+  .playing-cards { min-height: 100px; gap: 5px; }
+  .sports-hero { padding: 25px 22px; }
+  .sports-hero-ball { font-size: 135px; right: -15px; top: 50px; }
+  .event-topline { padding: 12px; }
+  .market-buttons { gap: 5px; padding: 0 10px 12px; }
+  .market-buttons button { flex-direction: column; padding: 12px 5px; }
+  .event-teams { padding: 18px 13px; }
+}
 @media(max-width: 760px) {
   .main-header { flex-wrap: wrap; }
   .header-account { flex-wrap: wrap; }
