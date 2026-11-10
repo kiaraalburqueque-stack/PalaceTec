@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'roulette',
     'responsible',
     'casino',
+    'admin_api',
 ]
 
 MIDDLEWARE = [
@@ -153,7 +154,8 @@ MAILERS = {
     },
 }
 
-CORS_ALLOWED_ORIGINS = ["http://localhost:5173"]
+# 5173: frontend del jugador; 5174: panel React de administración.
+CORS_ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:5174"]
 CORS_ALLOW_CREDENTIALS = True
 
 SIMPLE_JWT = {"ACCESS_TOKEN_LIFETIME": timedelta(minutes=15)}

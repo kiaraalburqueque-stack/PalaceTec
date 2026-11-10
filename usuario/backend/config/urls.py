@@ -25,6 +25,7 @@ urlpatterns = [
     path('api/v1/users/bets-history', BetHistoryView.as_view(), name='bets-history'),
     path('api/v1/responsible-gaming/', include('responsible.urls')),
     path('api/v1/admin/status', AdminStatusView.as_view(), name='admin-status'),
+    path('api/v1/admin/', include('admin_api.urls')),
     path('api/v1/auth/', include('accounts.urls')),
     path('api/v1/wallet/', include('wallet.urls')),
     path('api/v1/users/', include('accounts.profile_urls')),
