@@ -66,3 +66,36 @@ class BiggestWinView(AuthenticatedView):
         best = max(candidates, key=lambda item: (item["net"], -item["created_at"].timestamp()))
         return Response({"record": {**best, "net": format(best["net"], ".2f"), "payout": format(best["payout"], ".2f"),
                                     "amount": format(best["amount"], ".2f"), "created_at": best["created_at"].isoformat()}})
+
+
+class BalanceHistoryQuery(serializers.Serializer):
+    period = serializers.ChoiceField(choices=["7", "30"], required=False, default="7")
+
+
+class BalanceHistoryView(AuthenticatedView):
+    """HU53: saldo al cierre de cada día (Lima) en los últimos 7 o 30 días."""
+
+    def get(self, request):
+        query = BalanceHistoryQuery(data=request.query_params)
+        query.is_valid(raise_exception=True)
+        days = int(query.validated_data["period"])
+        today = timezone.now().astimezone(LIMA).date()
+        first = today - timedelta(days=days - 1)
+        start, _ = day_bounds(first)
+        movements = WalletTransaction.objects.filter(wallet__user=request.user)
+        previous = movements.filter(created_at__lt=start).order_by("-created_at", "-id").first()
+        balance = previous.balance_after if previous else ZERO
+        opening = balance
+        rows = list(movements.filter(created_at__gte=start).order_by("created_at", "id").values("created_at", "balance_after"))
+        series, index = [], 0
+        for offset in range(days):
+            day = first + timedelta(days=offset)
+            _, end = day_bounds(day)
+            count = 0
+            while index < len(rows) and rows[index]["created_at"] < end:
+                balance = rows[index]["balance_after"]
+                index += 1
+                count += 1
+            series.append({"date": day.isoformat(), "balance": format(balance, ".2f"), "movements": count})
+        return Response({"period": days, "opening_balance": format(opening, ".2f"),
+                         "closing_balance": format(balance, ".2f"), "timezone": "America/Lima", "points": series})
