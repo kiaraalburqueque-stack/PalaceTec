@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'responsible',
     'casino',
     'admin_api',
+    'stats',
 ]
 
 MIDDLEWARE = [
