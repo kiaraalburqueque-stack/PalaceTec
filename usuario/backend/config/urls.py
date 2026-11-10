@@ -19,13 +19,14 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from accounts.views import AdminStatusView
-from roulette.history import BetHistoryView, StatsSummaryView
+from roulette.history import BetDetailView, BetHistoryView, StatsSummaryView
 
 urlpatterns = [
     path('api/v1/casino/', include('casino.urls')),
     path('api/v1/stats/summary', StatsSummaryView.as_view(), name='stats-summary'),
     path('api/v1/stats/', include('stats.urls')),
     path('api/v1/users/bets-history', BetHistoryView.as_view(), name='bets-history'),
+    path('api/v1/users/bets/<int:bet_id>', BetDetailView.as_view(), name='bet-detail'),
     path('api/v1/responsible-gaming/', include('responsible.urls')),
     path('api/v1/admin/status', AdminStatusView.as_view(), name='admin-status'),
     path('api/v1/admin/', include('admin_api.urls')),
