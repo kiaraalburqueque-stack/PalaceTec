@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import monitor, views
 
 urlpatterns = [
     path("users", views.AdminUserListView.as_view(), name="admin-users"),
@@ -10,4 +10,5 @@ urlpatterns = [
     path("games/<int:game_id>", views.AdminGameDetailView.as_view(), name="admin-game-detail"),
     path("games/<int:game_id>/soft-delete", views.AdminGameSoftDeleteView.as_view(), name="admin-game-soft-delete"),
     path("games/<int:game_id>/restore", views.AdminGameRestoreView.as_view(), name="admin-game-restore"),
+    path("responsible-gaming/users", monitor.ResponsibleMonitorView.as_view(), name="admin-responsible-users"),
 ]
