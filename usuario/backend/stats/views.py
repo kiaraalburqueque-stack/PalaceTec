@@ -42,3 +42,27 @@ class WinRateView(AuthenticatedView):
         return Response({"won": won, "lost": lost, "push": push, "total": total, "win_rate": rate,
                          "lost_rate": round(lost * 100 / total, 2) if total else 0.0,
                          "scope": "settled_bets", "timezone": "America/Lima"})
+
+
+class BiggestWinView(AuthenticatedView):
+    """HU52: mayor ganancia neta obtenida en una sola ronda o jugada."""
+
+    def get(self, request):
+        candidates = []
+        bet = (Bet.objects.filter(user=request.user, payout__gt=F("amount")).select_related("round__room__game")
+               .annotate(profit=F("payout") - F("amount")).order_by("-profit", "created_at").first())
+        if bet:
+            candidates.append({"net": bet.profit, "payout": bet.payout, "amount": bet.amount, "source": "roulette",
+                               "game": bet.round.room.game.title if bet.round.room.game_id else "Ruleta Europea",
+                               "round_id": bet.round_id, "bet_id": bet.pk, "created_at": bet.created_at})
+        play = (Play.objects.filter(user=request.user, payout__gt=F("amount"))
+                .annotate(profit=F("payout") - F("amount")).order_by("-profit", "created_at").first())
+        if play:
+            candidates.append({"net": play.profit, "payout": play.payout, "amount": play.amount, "source": "casino",
+                               "game": play.get_kind_display(), "round_id": None, "bet_id": play.pk,
+                               "created_at": play.created_at})
+        if not candidates:
+            return Response({"record": None})
+        best = max(candidates, key=lambda item: (item["net"], -item["created_at"].timestamp()))
+        return Response({"record": {**best, "net": format(best["net"], ".2f"), "payout": format(best["payout"], ".2f"),
+                                    "amount": format(best["amount"], ".2f"), "created_at": best["created_at"].isoformat()}})
