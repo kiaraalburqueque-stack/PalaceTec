@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { getAdminGames } from '../services/adminService';
 import Loading from '../components/Loading';
 import GameEditModal from '../components/GameEditModal';
+import DeactivateGame from '../components/DeactivateGame';
 import { categoryLabel } from '../utils/games';
 import { credits } from '../utils/format';
 
@@ -34,6 +35,7 @@ export default function Games() {
         <dl className="game-params"><div><dt>Mínima</dt><dd>{credits(game.min_bet)}</dd></div><div><dt>Máxima</dt><dd>{credits(game.max_bet)}</dd></div><div><dt>RTP</dt><dd>{game.rtp}%</dd></div></dl>
         <div className="actions">
           {!game.deleted_at && <button type="button" className="secondary small" onClick={() => setEditing(game)}>Editar parámetros</button>}
+          <DeactivateGame game={game} onChanged={refresh} />
         </div>
       </div>
     </article>)}</div>}
