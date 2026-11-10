@@ -918,3 +918,26 @@ a { text-decoration: none; }
 .chart-tooltip strong { color: #fff; font-size: 14px; }
 .chart-footnote { font-size: 12px !important; margin-bottom: 0; }
 @media (max-width: 760px) { .stats-dashboard { grid-template-columns: minmax(0, 1fr); } .win-rate-body svg { width: 170px; height: 170px; } }
+
+/* Sprint 3 · ventanas modales (HU54, HU60) */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.link-button { background: none; border: 0; color: #ffb06a; cursor: pointer; font-weight: 700; padding: 4px; text-decoration: underline; font-size: 12px; }
+.dialog-modal { padding: 0; border: 1px solid #3a4351; border-radius: 14px; background: #161b23; color: #edf0f7; width: min(760px, calc(100vw - 32px)); max-height: calc(100vh - 48px); box-shadow: 0 30px 80px #000a; }
+.dialog-modal::backdrop { background: #05080ccc; backdrop-filter: blur(2px); }
+.dialog-modal-content { padding: 22px 24px 24px; }
+.dialog-modal header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.dialog-modal h2 { margin: 0; font-size: 20px; }
+.dialog-close { background: #232a35; border: 1px solid #3a4351; color: #fff; width: 36px; height: 36px; border-radius: 50%; font-size: 20px; cursor: pointer; line-height: 1; }
+.dialog-close:hover { background: #2f3846; }
+.bet-detail-table { width: 100%; height: auto; background: radial-gradient(ellipse, #1b503a, #153d2c); border-radius: 12px; padding: 6px; border: 1px solid #48704e; }
+.table-number { fill: #fff; font-size: 14px; font-weight: 700; pointer-events: none; }
+.table-number.small { font-size: 11px; }
+.table-chip circle { fill: #ff8a2c; stroke: #fff3e0; stroke-width: 2; filter: drop-shadow(0 2px 2px #0008); }
+.table-chip .chip-inner { fill: none; stroke: #fff3e0; stroke-dasharray: 3 3; }
+.table-chip text { fill: #1c1006; font-size: 10px; font-weight: 900; }
+.bet-detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin: 16px 0 10px; }
+.bet-detail-grid div { background: #1d242f; border-radius: 8px; padding: 10px 12px; }
+.bet-detail-grid dt { font-size: 11px; color: #8d9aad; text-transform: uppercase; letter-spacing: .5px; }
+.bet-detail-grid dd { margin: 4px 0 0; font-weight: 700; }
+.status-won { color: #5fe0a2; } .status-lost { color: #ff8b84; } .status-pending { color: #ffcf7a; }
+.dialog-modal small { color: #8d9aad; }
