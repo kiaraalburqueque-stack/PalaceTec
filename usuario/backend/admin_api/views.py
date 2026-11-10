@@ -117,8 +117,11 @@ class AdminGameDetailView(AdminView):
             game = serializer.save()
             rooms = list(Room.objects.select_for_update().filter(game=game).order_by("id"))
             for room in rooms:
-                if (room.min_bet, room.max_bet) != (game.min_bet, game.max_bet):
-                    room.min_bet, room.max_bet = game.min_bet, game.max_bet
+                # Cada sala conserva su nivel (baja, media, alta) pero queda dentro de los nuevos límites del juego.
+                low = min(max(room.min_bet, game.min_bet), game.max_bet)
+                high = max(min(room.max_bet, game.max_bet), low)
+                if (room.min_bet, room.max_bet) != (low, high):
+                    room.min_bet, room.max_bet = low, high
                     room.save(update_fields=["min_bet", "max_bet"])
                     after_commit(f"room.{room.pk}", "room:limits", {
                         "room_id": room.pk, "min_bet": format(room.min_bet, ".2f"), "max_bet": format(room.max_bet, ".2f")})

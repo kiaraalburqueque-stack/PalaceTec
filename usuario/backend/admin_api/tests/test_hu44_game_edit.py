@@ -11,7 +11,8 @@ class HU44GameEditTests(AdminTestBase):
         self.url = f"/api/v1/admin/games/{self.game.pk}"
 
     def test_hu44_updates_limits_and_rtp_and_notifies_active_rooms(self):
-        rooms = list(Room.objects.filter(game=self.game))
+        rooms = list(Room.objects.filter(game=self.game).order_by("id"))
+        before = {room.pk: (room.min_bet, room.max_bet) for room in rooms}
         self.assertTrue(rooms)
         with patch("admin_api.views.after_commit") as published, self.captureOnCommitCallbacks(execute=True):
             response = self.client.put(self.url, {"min_bet": "25.00", "max_bet": "750.00", "rtp": "96.50"}, format="json")
@@ -20,12 +21,17 @@ class HU44GameEditTests(AdminTestBase):
         self.assertEqual((str(self.game.min_bet), str(self.game.max_bet), str(self.game.rtp)), ("25.00", "750.00", "96.50"))
         for room in rooms:
             room.refresh_from_db()
-            self.assertEqual((room.min_bet, room.max_bet), (25, 750))
+            low, high = before[room.pk]
+            # La sala conserva su nivel, recortado a los nuevos límites del juego.
+            self.assertEqual((room.min_bet, room.max_bet), (min(max(low, 25), 750), max(min(high, 750), min(max(low, 25), 750))))
+            self.assertTrue(25 <= room.min_bet <= room.max_bet <= 750)
+        changed = {room.pk for room in rooms if before[room.pk] != (room.min_bet, room.max_bet)}
         groups = {call.args[0] for call in published.call_args_list if call.args[1] == "room:limits"}
-        self.assertEqual(groups, {f"room.{room.pk}" for room in rooms})
+        self.assertEqual(groups, {f"room.{pk}" for pk in changed})
+        self.assertTrue(groups)
         self.as_player()
         state = self.client.get(f"/api/v1/rooms/{rooms[0].pk}/state").data
-        self.assertEqual((state["min_bet"], state["max_bet"]), ("25.00", "750.00"))
+        self.assertEqual((state["min_bet"], state["max_bet"]), (format(rooms[0].min_bet, ".2f"), format(rooms[0].max_bet, ".2f")))
 
     def test_hu44_rejects_min_bet_greater_than_max_bet(self):
         response = self.client.put(self.url, {"min_bet": "99999.00"}, format="json")
