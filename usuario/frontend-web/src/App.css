@@ -1011,3 +1011,8 @@ a { text-decoration: none; }
 .rules-actions .place-bet-button { padding: 0 24px; }
 .close-modal-button { background: #232a35; color: #e6ebf3; border: 1px solid #3a4351; border-radius: 8px; padding: 0 18px; min-height: 44px; cursor: pointer; }
 @media (max-width: 560px) { .rules-stats { grid-template-columns: 1fr; } }
+
+/* Sprint 3 · HU43 catálogo con portada y categoría */
+.game-cover { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px; border: 1px solid #2d3541; margin-bottom: 6px; }
+.game-meta { display: flex; gap: 10px; align-items: center; font-size: 12px; color: #9aa6b8; margin: 0; }
+.game-category { background: #2a2216; color: #ffb06a; border: 1px solid #5a4325; border-radius: 999px; padding: 2px 10px; font-weight: 700; }
