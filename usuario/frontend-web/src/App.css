@@ -984,3 +984,10 @@ a { text-decoration: none; }
 .switch[aria-checked="true"] { background: #2fbf7a; }
 .switch[aria-checked="true"] span { transform: translateX(22px); }
 .switch:disabled { opacity: .6; }
+
+/* Sprint 3 · HU59 reconexión */
+.reconnect-banner, .recovered-banner { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; font-size: 13px; position: sticky; top: 8px; z-index: 20; }
+.reconnect-banner { background: #3a2a10; border: 1px solid #b7862c; color: #ffd98a; }
+.recovered-banner { background: #10301f; border: 1px solid #2f8a5a; color: #a8f0c8; justify-content: space-between; }
+.spinner { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #ffd98a55; border-top-color: #ffd98a; animation: spin 0.8s linear infinite; flex: none; }
+@keyframes spin { to { transform: rotate(360deg); } }

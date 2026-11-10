@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import useUser from '../hooks/useUser';
 import { getWalletSummary } from '../services/walletService';
 import { getRoomBets, getRoomState } from '../services/roomService';
-import { connectRoom } from '../services/roomSocket';
+import useRoomSocket from '../hooks/useRoomSocket';
 import PreBetBalance from '../components/PreBetBalance';
 import BetControls from '../components/BetControls';
 import RouletteWheel from '../components/RouletteWheel';
@@ -29,7 +29,6 @@ function RoomSession({ roomId, user }) {
   const [pauseUntil, setPauseUntil] = useState(null);
   const [state, setState] = useState(null);
   const [history, setHistory] = useState([]);
-  const [status, setStatus] = useState('Conectando');
   const [error, setError] = useState('');
   const [now, setNow] = useState(() => Date.now());
   const [offset, setOffset] = useState(0);
@@ -38,6 +37,25 @@ function RoomSession({ roomId, user }) {
   const [outcome, setOutcome] = useState(null);
   const [confirmedResult, setConfirmedResult] = useState(null);
   const seenResults = useRef(new Set());
+  const syncRef = useRef(() => {});
+  const handleEvent = useCallback(({ event, data }) => {
+    if (event === 'responsible:risk-alert') window.dispatchEvent(new CustomEvent('palacetec:risk-alert', { detail: { userId: user.id, ...data } }));
+    if (event === 'room:state') { setState(data); setOffset(Date.parse(data.server_time) - Date.now()); }
+    if (event === 'timer:start') setState((old) => ({ ...old, round: data }));
+    if (event === 'timer:tick') setState((old) => old?.round?.id === data.round_id ? { ...old, round: { ...old.round, status: 'OPEN', closes_at: data.closes_at } } : old);
+    if (event === 'bets:closed' || event === 'timer:stop') setState((old) => old?.round?.id === data.round_id ? { ...old, round: { ...old.round, status: 'CLOSED' } } : old);
+    if (event === 'wallet:update') {
+      setWallet(data);
+      window.dispatchEvent(new CustomEvent('palacetec:wallet-update', { detail: { userId: user.id, wallet: data } }));
+    }
+    if (event === 'round:result' && !seenResults.current.has(data.round_id)) { seenResults.current.add(data.round_id); setConfirmedResult(data); setResult(data.winning_number); setOutcome({ roundId: data.round_id, number: data.winning_number }); void syncRef.current(); }
+    if (event === 'round:winnings') { setPrize(data); void syncRef.current(); }
+    if (event === 'RECONNECT_SUCCESS') {
+      setState(data.state); setOffset(Date.parse(data.state.server_time) - Date.now());
+      void syncRef.current();
+    }
+  }, [user.id]);
+  const { status, reconnecting, recovered, dismissRecovered } = useRoomSocket(roomId, handleEvent);
   useEffect(() => {
     if (!roomId || !user) return;
     let active = true;
@@ -54,26 +72,13 @@ function RoomSession({ roomId, user }) {
         if (last) { setConfirmedResult(last); setResult(last.winning_number); setOutcome({ roundId: last.round_id, number: last.winning_number }); }
       } catch (err) { if (active) setError(err.message); }
     }
+    syncRef.current = sync;
     void sync();
-    const stop = connectRoom(roomId, ({ event, data }) => {
-      if (!active) return;
-      if (event === 'responsible:risk-alert') window.dispatchEvent(new CustomEvent('palacetec:risk-alert', { detail: { userId: user.id, ...data } }));
-      if (event === 'room:state') { setState(data); setOffset(Date.parse(data.server_time) - Date.now()); }
-      if (event === 'timer:start') setState((old) => ({ ...old, round: data }));
-      if (event === 'timer:tick') setState((old) => old?.round?.id === data.round_id ? { ...old, round: { ...old.round, status: 'OPEN', closes_at: data.closes_at } } : old);
-      if (event === 'bets:closed' || event === 'timer:stop') setState((old) => old?.round?.id === data.round_id ? { ...old, round: { ...old.round, status: 'CLOSED' } } : old);
-      if (event === 'wallet:update') {
-        setWallet(data);
-        window.dispatchEvent(new CustomEvent('palacetec:wallet-update', { detail: { userId: user.id, wallet: data } }));
-      }
-      if (event === 'round:result' && !seenResults.current.has(data.round_id)) { seenResults.current.add(data.round_id); setConfirmedResult(data); setResult(data.winning_number); setOutcome({ roundId: data.round_id, number: data.winning_number }); void sync(); }
-      if (event === 'round:winnings') { setPrize(data); void sync(); }
-    }, (value) => { if (active) setStatus(value); });
     const tick = setInterval(() => setNow(Date.now()), 250);
     const fallback = setInterval(sync, 5000);
     const pause = (event) => { if (event.detail?.userId === user.id) setPauseUntil(event.detail.pause_until); };
     window.addEventListener('palacetec:pause', pause);
-    return () => { active = false; stop(); clearInterval(tick); clearInterval(fallback); window.removeEventListener('palacetec:pause', pause); };
+    return () => { active = false; syncRef.current = () => {}; clearInterval(tick); clearInterval(fallback); window.removeEventListener('palacetec:pause', pause); };
   }, [roomId, user]);
   const refresh = async () => {
     const [summary, bets, limit] = await Promise.all([getWalletSummary(), getRoomBets(roomId), getDailyLimit()]);
@@ -88,6 +93,10 @@ function RoomSession({ roomId, user }) {
   return <main className="main-sections roulette-page">
     <h1>Ruleta europea · Sala {roomId}</h1>
     <p>Conexión: {status}</p><Link to="/">Volver a salas</Link>
+    {reconnecting && <div className="reconnect-banner" role="status"><span className="spinner" aria-hidden="true" />Conexión perdida. Reconectando… tu mesa y tus apuestas se conservan.</div>}
+    {recovered?.reconnected && !recovered.dismissed && <div className="recovered-banner" role="status">
+      <span>Reconectado. {recovered.bets.length ? `Recuperamos ${recovered.bets.length} apuesta${recovered.bets.length === 1 ? '' : 's'} de la ronda ${recovered.round_id} (${recovered.total_amount} CRD).` : 'No tenías apuestas activas en la ronda actual.'}</span>
+      <button type="button" className="link-button" onClick={dismissRecovered}>Entendido</button></div>}
     {error && <p role="alert">{error}</p>}
     <p><Link to="/juego-responsable">Mis límites y juego responsable</Link> · {dailyLimit?.configured ? `Cupo diario disponible: ${dailyLimit.remaining} CRD` : 'Configura tu límite diario para apostar.'}</p>
     <section className="prebet-balance round-panel"><h2>Ronda {round?.id || 'pendiente'}</h2>
