@@ -8,6 +8,7 @@ import { getUserProfile } from '../services/authService';
 import { getWalletSummary } from '../services/walletService';
 vi.mock('../services/authService', () => ({ getUserProfile: vi.fn(), getCurrentUser: vi.fn().mockResolvedValue({ role: 'USER' }) }));
 vi.mock('../services/walletService', () => ({ getWalletSummary: vi.fn() }));
+vi.mock('../services/notificationService', () => ({ getNotifications: vi.fn().mockResolvedValue({ unread_count: 0, results: [] }), connectNotifications: vi.fn(() => () => {}), markAllNotificationsRead: vi.fn(), markNotificationRead: vi.fn() }));
 beforeEach(() => { getUserProfile.mockResolvedValue({ id: 1, email: 'real@example.com', nickname: 'Kiara' }); getWalletSummary.mockResolvedValue({ balance: '1000.00', bonus_balance: '1000.00', winnings_balance: '0.00' }); });
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 describe('HU04 - perfil real', () => {
