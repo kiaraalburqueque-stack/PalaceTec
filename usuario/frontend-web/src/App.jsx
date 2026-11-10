@@ -21,6 +21,7 @@ import SportsPage from './pages/SportsPage';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import NotMePage from './pages/NotMePage';
+import NotificationSettings from './pages/NotificationSettings';
 
 import './App.css';
 
@@ -68,6 +69,7 @@ function App() {
             <Route path="/seguridad/no-fui-yo" element={<NotMePage />} />
             <Route path="/perfil" element={<ProfilePage />} />
             <Route path="/perfil/seguridad" element={<PasswordPage />} />
+            <Route path="/perfil/notificaciones" element={<NotificationSettings />} />
             <Route path="/juego-responsable" element={<ResponsiblePage />} />
             <Route path="/historial" element={<HistoryPage />} />
             <Route path="/estadisticas" element={<StatsPage />} />
