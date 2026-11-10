@@ -100,3 +100,26 @@ class AdminGameListView(AdminView):
             Room.objects.create(game=game, name=f"Mesa principal · {game.title}",
                                 min_bet=game.min_bet, max_bet=game.max_bet)
         return Response(AdminGameSerializer(game, context={"request": request}).data, status=201)
+
+
+class AdminGameDetailView(AdminView):
+    """HU44: edita parámetros; las salas activas reciben los nuevos límites al instante."""
+
+    def get(self, request, game_id):
+        game = get_object_or_404(Game, pk=game_id)
+        return Response(AdminGameSerializer(game, context={"request": request}).data)
+
+    def put(self, request, game_id):
+        with transaction.atomic():
+            game = get_object_or_404(Game.objects.select_for_update(), pk=game_id)
+            serializer = AdminGameSerializer(game, data=request.data, partial=True, context={"request": request})
+            serializer.is_valid(raise_exception=True)
+            game = serializer.save()
+            rooms = list(Room.objects.select_for_update().filter(game=game).order_by("id"))
+            for room in rooms:
+                if (room.min_bet, room.max_bet) != (game.min_bet, game.max_bet):
+                    room.min_bet, room.max_bet = game.min_bet, game.max_bet
+                    room.save(update_fields=["min_bet", "max_bet"])
+                    after_commit(f"room.{room.pk}", "room:limits", {
+                        "room_id": room.pk, "min_bet": format(room.min_bet, ".2f"), "max_bet": format(room.max_bet, ".2f")})
+        return Response(AdminGameSerializer(game, context={"request": request}).data)
