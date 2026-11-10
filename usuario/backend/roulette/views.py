@@ -65,10 +65,12 @@ class BetView(AuthenticatedView):
 class GameListView(AuthenticatedView):
     def get(self, request):
         games = Game.objects.filter(is_published=True, rooms__is_active=True).annotate(
-            min_bet=Min("rooms__min_bet", filter=Q(rooms__is_active=True)),
-            max_bet=Max("rooms__max_bet", filter=Q(rooms__is_active=True))).order_by("id")
+            room_min=Min("rooms__min_bet", filter=Q(rooms__is_active=True)),
+            room_max=Max("rooms__max_bet", filter=Q(rooms__is_active=True))).order_by("id")
         return Response([{"id": game.pk, "slug": game.slug, "title": game.title,
-            "min_bet": format(game.min_bet, ".2f"), "max_bet": format(game.max_bet, ".2f"),
+            "category": game.category, "rtp": format(game.rtp, ".2f"),
+            "cover_url": request.build_absolute_uri(game.cover.url) if game.cover else None,
+            "min_bet": format(game.room_min, ".2f"), "max_bet": format(game.room_max, ".2f"),
             "rooms_url": f"/api/v1/rooms?game={game.pk}"} for game in games])
 
 

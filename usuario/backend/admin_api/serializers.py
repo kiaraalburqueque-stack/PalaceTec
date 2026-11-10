@@ -3,6 +3,7 @@ from decimal import Decimal
 from rest_framework import serializers
 
 from accounts.models import User
+from roulette.models import Game
 
 
 class AdminUserSerializer(serializers.ModelSerializer):
@@ -42,3 +43,72 @@ class UserStatusInput(serializers.Serializer):
         if len(value.strip()) < 5:
             raise serializers.ValidationError("Describe el motivo de la sanción (mínimo 5 caracteres).")
         return value.strip()
+
+
+COVER_SIGNATURES = {
+    "image/jpeg": (b"\xff\xd8\xff",),
+    "image/png": (b"\x89PNG\r\n\x1a\n",),
+    "image/webp": (b"RIFF",),
+}
+COVER_EXTENSIONS = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png", "webp": "image/webp"}
+
+
+def validate_cover(upload):
+    """HU43: solo JPG, PNG o WEBP de hasta 2 MB; se revisa la firma real del archivo."""
+    from django.conf import settings
+    extension = upload.name.rsplit(".", 1)[-1].lower() if "." in upload.name else ""
+    kind = COVER_EXTENSIONS.get(extension)
+    if kind is None:
+        raise serializers.ValidationError("La portada debe ser JPG, PNG o WEBP.")
+    if upload.size > settings.GAME_COVER_MAX_BYTES:
+        raise serializers.ValidationError("La portada no debe superar 2 MB.")
+    head = upload.read(12)
+    upload.seek(0)
+    valid = any(head.startswith(signature) for signature in COVER_SIGNATURES[kind])
+    if kind == "image/webp":
+        valid = valid and head[8:12] == b"WEBP"
+    if not valid:
+        raise serializers.ValidationError("El contenido del archivo no corresponde a una imagen válida.")
+    return upload
+
+
+class AdminGameSerializer(serializers.ModelSerializer):
+    cover = serializers.FileField(required=False, allow_null=True, validators=[validate_cover], write_only=True)
+    cover_url = serializers.SerializerMethodField()
+    min_bet = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal("1.00"))
+    max_bet = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal("1.00"))
+    rtp = serializers.DecimalField(max_digits=5, decimal_places=2, min_value=Decimal("80.00"), max_value=Decimal("99.99"))
+    title = serializers.CharField(min_length=3, max_length=80)
+    slug = serializers.SlugField(max_length=50)
+    is_published = serializers.BooleanField(required=False, default=True)
+    rooms = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Game
+        fields = ["id", "slug", "title", "category", "min_bet", "max_bet", "rtp", "is_published",
+                  "cover", "cover_url", "rooms", "created_at"]
+        read_only_fields = ["id", "created_at"]
+
+    def get_cover_url(self, game):
+        if not game.cover:
+            return None
+        request = self.context.get("request")
+        return request.build_absolute_uri(game.cover.url) if request else game.cover.url
+
+    def get_rooms(self, game):
+        return game.rooms.count()
+
+    def validate_slug(self, value):
+        duplicated = Game.objects.filter(slug=value)
+        if self.instance:
+            duplicated = duplicated.exclude(pk=self.instance.pk)
+        if duplicated.exists():
+            raise serializers.ValidationError("Ya existe un juego con este slug.")
+        return value
+
+    def validate(self, attrs):
+        low = attrs.get("min_bet", getattr(self.instance, "min_bet", None))
+        high = attrs.get("max_bet", getattr(self.instance, "max_bet", None))
+        if low is not None and high is not None and low > high:
+            raise serializers.ValidationError({"min_bet": "La apuesta mínima no puede ser mayor que la máxima."})
+        return attrs

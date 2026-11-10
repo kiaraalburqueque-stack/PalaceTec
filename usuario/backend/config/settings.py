@@ -144,6 +144,11 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# HU43: portadas de juegos guardadas en disco local durante el desarrollo.
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+GAME_COVER_MAX_BYTES = 2 * 1024 * 1024
+
 
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration

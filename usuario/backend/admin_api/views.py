@@ -8,7 +8,8 @@ from accounts.models import AuthSession, User
 from realtime.events import after_commit
 from .base import AdminPagination, AdminView
 from .models import SanctionLog
-from .serializers import AdminUserSerializer, UserListQuery, UserStatusInput
+from roulette.models import Game, Room
+from .serializers import AdminGameSerializer, AdminUserSerializer, UserListQuery, UserStatusInput
 
 
 class AdminUserListView(AdminView):
@@ -81,3 +82,21 @@ class AdminUserSanctionsView(AdminView):
         return Response([{"id": s.pk, "action": s.action, "reason": s.reason, "admin": s.admin.email,
                           "created_at": s.created_at.isoformat()}
                          for s in SanctionLog.objects.filter(user_id=user_id).select_related("admin")[:50]])
+
+
+class AdminGameListView(AdminView):
+    """HU43: catálogo completo para el administrador y creación de juegos."""
+
+    def get(self, request):
+        games = Game.objects.prefetch_related("rooms").order_by("id")
+        return Response(AdminGameSerializer(games, many=True, context={"request": request}).data)
+
+    def post(self, request):
+        serializer = AdminGameSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            game = serializer.save()
+            # Cada juego nuevo abre una mesa principal con sus límites para aparecer en el catálogo.
+            Room.objects.create(game=game, name=f"Mesa principal · {game.title}",
+                                min_bet=game.min_bet, max_bet=game.max_bet)
+        return Response(AdminGameSerializer(game, context={"request": request}).data, status=201)
