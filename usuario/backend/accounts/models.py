@@ -84,3 +84,19 @@ class PasswordResetToken(models.Model):
 
     class Meta:
         db_table = "password_reset_tokens"
+
+
+class LoginHistory(models.Model):
+    """HU56: accesos exitosos para detectar IP o dispositivo nuevos (sin geolocalización)."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="login_history")
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.CharField(max_length=255, blank=True)
+    is_new_ip = models.BooleanField(default=False)
+    is_new_device = models.BooleanField(default=False)
+    alert_sent = models.BooleanField(default=False)
+    reported_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        db_table = "login_history"
+        ordering = ["-created_at", "-id"]
