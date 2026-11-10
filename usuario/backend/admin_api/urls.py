@@ -16,4 +16,5 @@ urlpatterns = [
     path("audit/transactions", audit_transactions.TransactionAuditView.as_view(), name="admin-audit-transactions"),
     path("audit/transactions/export", audit_transactions.TransactionExportView.as_view(), name="admin-audit-transactions-export"),
     path("audit-logs", audit_logs.AuditLogListView.as_view(), name="admin-audit-logs"),
+    path("promotions", views.AdminPromotionView.as_view(), name="admin-promotions"),
 ]

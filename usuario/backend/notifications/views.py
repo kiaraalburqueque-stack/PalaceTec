@@ -4,7 +4,9 @@ from rest_framework.response import Response
 
 from roulette.views import AuthenticatedView
 from .models import Notification
-from .services import unread_count
+from rest_framework import serializers
+
+from .services import preferences, unread_count
 
 PAGE_SIZE = 30
 
@@ -30,3 +32,25 @@ class NotificationReadView(AuthenticatedView):
             item.read_at = timezone.now()
             item.save(update_fields=["read_at"])
         return Response({**item.as_dict(), "unread_count": unread_count(request.user)})
+
+
+class PreferencesSerializer(serializers.Serializer):
+    promotions = serializers.BooleanField()
+    security = serializers.BooleanField()
+    game_alerts = serializers.BooleanField()
+
+
+class NotificationPreferencesView(AuthenticatedView):
+    """HU58: GET y PUT /users/notification-preferences."""
+
+    def get(self, request):
+        return Response(PreferencesSerializer(preferences(request.user)).data)
+
+    def put(self, request):
+        data = PreferencesSerializer(data=request.data, partial=True)
+        data.is_valid(raise_exception=True)
+        setting = preferences(request.user)
+        for field, value in data.validated_data.items():
+            setattr(setting, field, value)
+        setting.save()
+        return Response(PreferencesSerializer(setting).data)

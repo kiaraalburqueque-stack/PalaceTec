@@ -114,3 +114,9 @@ class AdminGameSerializer(serializers.ModelSerializer):
         if low is not None and high is not None and low > high:
             raise serializers.ValidationError({"min_bet": "La apuesta mínima no puede ser mayor que la máxima."})
         return attrs
+
+
+class PromotionInput(serializers.Serializer):
+    title = serializers.CharField(min_length=3, max_length=120)
+    message = serializers.CharField(min_length=5, max_length=500)
+    send_email = serializers.BooleanField(required=False, default=False)

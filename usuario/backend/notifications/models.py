@@ -29,3 +29,21 @@ class Notification(models.Model):
     def as_dict(self):
         return {"id": self.pk, "category": self.category, "title": self.title, "message": self.message,
                 "is_read": self.is_read, "created_at": self.created_at.isoformat()}
+
+
+class NotificationSetting(models.Model):
+    """HU58: preferencias del jugador por tipo de aviso (todas activas por defecto)."""
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notification_setting")
+    promotions = models.BooleanField(default=True)
+    security = models.BooleanField(default=True)
+    game_alerts = models.BooleanField(default=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "notification_settings"
+
+    FIELD_BY_CATEGORY = {"PROMOTION": "promotions", "SECURITY": "security", "GAME": "game_alerts"}
+
+    def allows(self, category):
+        return getattr(self, self.FIELD_BY_CATEGORY[category])

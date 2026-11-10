@@ -9,7 +9,7 @@ from realtime.events import after_commit
 from .base import AdminPagination, AdminView
 from .models import SanctionLog
 from roulette.models import Game, Room
-from .serializers import AdminGameSerializer, AdminUserSerializer, UserListQuery, UserStatusInput
+from .serializers import PromotionInput, AdminGameSerializer, AdminUserSerializer, UserListQuery, UserStatusInput
 
 
 class AdminUserListView(AdminView):
@@ -148,3 +148,20 @@ class AdminGameRestoreView(AdminView):
             game.is_published = True
             game.save(update_fields=["is_published", "deleted_at"])
         return Response(AdminGameSerializer(game, context={"request": request}).data)
+
+
+class AdminPromotionView(AdminView):
+    """Envía una promoción a los jugadores activos que aceptan promociones (HU58)."""
+
+    def post(self, request):
+        from notifications.models import Notification
+        from notifications.services import notify
+        data = PromotionInput(data=request.data)
+        data.is_valid(raise_exception=True)
+        sent = skipped = 0
+        with transaction.atomic():
+            for user in User.objects.filter(is_active=True, is_staff=False, is_superuser=False).order_by("id"):
+                created = notify(user, Notification.Category.PROMOTION, data.validated_data["title"],
+                                 data.validated_data["message"], email=data.validated_data["send_email"])
+                sent, skipped = (sent + 1, skipped) if created else (sent, skipped + 1)
+        return Response({"sent": sent, "skipped": skipped}, status=201)
