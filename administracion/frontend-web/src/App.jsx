@@ -8,10 +8,12 @@ import Users from './pages/Users';
 import Games from './pages/Games';
 import GameForm from './pages/GameForm';
 import ResponsibleMonitor from './pages/ResponsibleMonitor';
+import Dashboard from './pages/Dashboard';
 import './App.css';
 
 // Cada entrada agrega una opción del menú lateral y su ruta.
 const SECTIONS = [
+  { path: '/', label: 'Dashboard', icon: '📊', element: <Dashboard /> },
   { path: '/usuarios', label: 'Usuarios', icon: '👥', element: <Users /> },
   { path: '/juegos', label: 'Juegos', icon: '🎰', element: <Games /> },
   { path: '/juego-responsable', label: 'Juego responsable', icon: '🛡️', element: <ResponsibleMonitor /> },
