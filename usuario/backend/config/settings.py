@@ -107,6 +107,8 @@ if os.getenv('DB_ENGINE') == 'sqlite':
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
+            # Servidor, reloj de ruleta y WebSockets escriben a la vez: IMMEDIATE evita "database is locked".
+            'OPTIONS': {'transaction_mode': 'IMMEDIATE', 'timeout': 20},
         }
     }
 
