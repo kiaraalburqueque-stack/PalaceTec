@@ -5,13 +5,17 @@ import { logout } from './services/adminService';
 import Loading from './components/Loading';
 import LoginPage from './pages/LoginPage';
 import Users from './pages/Users';
+import Games from './pages/Games';
+import GameForm from './pages/GameForm';
 import './App.css';
 
 // Cada entrada agrega una opción del menú lateral y su ruta.
 const SECTIONS = [
   { path: '/usuarios', label: 'Usuarios', icon: '👥', element: <Users /> },
+  { path: '/juegos', label: 'Juegos', icon: '🎰', element: <Games /> },
 ];
 const EXTRA_ROUTES = [
+  { path: '/juegos/nuevo', element: <GameForm /> },
 ];
 
 function Shell() {

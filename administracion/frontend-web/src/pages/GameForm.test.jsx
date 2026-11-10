@@ -1,0 +1,32 @@
+import { it, expect, vi, afterEach } from 'vitest';
+import { render, screen, cleanup } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
+import '@testing-library/jest-dom/vitest';
+import GameForm from './GameForm';
+import { createGame } from '../services/adminService';
+const navigate = vi.fn();
+vi.mock('../services/adminService', () => ({ createGame: vi.fn() }));
+vi.mock('react-router-dom', async (original) => ({ ...(await original()), useNavigate: () => navigate }));
+afterEach(() => { cleanup(); vi.clearAllMocks(); });
+it('HU43 crea el juego con portada y vuelve al catálogo', async () => {
+  createGame.mockResolvedValue({ id: 3, title: 'Ruleta Imperial' });
+  const user = userEvent.setup();
+  render(<MemoryRouter><GameForm /></MemoryRouter>);
+  await user.type(screen.getByLabelText('Título *'), 'Ruleta Imperial');
+  expect(screen.getByLabelText('Slug *')).toHaveValue('ruleta-imperial');
+  await user.upload(screen.getByLabelText(/Portada/), new File(['png'], 'portada.png', { type: 'image/png' }));
+  await user.click(screen.getByRole('button', { name: 'Crear juego' }));
+  const form = createGame.mock.calls[0][0];
+  expect(form.get('slug')).toBe('ruleta-imperial');
+  expect(form.get('cover').name).toBe('portada.png');
+  expect(navigate).toHaveBeenCalledWith('/juegos', { state: { created: 'Ruleta Imperial' } });
+});
+it('HU43 muestra el error de slug duplicado del servidor', async () => {
+  createGame.mockRejectedValue(Object.assign(new Error('Revisa los campos marcados.'), { data: { slug: ['Ya existe un juego con este slug.'] } }));
+  const user = userEvent.setup();
+  render(<MemoryRouter><GameForm /></MemoryRouter>);
+  await user.type(screen.getByLabelText('Título *'), 'Ruleta Europea');
+  await user.click(screen.getByRole('button', { name: 'Crear juego' }));
+  expect(await screen.findByText('Ya existe un juego con este slug.')).toBeInTheDocument();
+});
