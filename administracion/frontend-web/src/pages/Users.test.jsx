@@ -1,0 +1,30 @@
+import { it, expect, vi, afterEach } from 'vitest';
+import { render, screen, cleanup } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import '@testing-library/jest-dom/vitest';
+import Users from './Users';
+import { getUsers } from '../services/adminService';
+vi.mock('../services/adminService', () => ({ getUsers: vi.fn(), getSanctions: vi.fn().mockResolvedValue([]), setUserStatus: vi.fn() }));
+afterEach(() => { cleanup(); vi.clearAllMocks(); });
+const page = (count, results) => ({ count, results });
+const user = (id, extra = {}) => ({ id, email: `u${id}@palacetec.pe`, dni: `1000000${id}`, role: 'USER', status: 'ACTIVE', balance: '100.00', created_at: '2026-11-10T12:00:00Z', ...extra });
+it('HU41 muestra la tabla paginada y avanza de página', async () => {
+  getUsers.mockResolvedValue(page(12, [user(1), user(2)]));
+  const userEvents = userEvent.setup();
+  render(<Users />);
+  expect(await screen.findByText('u1@palacetec.pe')).toBeInTheDocument();
+  expect(screen.getByText('Página 1 de 2 · 12 registros')).toBeInTheDocument();
+  await userEvents.click(screen.getByRole('button', { name: 'Siguiente ›' }));
+  expect(getUsers).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2 }));
+});
+it('HU41 filtra por estado y rol y busca por correo o DNI', async () => {
+  getUsers.mockResolvedValue(page(0, []));
+  const userEvents = userEvent.setup();
+  render(<Users />);
+  await screen.findByText('No hay usuarios que coincidan.');
+  await userEvents.selectOptions(screen.getByLabelText('Filtrar por estado'), 'suspended');
+  await userEvents.selectOptions(screen.getByLabelText('Filtrar por rol'), 'admin');
+  expect(getUsers).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'suspended', role: 'admin', page: 1 }));
+  await userEvents.type(screen.getByLabelText('Buscar por correo o DNI'), '4567');
+  await vi.waitFor(() => expect(getUsers).toHaveBeenLastCalledWith(expect.objectContaining({ search: '4567' })), { timeout: 2000 });
+});
