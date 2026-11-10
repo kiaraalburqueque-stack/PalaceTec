@@ -50,7 +50,7 @@ class HU56SuspiciousLoginTests(APITestCase):
     def test_hu56_not_me_locks_account_and_revokes_sessions(self):
         self.login()
         self.login(ip="200.48.1.9")
-        token = re.search(r"token=([^\s\"]+)", mail.outbox[0].body).group(1)
+        token = re.search(r"/seguridad/no-fui-yo/([\w-]+)", mail.outbox[0].body).group(1)
         response = self.client.post("/api/v1/auth/not-me", {"token": token}, format="json")
         self.assertEqual(response.status_code, 200)
         self.user.refresh_from_db()
@@ -58,6 +58,11 @@ class HU56SuspiciousLoginTests(APITestCase):
         self.assertFalse(AuthSession.objects.filter(user=self.user, revoked_at__isnull=True).exists())
         self.assertEqual(self.login().status_code, 429)
         self.assertEqual(self.client.post("/api/v1/auth/not-me", {"token": "falso"}, format="json").status_code, 400)
+        # El enlace vence a las 24 horas del acceso.
+        from datetime import timedelta
+        from django.utils import timezone
+        LoginHistory.objects.filter(reported_at__isnull=False).update(reported_at=None, created_at=timezone.now() - timedelta(hours=25))
+        self.assertEqual(self.client.post("/api/v1/auth/not-me", {"token": token}, format="json").status_code, 400)
 
     def test_hu56_security_preference_off_skips_alert(self):
         from notifications.services import preferences

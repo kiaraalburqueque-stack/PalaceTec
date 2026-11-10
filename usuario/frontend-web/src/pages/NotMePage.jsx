@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { reportNotMe } from '../services/authService';
 import { endSession } from '../services/api';
 
 // HU56: destino del botón "No fui yo" del correo de alerta de acceso.
 export default function NotMePage() {
-  const [params] = useSearchParams();
-  const token = params.get('token') || '';
+  const { token = '' } = useParams();
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);

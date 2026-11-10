@@ -67,6 +67,7 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/seguridad/no-fui-yo" element={<NotMePage />} />
+            <Route path="/seguridad/no-fui-yo/:token" element={<NotMePage />} />
             <Route path="/perfil" element={<ProfilePage />} />
             <Route path="/perfil/seguridad" element={<PasswordPage />} />
             <Route path="/perfil/notificaciones" element={<NotificationSettings />} />

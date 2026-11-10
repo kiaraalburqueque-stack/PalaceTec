@@ -1,8 +1,8 @@
 """HU56: alerta por inicio de sesión desde una IP o un dispositivo nuevo."""
+import secrets
 from datetime import timedelta
 
 from django.conf import settings
-from django.core import signing
 from django.core.mail import send_mail
 from django.db import transaction
 from django.utils import timezone
@@ -13,10 +13,9 @@ from rest_framework.views import APIView
 
 from .authentication import enforce_csrf
 from .models import LoginHistory, User
-from .recovery import revoke_all_sessions
+from .recovery import revoke_all_sessions, token_hash
 from .throttles import LoginRateThrottle
 
-SIGNING_SALT = "palacetec.not-me"
 LINK_MAX_AGE = timedelta(hours=24)
 LOCK_DURATION = timedelta(hours=24)
 
@@ -56,8 +55,9 @@ def alert_new_login(user, entry):
         return
     when = timezone.localtime(entry.created_at).strftime("%d/%m/%Y %H:%M")
     device = describe_device(entry.user_agent)
-    token = signing.dumps({"u": user.pk, "h": entry.pk, "v": user.auth_version}, salt=SIGNING_SALT)
-    link = f"{settings.FRONTEND_URL}/seguridad/no-fui-yo?token={token}"
+    # Token aleatorio corto en la ruta (sin "?token="): el enlace no se corta en la consola de correo.
+    token = secrets.token_urlsafe(24)
+    link = f"{settings.FRONTEND_URL}/seguridad/no-fui-yo/{token}"
     notify(user, Notification.Category.SECURITY, "Nuevo acceso a tu cuenta",
            f"Iniciaste sesión el {when} desde {device} (IP {entry.ip_address or 'desconocida'}). Si no fuiste tú, cambia tu contraseña.")
     body = (f"Hola {user.nickname or user.email},\n\n"
@@ -65,14 +65,14 @@ def alert_new_login(user, entry):
             f"  Fecha: {when} (hora de Lima)\n  Dispositivo: {device}\n  IP: {entry.ip_address or 'desconocida'}\n\n"
             f"Si fuiste tú, no necesitas hacer nada.\n\n"
             f"Si NO fuiste tú, pulsa \"No fui yo\" para bloquear tu cuenta temporalmente y cerrar todas las sesiones:\n\n"
-            f"  NO FUI YO → {link}\n\nDespués restablece tu contraseña desde la pantalla de inicio de sesión.\n\n— PalaceTec")
+            f"NO FUI YO:\n{link}\n\nDespués restablece tu contraseña desde la pantalla de inicio de sesión.\n\n— PalaceTec")
     html = (f"<p>Hola {user.nickname or user.email},</p><p>Detectamos un nuevo acceso a tu cuenta de PalaceTec:</p>"
             f"<ul><li>Fecha: {when} (hora de Lima)</li><li>Dispositivo: {device}</li><li>IP: {entry.ip_address or 'desconocida'}</li></ul>"
             f"<p>Si no fuiste tú:</p><p><a href=\"{link}\" style=\"background:#bb2737;color:#fff;padding:10px 18px;"
             f"border-radius:6px;text-decoration:none;font-weight:bold\">No fui yo</a></p>")
     transaction.on_commit(lambda: send_mail("PalaceTec · Nuevo acceso a tu cuenta", body, settings.DEFAULT_FROM_EMAIL,
                                             [user.email], html_message=html, fail_silently=True))
-    LoginHistory.objects.filter(pk=entry.pk).update(alert_sent=True)
+    LoginHistory.objects.filter(pk=entry.pk).update(alert_sent=True, report_token_hash=token_hash(token))
 
 
 class NotMeInput(serializers.Serializer):
@@ -89,16 +89,14 @@ class NotMeView(APIView):
         enforce_csrf(request)
         data = NotMeInput(data=request.data)
         data.is_valid(raise_exception=True)
-        try:
-            payload = signing.loads(data.validated_data["token"], salt=SIGNING_SALT, max_age=LINK_MAX_AGE)
-        except signing.BadSignature:
-            return Response({"code": "invalid_token", "detail": "El enlace no es válido o venció."}, status=400)
+        invalid = Response({"code": "invalid_token", "detail": "El enlace no es válido o venció."}, status=400)
         with transaction.atomic():
-            user = User.objects.select_for_update().filter(pk=payload.get("u")).first()
-            entry = LoginHistory.objects.select_for_update().filter(pk=payload.get("h"), user=user).first()
-            if user is None or entry is None:
-                return Response({"code": "invalid_token", "detail": "El enlace no es válido o venció."}, status=400)
+            entry = (LoginHistory.objects.select_for_update()
+                     .filter(report_token_hash=token_hash(data.validated_data["token"])).first())
             now = timezone.now()
+            if entry is None or entry.created_at + LINK_MAX_AGE <= now:
+                return invalid
+            user = User.objects.select_for_update().get(pk=entry.user_id)
             if entry.reported_at is None:
                 entry.reported_at = now
                 entry.save(update_fields=["reported_at"])

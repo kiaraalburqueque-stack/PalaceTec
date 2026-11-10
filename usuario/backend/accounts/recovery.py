@@ -60,7 +60,8 @@ class ForgotPasswordView(APIView):
         email = User.objects.normalize_email(data.validated_data["email"])
         user = User.objects.filter(email=email, is_active=True).first()
         if user is not None:
-            token = secrets.token_urlsafe(32)
+            # 24 bytes = 32 caracteres: el enlace cabe en una línea del correo y se copia completo desde la consola.
+            token = secrets.token_urlsafe(24)
             with transaction.atomic():
                 # Un enlace nuevo invalida los anteriores que no se usaron.
                 PasswordResetToken.objects.filter(user=user, used_at__isnull=True).update(used_at=timezone.now())

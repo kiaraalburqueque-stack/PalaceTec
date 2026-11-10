@@ -1,7 +1,7 @@
 import { it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import '@testing-library/jest-dom/vitest';
 import NotMePage from './NotMePage';
 import { reportNotMe } from '../services/authService';
@@ -11,7 +11,7 @@ afterEach(() => { cleanup(); vi.clearAllMocks(); });
 it('HU56 bloquea la cuenta con el token del correo', async () => {
   reportNotMe.mockResolvedValue({ detail: 'Bloqueamos tu cuenta temporalmente.' });
   const user = userEvent.setup();
-  render(<MemoryRouter initialEntries={['/seguridad/no-fui-yo?token=firmado']}><NotMePage /></MemoryRouter>);
+  render(<MemoryRouter initialEntries={['/seguridad/no-fui-yo/firmado']}><Routes><Route path="/seguridad/no-fui-yo/:token" element={<NotMePage />} /></Routes></MemoryRouter>);
   await user.click(screen.getByRole('button', { name: /No fui yo/ }));
   expect(reportNotMe).toHaveBeenCalledWith('firmado');
   expect(await screen.findByRole('status')).toHaveTextContent('Bloqueamos tu cuenta');
