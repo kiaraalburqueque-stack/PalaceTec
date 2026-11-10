@@ -86,8 +86,8 @@ class AdminGameSerializer(serializers.ModelSerializer):
     class Meta:
         model = Game
         fields = ["id", "slug", "title", "category", "min_bet", "max_bet", "rtp", "is_published",
-                  "cover", "cover_url", "rooms", "created_at"]
-        read_only_fields = ["id", "created_at"]
+                  "cover", "cover_url", "rooms", "created_at", "deleted_at"]
+        read_only_fields = ["id", "created_at", "deleted_at"]
 
     def get_cover_url(self, game):
         if not game.cover:
@@ -107,6 +107,8 @@ class AdminGameSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
+        if self.instance and self.instance.deleted_at and attrs.get("is_published"):
+            raise serializers.ValidationError({"is_published": "El juego está desactivado. Restáuralo antes de publicarlo."})
         low = attrs.get("min_bet", getattr(self.instance, "min_bet", None))
         high = attrs.get("max_bet", getattr(self.instance, "max_bet", None))
         if low is not None and high is not None and low > high:

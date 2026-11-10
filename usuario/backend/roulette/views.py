@@ -64,7 +64,7 @@ class BetView(AuthenticatedView):
 
 class GameListView(AuthenticatedView):
     def get(self, request):
-        games = Game.objects.filter(is_published=True, rooms__is_active=True).annotate(
+        games = Game.objects.filter(is_published=True, deleted_at__isnull=True, rooms__is_active=True).annotate(
             room_min=Min("rooms__min_bet", filter=Q(rooms__is_active=True)),
             room_max=Max("rooms__max_bet", filter=Q(rooms__is_active=True))).order_by("id")
         return Response([{"id": game.pk, "slug": game.slug, "title": game.title,

@@ -22,6 +22,8 @@ class Game(models.Model):
     rtp = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("97.30"))
     cover = models.FileField(upload_to="games/covers/", blank=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
+    # HU45: borrado lógico; las rondas y apuestas pasadas se conservan (PROTECT).
+    deleted_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         constraints = [
@@ -32,7 +34,8 @@ class Game(models.Model):
 
 class RoomQuerySet(models.QuerySet):
     def available(self):
-        return self.filter(is_active=True).filter(Q(game__isnull=True) | Q(game__is_published=True))
+        return self.filter(is_active=True).filter(
+            Q(game__isnull=True) | Q(game__is_published=True, game__deleted_at__isnull=True))
 
 
 class Room(models.Model):

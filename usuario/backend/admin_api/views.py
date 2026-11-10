@@ -123,3 +123,28 @@ class AdminGameDetailView(AdminView):
                     after_commit(f"room.{room.pk}", "room:limits", {
                         "room_id": room.pk, "min_bet": format(room.min_bet, ".2f"), "max_bet": format(room.max_bet, ".2f")})
         return Response(AdminGameSerializer(game, context={"request": request}).data)
+
+
+class AdminGameSoftDeleteView(AdminView):
+    """HU45: desactiva el juego sin borrar su historial."""
+
+    def patch(self, request, game_id):
+        with transaction.atomic():
+            game = get_object_or_404(Game.objects.select_for_update(), pk=game_id)
+            if game.deleted_at is None:
+                game.is_published = False
+                game.deleted_at = timezone.now()
+                game.save(update_fields=["is_published", "deleted_at"])
+                for room_id in game.rooms.values_list("id", flat=True):
+                    after_commit(f"room.{room_id}", "room:closed", {"room_id": room_id, "reason": "game_deactivated"})
+        return Response(AdminGameSerializer(game, context={"request": request}).data)
+
+
+class AdminGameRestoreView(AdminView):
+    def patch(self, request, game_id):
+        with transaction.atomic():
+            game = get_object_or_404(Game.objects.select_for_update(), pk=game_id)
+            game.deleted_at = None
+            game.is_published = True
+            game.save(update_fields=["is_published", "deleted_at"])
+        return Response(AdminGameSerializer(game, context={"request": request}).data)
