@@ -120,6 +120,11 @@ class RouletteConsumer(AsyncJsonWebsocketConsumer):
             await self.send_json({"event": "error", "data": {"detail": "Evento no permitido. Envia apuestas por HTTP."}})
 
     async def push_event(self, message):
+        if message["event"] == "FORCE_DISCONNECT":
+            # HU42: el administrador suspendió la cuenta; se avisa y se corta la conexión.
+            await self.send_json({"event": "FORCE_DISCONNECT", "data": message["data"]})
+            await self.close(code=4403)
+            return
         if message["event"] == "session:revoked" or time.time() >= self.token_expiry or not await self.refresh_connection():
             await self.close(code=4401)
             return

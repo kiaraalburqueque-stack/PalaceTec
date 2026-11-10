@@ -1,8 +1,14 @@
+from django.db import transaction
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from rest_framework.response import Response
 
-from accounts.models import User
+from accounts.models import AuthSession, User
+from realtime.events import after_commit
 from .base import AdminPagination, AdminView
-from .serializers import AdminUserSerializer, UserListQuery
+from .models import SanctionLog
+from .serializers import AdminUserSerializer, UserListQuery, UserStatusInput
 
 
 class AdminUserListView(AdminView):
@@ -30,3 +36,48 @@ class AdminUserListView(AdminView):
         # LIMIT/OFFSET: la paginación solo trae las filas de la página pedida.
         page = pagination.paginate_queryset(users, request, view=self)
         return pagination.get_paginated_response(AdminUserSerializer(page, many=True).data)
+
+
+class AdminUserStatusView(AdminView):
+    """HU42: suspende o activa una cuenta indicando el motivo."""
+
+    def patch(self, request, user_id):
+        data = UserStatusInput(data=request.data)
+        data.is_valid(raise_exception=True)
+        if user_id == request.user.pk:
+            return Response({"detail": "No puedes cambiar el estado de tu propia cuenta."}, status=400)
+        with transaction.atomic():
+            user = get_object_or_404(User.objects.select_for_update(), pk=user_id)
+            active = data.validated_data["is_active"]
+            if user.is_superuser and not request.user.is_superuser:
+                return Response({"detail": "Solo un superusuario puede sancionar a otro superusuario."}, status=403)
+            if user.is_active != active:
+                user.is_active = active
+                fields = ["is_active"]
+                if not active:
+                    # Invalida todos los JWT emitidos y revoca las sesiones abiertas.
+                    user.auth_version += 1
+                    fields.append("auth_version")
+                    sessions = list(AuthSession.objects.filter(user=user, revoked_at__isnull=True).values_list("jti", flat=True))
+                    AuthSession.objects.filter(user=user, revoked_at__isnull=True).update(revoked_at=timezone.now())
+                    after_commit(f"user.{user.pk}", "FORCE_DISCONNECT", {"reason": "account_suspended"})
+                    for jti in sessions:
+                        after_commit(f"session.{jti}", "session:revoked", {})
+                else:
+                    user.failed_attempts = 0
+                    user.locked_until = None
+                    fields += ["failed_attempts", "locked_until"]
+                user.save(update_fields=fields)
+            sanction = SanctionLog.objects.create(admin=request.user, user=user, reason=data.validated_data["reason"],
+                action=SanctionLog.Action.ACTIVATE if active else SanctionLog.Action.SUSPEND)
+        return Response({**AdminUserSerializer(User.objects.select_related("wallet").get(pk=user.pk)).data,
+                         "sanction": {"id": sanction.pk, "action": sanction.action, "reason": sanction.reason,
+                                      "created_at": sanction.created_at.isoformat()}})
+
+
+class AdminUserSanctionsView(AdminView):
+    def get(self, request, user_id):
+        get_object_or_404(User, pk=user_id)
+        return Response([{"id": s.pk, "action": s.action, "reason": s.reason, "admin": s.admin.email,
+                          "created_at": s.created_at.isoformat()}
+                         for s in SanctionLog.objects.filter(user_id=user_id).select_related("admin")[:50]])

@@ -53,7 +53,13 @@ class LoginView(APIView):
             if user.locked_until:
                 user.failed_attempts = 0
                 user.locked_until = None
-            if not user.check_password(data["password"]) or not user.is_active:
+            password_ok = user.check_password(data["password"])
+            if password_ok and not user.is_active:
+                # HU42: cuenta suspendida por un administrador.
+                return Response({"code": "account_suspended",
+                                 "detail": "Tu cuenta está suspendida. Comunícate con soporte."},
+                                status=status.HTTP_403_FORBIDDEN)
+            if not password_ok:
                 user.failed_attempts += 1
                 if user.failed_attempts >= 5:
                     user.locked_until = now + timedelta(minutes=15)
