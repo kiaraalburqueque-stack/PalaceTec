@@ -1,6 +1,7 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { connectRoom, reconnectDelay } from './roomSocket';
 vi.mock('./api', () => ({ API_BASE_URL: 'http://localhost:8000', refreshSession: vi.fn().mockResolvedValue({}), endSession: vi.fn() }));
+vi.mock('./notificationService', () => ({ forceDisconnect: vi.fn() }));
 afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
 it('HU59 usa retroceso exponencial con tope de 30 segundos', () => {
   const fixed = () => 1;
@@ -24,12 +25,11 @@ it('HU59 se reconecta solo y pide recuperar la ronda y sus apuestas', () => {
   stop();
 });
 it('HU42 cierra la sesión cuando el administrador suspende la cuenta', async () => {
-  const { endSession } = await import('./api');
+  const { forceDisconnect } = await import('./notificationService');
   let socket;
   vi.stubGlobal('WebSocket', class { constructor() { this.close = vi.fn(); socket = this; } });
   const stop = connectRoom(1, vi.fn(), vi.fn());
   socket.onmessage({ data: JSON.stringify({ event: 'FORCE_DISCONNECT', data: {} }) });
-  expect(endSession).toHaveBeenCalled();
-  expect(sessionStorage.getItem('palacetec:notice')).toMatch(/suspendida/);
+  expect(forceDisconnect).toHaveBeenCalled();
   stop();
 });

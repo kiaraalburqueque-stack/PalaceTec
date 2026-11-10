@@ -1,4 +1,5 @@
 import { API_BASE_URL, refreshSession, endSession } from './api';
+import { forceDisconnect } from './notificationService';
 
 // HU59: retroceso exponencial (1 s, 2 s, 4 s… hasta 30 s) con una pequeña variación aleatoria.
 export function reconnectDelay(attempt, random = Math.random) {
@@ -31,11 +32,7 @@ export function connectRoom(roomId, onEvent, onStatus) {
       try {
         const message = JSON.parse(data);
         if (message.event === 'session:revoked') { endSession(); return; }
-        if (message.event === 'FORCE_DISCONNECT') {
-          stopped = true;
-          sessionStorage.setItem('palacetec:notice', 'Tu cuenta fue suspendida por un administrador. Comunícate con soporte.');
-          endSession(); return;
-        }
+        if (message.event === 'FORCE_DISCONNECT') { stopped = true; forceDisconnect(); return; }
         if (message.event === 'room:state') onStatus('En vivo');
         if (message.event === 'RECONNECT_SUCCESS') { message.data = { ...message.data, reconnected: connectedBefore }; connectedBefore = true; }
         onEvent(message);
@@ -45,7 +42,7 @@ export function connectRoom(roomId, onEvent, onStatus) {
     socket.onclose = ({ code }) => {
       if (stopped) return;
       if (code === 4401) { onStatus('Renovando sesión'); void refreshSession().catch(() => {}); return; }
-      if (code === 4403) { onStatus('Acceso denegado'); return; }
+      if (code === 4403) { onStatus('Acceso denegado'); forceDisconnect(); return; }
       if (code === 4404) { onStatus('Sala no disponible o acceso denegado'); return; }
       connectedBefore = true;
       const delay = reconnectDelay(attempt);

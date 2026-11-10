@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { connectRoom } from './roomSocket';
 import { refreshSession } from './api';
 vi.mock('./api', () => ({ API_BASE_URL: 'http://localhost:8000', refreshSession: vi.fn().mockResolvedValue({}), endSession: vi.fn() }));
+vi.mock('./notificationService', () => ({ forceDisconnect: vi.fn() }));
 afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
 describe('HU10 HU16 conexión en vivo', () => {
   it('sincroniza, entrega eventos y cancela reconexiones al salir', () => {

@@ -10,6 +10,7 @@ export function forceDisconnect() {
   // HU42: el administrador suspendió la cuenta; se cierra la sesión local de inmediato.
   sessionStorage.setItem('palacetec:notice', 'Tu cuenta fue suspendida por un administrador. Comunícate con soporte.');
   endSession();
+  if (window.location.pathname !== '/login') window.location.assign('/login');
 }
 
 // HU57: canal personal en tiempo real. Se reconecta con retroceso exponencial.
