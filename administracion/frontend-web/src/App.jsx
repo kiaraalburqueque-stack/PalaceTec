@@ -11,6 +11,7 @@ import ResponsibleMonitor from './pages/ResponsibleMonitor';
 import Dashboard from './pages/Dashboard';
 import TransactionAudit from './pages/TransactionAudit';
 import AuditLogs from './pages/AuditLogs';
+import Promotions from './pages/Promotions';
 import './App.css';
 
 // Cada entrada agrega una opción del menú lateral y su ruta.
@@ -21,6 +22,7 @@ const SECTIONS = [
   { path: '/juego-responsable', label: 'Juego responsable', icon: '🛡️', element: <ResponsibleMonitor /> },
   { path: '/auditoria/transacciones', label: 'Transacciones', icon: '💳', element: <TransactionAudit /> },
   { path: '/auditoria/registro', label: 'Registro de auditoría', icon: '📜', element: <AuditLogs /> },
+  { path: '/promociones', label: 'Promociones', icon: '🎁', element: <Promotions /> },
 ];
 const EXTRA_ROUTES = [
   { path: '/juegos/nuevo', element: <GameForm /> },
