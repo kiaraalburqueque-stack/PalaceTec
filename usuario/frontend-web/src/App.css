@@ -947,3 +947,6 @@ a { text-decoration: none; }
 .requirements li.ok { color: #5fe0a2; }
 .requirements li.ok::marker { content: '✓  '; }
 .link-as-button { display: inline-grid; place-items: center; padding: 0 22px; color: #17120d !important; }
+.danger-button { background: #d9443b !important; color: #fff !important; margin: 8px 0 14px; }
+.danger-button:hover:not(:disabled) { background: #ef5a50 !important; }
+.security-alert { border-color: #7a3430; }

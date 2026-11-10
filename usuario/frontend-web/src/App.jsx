@@ -20,6 +20,7 @@ import BlackjackPage from './pages/BlackjackPage';
 import SportsPage from './pages/SportsPage';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import NotMePage from './pages/NotMePage';
 
 import './App.css';
 
@@ -64,6 +65,7 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
+            <Route path="/seguridad/no-fui-yo" element={<NotMePage />} />
             <Route path="/perfil" element={<ProfilePage />} />
             <Route path="/perfil/seguridad" element={<PasswordPage />} />
             <Route path="/juego-responsable" element={<ResponsiblePage />} />
