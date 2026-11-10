@@ -25,7 +25,8 @@ def monitored_users(now=None):
     now = now or timezone.now()
     since = now - RISK_WINDOW
     spent_today = DailySpending.objects.filter(user=OuterRef("pk"), date=LimitService.day(now)).values("amount")[:1]
-    return (User.objects
+    # Solo jugadores: las cuentas administrativas no se monitorean.
+    return (User.objects.filter(is_staff=False, is_superuser=False)
             .select_related("daily_limit")
             .annotate(
                 risk_alerts=Count("riskincident", filter=Q(riskincident__created_at__gte=since), distinct=True),
@@ -87,7 +88,7 @@ class ResponsibleMonitorView(AdminView):
         response = pagination.get_paginated_response([row(user, now) for user in page])
         response.data["summary"] = {
             "limit_active": monitored_users(now).filter(daily_limit__amount__isnull=False).count(),
-            "self_excluded": User.objects.filter(self_excluded_until__gt=now).count(),
+            "self_excluded": monitored_users(now).filter(self_excluded_until__gt=now).count(),
             "risk_alert": monitored_users(now).filter(Q(risk_alerts__gt=0) | Q(pause_until__gt=now)).count(),
         }
         return response
