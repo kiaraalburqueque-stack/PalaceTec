@@ -986,7 +986,7 @@ a { text-decoration: none; }
 .switch:disabled { opacity: .6; }
 
 /* Sprint 3 · HU59 reconexión */
-.reconnect-banner, .recovered-banner { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; font-size: 13px; position: sticky; top: 8px; z-index: 20; }
+.reconnect-banner, .recovered-banner { position: fixed; top: 92px; left: 50%; transform: translateX(-50%); width: min(640px, calc(100vw - 32px)); display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; font-size: 13px; z-index: 60; box-shadow: 0 12px 30px #000a; }
 .reconnect-banner { background: #3a2a10; border: 1px solid #b7862c; color: #ffd98a; }
 .recovered-banner { background: #10301f; border: 1px solid #2f8a5a; color: #a8f0c8; justify-content: space-between; }
 .spinner { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #ffd98a55; border-top-color: #ffd98a; animation: spin 0.8s linear infinite; flex: none; }
@@ -1009,7 +1009,7 @@ a { text-decoration: none; }
 .payout-table strong { color: #5fe0a2; }
 .rules-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
 .rules-actions .place-bet-button { padding: 0 24px; }
-.close-modal-button { background: #232a35; color: #e6ebf3; border: 1px solid #3a4351; border-radius: 8px; padding: 0 18px; min-height: 44px; cursor: pointer; }
+.rules-actions .close-modal-button { background: #232a35; color: #e6ebf3; border: 1px solid #3a4351; border-radius: 8px; padding: 0 18px; min-height: 44px; height: 44px; cursor: pointer; }
 @media (max-width: 560px) { .rules-stats { grid-template-columns: 1fr; } }
 
 /* Sprint 3 · HU43 catálogo con portada y categoría */
