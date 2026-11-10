@@ -19,6 +19,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from accounts.views import AdminStatusView
+from notifications.views import NotificationListView
 from roulette.history import BetDetailView, BetHistoryView, StatsSummaryView
 
 urlpatterns = [
@@ -31,6 +32,8 @@ urlpatterns = [
     path('api/v1/admin/status', AdminStatusView.as_view(), name='admin-status'),
     path('api/v1/admin/', include('admin_api.urls')),
     path('api/v1/auth/', include('accounts.urls')),
+    path('api/v1/notifications', NotificationListView.as_view(), name='notifications'),
+    path('api/v1/notifications/', include('notifications.urls')),
     path('api/v1/wallet/', include('wallet.urls')),
     path('api/v1/users/', include('accounts.profile_urls')),
     path('api/v1/', include('roulette.urls')),
