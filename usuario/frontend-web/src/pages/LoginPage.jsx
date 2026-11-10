@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { login, getUserProfile } from '../services/authService';
 import useUser from '../hooks/useUser';
 
@@ -68,6 +68,7 @@ export default function LoginPage() {
           />
 
           {error && <p role="alert">{error}</p>}
+          <Link to="/forgot-password" className="forgot-link">¿Olvidaste tu contraseña?</Link>
 
           <button
             type="submit"
