@@ -72,3 +72,15 @@ class AuthSession(models.Model):
     expires_at = models.DateTimeField(db_index=True)
     refresh_expires_at = models.DateTimeField(null=True, blank=True)
     revoked_at = models.DateTimeField(null=True, blank=True)
+
+
+class PasswordResetToken(models.Model):
+    """HU55: solo se guarda el hash SHA-256 del token enviado por correo."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="password_reset_tokens")
+    token_hash = models.CharField(max_length=64, unique=True)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "password_reset_tokens"

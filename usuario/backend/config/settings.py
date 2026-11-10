@@ -161,6 +161,10 @@ MAILERS = {
     },
 }
 
+# Enlaces de los correos (HU55 y HU56) apuntan al frontend del jugador.
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+DEFAULT_FROM_EMAIL = 'PalaceTec <no-reply@palacetec.local>'
+
 # 5173: frontend del jugador; 5174: panel React de administración.
 CORS_ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:5174"]
 CORS_ALLOW_CREDENTIALS = True
