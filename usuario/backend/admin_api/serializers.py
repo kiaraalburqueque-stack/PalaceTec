@@ -86,7 +86,7 @@ class AdminGameSerializer(serializers.ModelSerializer):
     class Meta:
         model = Game
         fields = ["id", "slug", "title", "category", "min_bet", "max_bet", "rtp", "is_published",
-                  "cover", "cover_url", "rooms", "created_at", "deleted_at"]
+                  "cover", "cover_url", "rooms", "rules", "payout_table", "created_at", "deleted_at"]
         read_only_fields = ["id", "created_at", "deleted_at"]
 
     def get_cover_url(self, game):
@@ -97,6 +97,20 @@ class AdminGameSerializer(serializers.ModelSerializer):
 
     def get_rooms(self, game):
         return game.rooms.count()
+
+    def validate_payout_table(self, value):
+        if not isinstance(value, list) or len(value) > 30 or not all(
+                isinstance(row, dict) and str(row.get("bet", "")).strip() and str(row.get("pays", "")).strip() for row in value):
+            raise serializers.ValidationError("Cada fila de la tabla de pagos necesita 'bet' y 'pays'.")
+        return [{key: str(row.get(key, ""))[:80] for key in ("bet", "description", "pays", "probability")} for row in value]
+
+    def create(self, validated_data):
+        from roulette.rules import EUROPEAN_ROULETTE_PAYOUTS, EUROPEAN_ROULETTE_RULES
+        if validated_data.get("category", Game.Category.RULETA) == Game.Category.RULETA:
+            validated_data.setdefault("rules", EUROPEAN_ROULETTE_RULES)
+            if not validated_data.get("payout_table"):
+                validated_data["payout_table"] = EUROPEAN_ROULETTE_PAYOUTS
+        return super().create(validated_data)
 
     def validate_slug(self, value):
         duplicated = Game.objects.filter(slug=value)

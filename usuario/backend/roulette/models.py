@@ -24,6 +24,9 @@ class Game(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     # HU45: borrado lógico; las rondas y apuestas pasadas se conservan (PROTECT).
     deleted_at = models.DateTimeField(null=True, blank=True)
+    # HU60: reglas y tabla de pagos [{bet, description, pays, probability}].
+    rules = models.TextField(blank=True)
+    payout_table = models.JSONField(default=list, blank=True)
 
     class Meta:
         constraints = [
