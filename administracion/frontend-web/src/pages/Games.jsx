@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { getAdminGames } from '../services/adminService';
 import Loading from '../components/Loading';
+import GameEditModal from '../components/GameEditModal';
 import { categoryLabel } from '../utils/games';
 import { credits } from '../utils/format';
 
 export default function Games() {
   const [games, setGames] = useState(null);
   const [error, setError] = useState('');
+  const [editing, setEditing] = useState(null);
   const location = useLocation();
   const [notice, setNotice] = useState(location.state?.created ? `Se creó ${location.state.created}. Ya aparece en el catálogo del jugador.` : '');
   const [version, setVersion] = useState(0);
@@ -31,8 +33,10 @@ export default function Games() {
         <p className="muted">/{game.slug} · {categoryLabel(game.category)} · {game.rooms} sala{game.rooms === 1 ? '' : 's'}</p>
         <dl className="game-params"><div><dt>Mínima</dt><dd>{credits(game.min_bet)}</dd></div><div><dt>Máxima</dt><dd>{credits(game.max_bet)}</dd></div><div><dt>RTP</dt><dd>{game.rtp}%</dd></div></dl>
         <div className="actions">
+          {!game.deleted_at && <button type="button" className="secondary small" onClick={() => setEditing(game)}>Editar parámetros</button>}
         </div>
       </div>
     </article>)}</div>}
+    {editing && <GameEditModal game={editing} onClose={() => setEditing(null)} onSaved={(game) => { setEditing(null); refresh(`Se actualizaron los parámetros de ${game.title}. Las salas activas ya usan los nuevos límites.`); }} />}
   </section>;
 }
