@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import monitor, views
+from . import kpis, monitor, views
 
 urlpatterns = [
     path("users", views.AdminUserListView.as_view(), name="admin-users"),
@@ -11,4 +11,5 @@ urlpatterns = [
     path("games/<int:game_id>/soft-delete", views.AdminGameSoftDeleteView.as_view(), name="admin-game-soft-delete"),
     path("games/<int:game_id>/restore", views.AdminGameRestoreView.as_view(), name="admin-game-restore"),
     path("responsible-gaming/users", monitor.ResponsibleMonitorView.as_view(), name="admin-responsible-users"),
+    path("kpis", kpis.KpiView.as_view(), name="admin-kpis"),
 ]
