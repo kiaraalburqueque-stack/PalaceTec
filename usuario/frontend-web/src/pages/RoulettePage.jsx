@@ -36,6 +36,7 @@ function RoomSession({ roomId, user }) {
   const [prize, setPrize] = useState(null);
   const [outcome, setOutcome] = useState(null);
   const [confirmedResult, setConfirmedResult] = useState(null);
+  const [limitsNotice, setLimitsNotice] = useState('');
   const seenResults = useRef(new Set());
   const syncRef = useRef(() => {});
   const handleEvent = useCallback(({ event, data }) => {
@@ -50,6 +51,9 @@ function RoomSession({ roomId, user }) {
     }
     if (event === 'round:result' && !seenResults.current.has(data.round_id)) { seenResults.current.add(data.round_id); setConfirmedResult(data); setResult(data.winning_number); setOutcome({ roundId: data.round_id, number: data.winning_number }); void syncRef.current(); }
     if (event === 'round:winnings') { setPrize(data); void syncRef.current(); }
+    // HU44 y HU45: el administrador cambió los límites o desactivó el juego de esta sala.
+    if (event === 'room:limits') { setState((old) => old && { ...old, min_bet: data.min_bet, max_bet: data.max_bet }); setLimitsNotice(`El casino actualizó los límites de la mesa: mínimo ${data.min_bet} CRD, máximo ${data.max_bet} CRD.`); }
+    if (event === 'room:closed') setError('Este juego fue desactivado por el casino. Elige otra sala.');
     if (event === 'RECONNECT_SUCCESS') {
       setState(data.state); setOffset(Date.parse(data.state.server_time) - Date.now());
       void syncRef.current();
@@ -105,6 +109,7 @@ function RoomSession({ roomId, user }) {
       {paused && <p role="status">Tu pausa está activa. No puedes apostar hasta {new Date(pauseUntil).toLocaleTimeString('es-PE', { timeZone: 'America/Lima' })} (Lima).</p>}
       {dailyLimit?.configured && Number(dailyLimit.remaining) < Number(state?.min_bet || 10) && <p role="status">Tu cupo diario no alcanza para la apuesta mínima.</p>}
       {state && <p>Mínimo por apuesta: {state.min_bet} CRD · Máximo acumulado: {state.max_bet} CRD</p>}
+      {limitsNotice && <p role="status" className="limits-notice">{limitsNotice}</p>}
       {result !== null && <h3>Último número ganador: {result}</h3>}
     </section>
     <RouletteWheel key={`wheel-${roomId}`} spinning={round?.status === 'CLOSED' || (round?.status === 'OPEN' && seconds === 0)} outcome={outcome} />
