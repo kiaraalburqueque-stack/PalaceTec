@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
-import { getKpis } from '../services/adminService';
+import { getFinancialFlow, getKpis } from '../services/adminService';
 import KpiCard from '../components/KpiCard';
+import FinancialChart from '../components/FinancialChart';
 import Loading from '../components/Loading';
 import { credits, dateTime } from '../utils/format';
 
 // HU47 y HU48: indicadores del día y flujo financiero del último mes.
 export default function Dashboard() {
   const [kpis, setKpis] = useState(null);
+  const [flow, setFlow] = useState(null);
   const [error, setError] = useState('');
-  const load = useCallback(() => getKpis()
-    .then((k) => { setKpis(k); setError(''); }).catch((err) => setError(err.message)), []);
+  const load = useCallback(() => Promise.all([getKpis(), getFinancialFlow(30)])
+    .then(([k, f]) => { setKpis(k); setFlow(f); setError(''); }).catch((err) => setError(err.message)), []);
   useEffect(() => {
     void load();
     const timer = setInterval(load, 60000);
@@ -26,5 +28,6 @@ export default function Dashboard() {
       <KpiCard label="Créditos pagados hoy" value={credits(kpis.paid_today)} change={kpis.paid_change_pct} previous={credits(kpis.paid_yesterday)} invert />
       <KpiCard label="Ganancia simulada" value={credits(kpis.profit_today)} change={kpis.profit_change_pct} previous={credits(kpis.profit_yesterday)} />
     </div>}
+    <FinancialChart data={flow} />
   </section>;
 }
