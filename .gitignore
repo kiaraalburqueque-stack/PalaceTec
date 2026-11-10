@@ -11,3 +11,4 @@ playwright-report/
 .idea/
 target/
 usuario/backend/media/
+dump.rdb
