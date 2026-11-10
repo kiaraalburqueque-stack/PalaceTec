@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getUsers } from '../services/adminService';
 import Pagination from '../components/Pagination';
 import Loading from '../components/Loading';
+import SanctionModal from '../components/SanctionModal';
 import { credits, date } from '../utils/format';
 
 // HU41: tabla paginada (10 por página) con filtros por estado y rol, búsqueda y orden.
@@ -14,12 +15,14 @@ export default function Users() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [target, setTarget] = useState(null);
+  const [version, setVersion] = useState(0);
   useEffect(() => {
     let active = true;
     getUsers({ ...filters, page }).then((value) => { if (active) { setData(value); setError(''); } })
       .catch((err) => { if (active) setError(err.message); }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [filters, page]);
+  }, [filters, page, version]);
   // La búsqueda espera 350 ms después de la última tecla para no consultar en cada letra.
   useEffect(() => {
     if (search === filters.search) return undefined;
@@ -42,15 +45,18 @@ export default function Users() {
     {error && <p role="alert">{error}</p>}
     {!data && !error && <Loading />}
     {data && <div className="table-card"><table>
-      <thead><tr>{COLUMNS.map(([field, label]) => <th key={label}>{field ? <button type="button" className="sort" onClick={() => sortBy(field)}>{label}{arrow(field)}</button> : label}</th>)}</tr></thead>
-      <tbody>{data.results.length === 0 ? <tr><td colSpan={7} className="empty">No hay usuarios que coincidan.</td></tr>
+      <thead><tr>{COLUMNS.map(([field, label]) => <th key={label}>{field ? <button type="button" className="sort" onClick={() => sortBy(field)}>{label}{arrow(field)}</button> : label}</th>)}<th>Acciones</th></tr></thead>
+      <tbody>{data.results.length === 0 ? <tr><td colSpan={8} className="empty">No hay usuarios que coincidan.</td></tr>
         : data.results.map((user) => <tr key={user.id}>
           <td>{user.id}</td><td>{user.email}{user.nickname && <small className="muted"> · {user.nickname}</small>}</td><td>{user.dni}</td>
           <td><span className={`badge ${user.role === 'ADMIN' ? 'badge-blue' : 'badge-gray'}`}>{user.role === 'ADMIN' ? 'Admin' : 'Jugador'}</span></td>
           <td><span className={`badge ${user.status === 'ACTIVE' ? 'badge-green' : 'badge-red'}`}>{user.status === 'ACTIVE' ? 'Activo' : 'Suspendido'}</span></td>
           <td>{credits(user.balance)}</td><td>{date(user.created_at)}</td>
+          <td><button type="button" className={user.status === 'ACTIVE' ? 'danger small' : 'secondary small'} onClick={() => setTarget(user)}>
+            {user.status === 'ACTIVE' ? 'Suspender' : 'Activar'}</button></td>
         </tr>)}</tbody></table>
       <Pagination page={page} count={data.count} onChange={(value) => { setLoading(true); setPage(value); }} disabled={loading} />
     </div>}
+    {target && <SanctionModal user={target} onClose={() => setTarget(null)} onDone={() => { setTarget(null); setVersion((v) => v + 1); }} />}
   </section>;
 }
