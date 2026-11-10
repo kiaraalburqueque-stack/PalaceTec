@@ -9,5 +9,5 @@ it('HU34 usa juegos publicados y selecciona sus salas por ID', async () => {
   getGames.mockResolvedValue([{ id: 4, title: 'Ruleta Europea', min_bet: '10.00', max_bet: '500.00' }]);
   render(<GameCatalog />);
   expect(await screen.findByText('Salas del juego 4')).toBeInTheDocument();
-  expect(screen.getByRole('button')).toHaveAttribute('aria-pressed', 'true');
+  expect(screen.getByRole('button', { name: 'Ver salas de Ruleta Europea' })).toHaveAttribute('aria-pressed', 'true');
 });
