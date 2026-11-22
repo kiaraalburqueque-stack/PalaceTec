@@ -70,12 +70,12 @@ def catalog_params(request):
 
 
 class GameListView(AuthenticatedView):
-    """HU34 y HU61: juegos disponibles, con filtro opcional ?category=ruleta|cartas|deportes|otros."""
+    """HU34, HU61 y HU62: juegos disponibles con ?category=ruleta|cartas|deportes|otros y ?search=texto."""
 
     def get(self, request):
-        from .catalog import available_games, filter_category, game_payload
+        from .catalog import apply_search, available_games, filter_category, game_payload
         params = catalog_params(request)
-        games = filter_category(available_games(), params.get("category"))
+        games = apply_search(filter_category(available_games(), params.get("category")), params.get("search"))
         return Response([game_payload(game, request) for game in games])
 
 
@@ -83,9 +83,9 @@ class GameCategoryCountView(AuthenticatedView):
     """HU61: contador de juegos disponibles por categoría para las pestañas del catálogo."""
 
     def get(self, request):
-        from .catalog import available_games, category_counts
-        catalog_params(request)
-        return Response(category_counts(available_games()))
+        from .catalog import apply_search, available_games, category_counts
+        params = catalog_params(request)
+        return Response(category_counts(apply_search(available_games(), params.get("search"))))
 
 
 class PreviousBetsView(AuthenticatedView):

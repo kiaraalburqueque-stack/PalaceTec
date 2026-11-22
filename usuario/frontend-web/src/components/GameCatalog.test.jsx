@@ -41,7 +41,7 @@ it('HU61 muestra pestañas con contador y filtra sin recargar, guardando la cate
   await user.click(cards);
   expect(await screen.findByRole('link', { name: 'Jugar Blackjack 21' })).toHaveAttribute('href', '/blackjack');
   expect(screen.queryByText('Ruleta Europea')).not.toBeInTheDocument();
-  expect(getGames).toHaveBeenLastCalledWith({ category: 'cartas' });
+  expect(getGames).toHaveBeenLastCalledWith({ category: 'cartas', search: '' });
   expect(screen.getByTestId('location')).toHaveTextContent('?categoria=cartas');
   expect(cards).toHaveAttribute('aria-selected', 'true');
 });
@@ -49,6 +49,33 @@ it('HU61 muestra pestañas con contador y filtra sin recargar, guardando la cate
 it('HU61 abre el catálogo en la categoría indicada por la URL', async () => {
   renderCatalog('/?categoria=ruleta');
   expect(await screen.findByText('Salas del juego 4')).toBeInTheDocument();
-  expect(getGames).toHaveBeenCalledWith({ category: 'ruleta' });
+  expect(getGames).toHaveBeenCalledWith({ category: 'ruleta', search: '' });
   expect(await screen.findByRole('tab', { name: /Ruleta/ })).toHaveAttribute('aria-selected', 'true');
+});
+
+it('HU62 busca tras dejar de escribir y muestra el estado vacío con sugerencias de categorías', async () => {
+  const user = userEvent.setup();
+  getGames.mockImplementation(({ search } = {}) => Promise.resolve(search ? [] : [roulette, blackjack]));
+  renderCatalog();
+  await screen.findByText('Salas del juego 4');
+  getGames.mockClear();
+  await user.type(screen.getByRole('searchbox', { name: 'Buscar juegos' }), 'tragamonedas');
+  expect(await screen.findByText('No se encontraron juegos.')).toBeInTheDocument();
+  expect(getGames).toHaveBeenCalledTimes(1);
+  expect(getGames).toHaveBeenCalledWith({ category: '', search: 'tragamonedas' });
+  expect(getGameCategories).toHaveBeenLastCalledWith({ search: 'tragamonedas' });
+  expect(screen.getByTestId('location')).toHaveTextContent('buscar=tragamonedas');
+  await user.click(screen.getByRole('button', { name: 'Cartas' }));
+  expect(await screen.findByRole('link', { name: 'Jugar Blackjack 21' })).toBeInTheDocument();
+  expect(screen.getByRole('searchbox', { name: 'Buscar juegos' })).toHaveValue('');
+});
+
+it('HU62 el botón limpiar borra la búsqueda', async () => {
+  const user = userEvent.setup();
+  renderCatalog('/?buscar=ruleta');
+  const input = screen.getByRole('searchbox', { name: 'Buscar juegos' });
+  expect(input).toHaveValue('ruleta');
+  await user.click(screen.getByRole('button', { name: 'Limpiar búsqueda' }));
+  expect(input).toHaveValue('');
+  expect(screen.queryByRole('button', { name: 'Limpiar búsqueda' })).not.toBeInTheDocument();
 });

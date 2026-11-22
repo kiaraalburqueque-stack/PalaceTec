@@ -1,4 +1,6 @@
-"""Catálogo del jugador: juegos disponibles y filtro por categoría (HU61)."""
+"""Catálogo del jugador: juegos disponibles, filtro por categoría (HU61) y búsqueda por nombre (HU62)."""
+import unicodedata
+
 from django.db.models import Max, Min, Q
 from rest_framework import serializers
 
@@ -16,6 +18,7 @@ SLUG_BY_CATEGORY = {value: key for key, value in CATEGORY_SLUGS.items()}
 
 class CatalogQuery(serializers.Serializer):
     category = serializers.CharField(required=False, allow_blank=True, max_length=20)
+    search = serializers.CharField(required=False, allow_blank=True, max_length=80, trim_whitespace=True)
 
     def validate_category(self, value):
         value = value.strip().lower()
@@ -35,6 +38,22 @@ def available_games():
 
 def filter_category(games, slug):
     return games.filter(category=CATEGORY_SLUGS[slug]) if slug else games
+
+
+def normalize(text):
+    """HU62: minúsculas y sin tildes ni diéresis ("Pequeña" y "PEQUENA" dan "pequena").
+
+    Se hace en Python para que SQLite y PostgreSQL den el mismo resultado sin la extensión unaccent.
+    """
+    decomposed = unicodedata.normalize("NFKD", text or "")
+    plain = "".join(char for char in decomposed if not unicodedata.combining(char))
+    return " ".join(plain.casefold().split())
+
+
+def apply_search(games, search):
+    """Filtra por título; el catálogo es pequeño, así que basta recorrerlo en memoria."""
+    term = normalize(search)
+    return [game for game in games if term in normalize(game.title)] if term else list(games)
 
 
 def category_counts(games):
