@@ -54,3 +54,26 @@ class AssistantChatView(AuthenticatedView):
         data.is_valid(raise_exception=True)
         question, reply, reminder = answer(request.user, data.validated_data["message"])
         return Response({"question": question.as_dict(), "reply": reply.as_dict(), "reminder": reminder}, status=201)
+
+
+class OddsQuery(serializers.Serializer):
+    bet = serializers.CharField(max_length=20)
+    number = serializers.IntegerField(required=False, min_value=0, max_value=36)
+    selection = serializers.CharField(required=False, max_length=10)
+
+
+class OddsView(AuthenticatedView):
+    """HU69: GET /api/v1/assistant/odds?bet=straight&number=17 (o bet=color&selection=rojo)."""
+
+    def get(self, request):
+        from .odds import OddsError, compute_odds
+        query = OddsQuery(data=request.query_params)
+        query.is_valid(raise_exception=True)
+        params = query.validated_data
+        selection = params.get("number", params.get("selection"))
+        if selection is None:
+            return Response({"selection": ["Indica number (pleno) o selection (color, paridad, docena o columna)."]}, status=400)
+        try:
+            return Response(compute_odds(params["bet"].strip().lower(), selection))
+        except OddsError as exc:
+            return Response({"detail": str(exc)}, status=400)

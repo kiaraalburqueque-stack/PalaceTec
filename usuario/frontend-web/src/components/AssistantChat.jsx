@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import useUser from '../hooks/useUser';
 import { getAssistantHistory, sendAssistantMessage } from '../services/assistantService';
+import OddsCard from './OddsCard';
 
-const SUGGESTIONS = ['¿Cómo se juega la ruleta?', '¿Cuál es mi límite diario?', '¿Cuánto paga cada apuesta?'];
+const SUGGESTIONS = ['¿Cómo se juega la ruleta?', 'Probabilidad de un pleno al 17', '¿Cuál es mi límite diario?', '¿Cuánto paga cada apuesta?'];
 const DEFAULT_REMINDER = 'Juega con responsabilidad: son créditos virtuales y puedes fijar tu límite diario en Mis límites.';
 
 // HU68: burbuja flotante de chat con historial y estado Escribiendo.
@@ -55,6 +56,7 @@ export default function AssistantChat() {
         {loaded && messages.length === 0 && <p className="assistant-empty">¡Hola! Pregúntame por las reglas, los pagos o tus límites.</p>}
         {messages.map((item) => <div key={item.id} className={`assistant-message ${item.role === 'USER' ? 'from-user' : 'from-assistant'}`}>
           <span className="sr-only">{item.role === 'USER' ? 'Tú: ' : 'Asistente: '}</span>{item.content}
+          {item.data?.odds && <OddsCard odds={item.data.odds} />}
         </div>)}
         {sending && <p className="assistant-typing" role="status">Escribiendo…</p>}
       </div>

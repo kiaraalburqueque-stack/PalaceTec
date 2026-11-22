@@ -1071,3 +1071,11 @@ a { text-decoration: none; }
 .assistant-panel form button { background: #ff822c; border: 0; border-radius: 8px; color: #14110d; font-weight: 700; padding: 0 12px; cursor: pointer; }
 .assistant-panel form button:disabled { opacity: .5; cursor: not-allowed; }
 .assistant-reminder { padding: 0 14px 12px; color: #8995a6; font-size: 10.5px; }
+
+/* Sprint 4 · HU69: tarjeta de probabilidades */
+.odds-card { margin: 10px 0 2px; padding: 10px 12px; border: 1px solid #ff822c66; border-radius: 10px; background: #1a1410; display: grid; gap: 6px; }
+.odds-card .odds-title { color: #ffb06a; font-weight: 700; font-size: 13px; }
+.odds-card div:not(.odds-title) { display: flex; justify-content: space-between; gap: 10px; }
+.odds-card dt { color: #aeb7c4; font-size: 12px; }
+.odds-card dd { margin: 0; color: #f4f5f7; font-weight: 700; font-size: 13px; }
+.odds-card small { color: #aeb7c4; font-weight: 400; }

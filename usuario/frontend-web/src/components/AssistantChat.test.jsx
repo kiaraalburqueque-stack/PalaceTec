@@ -63,3 +63,14 @@ it('HU68 las sugerencias envían la pregunta con un clic', async () => {
   await user.click(await screen.findByRole('button', { name: '¿Cuál es mi límite diario?' }));
   expect(await screen.findByText('Tu límite diario es de 100.00 créditos.')).toBeInTheDocument();
 });
+
+it('HU69 la respuesta de probabilidad se muestra con su tarjeta', async () => {
+  const user = userEvent.setup();
+  const odds = { label: 'Pleno al 17', probability: '1/37', probability_pct: '2.70', payout: '35:1', house_edge_pct: '2.70' };
+  sendAssistantMessage.mockResolvedValue({ question: { id: 1, role: 'USER', content: 'Probabilidad de un pleno al 17' },
+    reply: { id: 2, role: 'ASSISTANT', content: 'Pleno al 17: 1/37.', source: 'odds', data: { odds } } });
+  render(<AssistantChat />);
+  await user.click(screen.getByRole('button', { name: 'Abrir asistente virtual' }));
+  await user.click(await screen.findByRole('button', { name: 'Probabilidad de un pleno al 17' }));
+  expect(await screen.findByLabelText('Probabilidades de Pleno al 17')).toHaveTextContent('35 a 1');
+});

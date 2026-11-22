@@ -7,6 +7,7 @@ from . import providers
 from .faq import faq_answer, is_account_question
 from .guard import GUARD_REPLY, RESPONSIBLE_REMINDER, asks_for_strategy
 from .models import AssistantMessage
+from .odds import compute_odds, odds_text, parse_bet
 
 logger = logging.getLogger(__name__)
 HISTORY_FOR_AI = 6
@@ -19,9 +20,17 @@ def recent_history(user):
 
 
 def build_reply(user, message):
-    """Devuelve (texto, origen, datos). Orden: filtro de seguridad, datos de la cuenta, proveedor de IA y FAQ."""
+    """Devuelve (texto, origen, datos).
+
+    Orden: filtro de seguridad, probabilidades (HU69), datos de la cuenta, proveedor de IA y FAQ.
+    """
     if asks_for_strategy(message):
         return GUARD_REPLY, "guard", {}
+    bet = parse_bet(message)
+    if bet:
+        # HU69: el backend calcula la probabilidad; el modelo de IA nunca la inventa.
+        odds = compute_odds(*bet)
+        return f"{odds_text(odds)} {RESPONSIBLE_REMINDER}", "odds", {"odds": odds}
     if not is_account_question(message):
         provider = providers.get_provider()
         if provider is not None:
