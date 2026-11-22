@@ -20,7 +20,9 @@ class Notification(models.Model):
     class Meta:
         db_table = "notifications"
         ordering = ["-created_at", "-id"]
-        indexes = [models.Index(fields=["user", "read_at"], name="notification_user_unread")]
+        indexes = [models.Index(fields=["user", "read_at"], name="notification_user_unread"),
+                   # HU75: la limpieza diaria busca leídas antiguas por (read_at, created_at).
+                   models.Index(fields=["read_at", "created_at"], name="notification_read_created")]
 
     @property
     def is_read(self):
