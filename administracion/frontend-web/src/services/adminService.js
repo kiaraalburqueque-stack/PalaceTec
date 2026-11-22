@@ -49,3 +49,6 @@ export const getAuditLogs = (params) => apiRequest('/api/v1/admin/audit-logs' + 
 
 // Promociones (respetan las preferencias de HU58)
 export const sendPromotion = (data) => apiRequest('/api/v1/admin/promotions', { method: 'POST', body: JSON.stringify(data) });
+
+// HU71: ranking de popularidad de juegos (7 o 30 días).
+export const getGamesRanking = (days = 7) => apiRequest('/api/v1/admin/reports/games-ranking?days=' + days);
