@@ -20,7 +20,7 @@ Django REST Framework, sesiones JWT revocables, billetera y ruleta europea con W
 
 ## Ejecutar y probar
 
-Desde `usuario/backend`, con el entorno virtual activado:
+Desde `administracion/backend`, con el entorno virtual activado:
 
 ```powershell
 python -m pip install -r requirements.txt

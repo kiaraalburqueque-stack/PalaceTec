@@ -13,7 +13,7 @@ from datetime import timedelta
 from pathlib import Path
 from unittest.mock import patch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "backend"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "administracion" / "backend"))
 os.environ["DJANGO_SETTINGS_MODULE"] = "config.test_settings"
 os.environ["DB_ENGINE"] = "sqlite"
 

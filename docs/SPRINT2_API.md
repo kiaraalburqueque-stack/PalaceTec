@@ -8,7 +8,7 @@ La ampliación posterior de blackjack y deportes virtuales se documenta en [casi
 
 Usar PostgreSQL para la aplicación integrada y las pruebas de concurrencia. Instalar `requirements.txt`, configurar las variables de conexión locales y mantener Redis activo. Cada integrante utiliza su propio `.env`; las bases de datos y credenciales no se comparten por Git.
 
-En PowerShell, desde `usuario/backend`, con el entorno virtual activado:
+En PowerShell, desde `administracion/backend`, con el entorno virtual activado:
 
 ```powershell
 $env:DB_ENGINE = "postgresql"

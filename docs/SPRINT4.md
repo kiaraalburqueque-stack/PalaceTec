@@ -235,9 +235,9 @@ Horas por tamaño: tres historias de 5 SP (7.5 h), once de 3 SP (12.1 h) y una d
 
 ## 5. Trazabilidad: de la historia al código
 
-Convención: Sebastián trabaja en la rama Sebastian, actualizada desde main antes de empezar; cada commit lleva el ID de la historia (por ejemplo feat(HU68): ...) y cada prueba incluye el ID en su nombre. Las rutas son las planificadas y se corrigen al cerrar cada historia. El backend está en usuario/backend/, el frontend del jugador en usuario/frontend-web/ y el panel en administracion/frontend-web/.
+Convención: Sebastián trabaja en la rama Sebastian, actualizada desde main antes de empezar; cada commit lleva el ID de la historia (por ejemplo feat(HU68): ...) y cada prueba incluye el ID en su nombre. Las rutas son las planificadas y se corrigen al cerrar cada historia. El backend está en administracion/backend/ (antes usuario/backend/, movido en la reorganización), el frontend del jugador en usuario/frontend-web/ y el panel en administracion/frontend-web/.
 
-| HU | Backend (usuario/backend/) | Frontend | Pruebas | Estado |
+| HU | Backend (administracion/backend/) | Frontend | Pruebas | Estado |
 | --- | --- | --- | --- | --- |
 | HU61 | roulette/catalog.py, views.py (games?category, games/categories), migraciones 0011 y 0012 (blackjack y deportes-virtuales) | usuario/frontend-web/src/components/CategoryTabs.jsx, GameCatalog.jsx | roulette/test_hu61.py, GameCatalog.test.jsx | Hecha |
 | HU62 | roulette/catalog.py (normalize, apply_search), views.py (games?search) | usuario/frontend-web/src/components/SearchInput.jsx, hooks/useDebounce.js, GameCatalog.jsx | roulette/test_hu62.py, GameCatalog.test.jsx, useDebounce.test.js | Hecha (sin tildes en Python en lugar de unaccent, aprobado) |

@@ -28,7 +28,7 @@ npm run test:e2e
 ```
 
 `npm test` usa jsdom para React. `test:e2e` necesita Microsoft Edge,
-Python y las dependencias instaladas en `../backend/.venv`. Los puertos 5173 y
+Python y las dependencias instaladas en `../../administracion/backend/.venv`. Los puertos 5173 y
 8010 deben estar libres. Playwright levanta y detiene Vite y Django/Channels;
 crea una base SQLite temporal y usa Channels/cache en memoria. No modifica la
 base de desarrollo ni exige Redis para este recorrido aislado.
