@@ -3,7 +3,7 @@
 React y Vite. Creditos simulados, sin dinero real. La integracion del Sprint 2
 cubre HU21-HU40 sobre el frontend del Sprint 1. Consulta la
 [trazabilidad de Sebastian](../../docs/SPRINT2_SEBASTIAN.md) y el
-[contrato del backend](../backend/SPRINT2_API.md).
+[contrato del backend](../../docs/SPRINT2_API.md).
 
 ## Ejecutar
 

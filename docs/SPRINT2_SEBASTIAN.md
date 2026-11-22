@@ -47,7 +47,7 @@ Desde `usuario/backend`, con SQLite y `config.test_settings`, se ejecutaron las
 La conexión local a PostgreSQL agotó su tiempo de espera y Redis no estaba
 disponible. Por eso no se atribuye a esta entrega una nueva validación de
 concurrencia con PostgreSQL/Redis. La validación anterior de Kiara se conserva
-documentada en `SPRINT2_API.md`.
+documentada en [SPRINT2_API.md](SPRINT2_API.md).
 
 ## Revisión antes del merge
 

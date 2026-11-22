@@ -24,7 +24,7 @@ Cuotas decimales de demostración: local 1.90, empate 3.20, visitante 2.40. Son 
 
 ## API
 
-Usa las mismas cookies, renovación y CSRF documentados en `SPRINT2_API.md`.
+Usa las mismas cookies, renovación y CSRF documentados en [SPRINT2_API.md](../../../docs/SPRINT2_API.md).
 
 | Método y ruta bajo `/api/v1/casino` | Entrada o respuesta |
 | --- | --- |
