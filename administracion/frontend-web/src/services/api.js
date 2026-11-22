@@ -35,3 +35,19 @@ export async function apiRequest(path, options = {}, retry = true) {
   }
   return data;
 }
+// HU73: descarga de archivos con la misma sesión y renovación; los errores llegan en JSON.
+export async function apiDownload(path, retry = true) {
+  const response = await fetch(API_BASE_URL + path, { credentials: 'include' });
+  if (response.status === 401 && retry) {
+    await refreshSession();
+    return apiDownload(path, false);
+  }
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    const message = typeof data.detail === 'string' ? data.detail : Object.values(data).flat().join(' ');
+    const error = new Error(message || 'No se pudo descargar el archivo.');
+    error.status = response.status; error.data = data;
+    throw error;
+  }
+  return response.blob();
+}

@@ -30,7 +30,12 @@ def grouped(queryset, amount_field):
 def financial_flow(days=30, now=None):
     now = now or timezone.now()
     last = now.astimezone(LIMA).date()
-    first = last - timedelta(days=days - 1)
+    return financial_flow_range(last - timedelta(days=days - 1), last)
+
+
+def financial_flow_range(first, last):
+    """Serie diaria de apostado, pagado y margen neto entre dos fechas de Lima (ambas incluidas). Reutilizada en HU73."""
+    days = (last - first).days + 1
     start, _ = day_bounds(first)
     _, end = day_bounds(last)
     bets = Bet.objects.filter(created_at__gte=start, created_at__lt=end)

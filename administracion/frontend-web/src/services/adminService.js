@@ -1,4 +1,4 @@
-import { API_BASE_URL, apiRequest } from './api';
+import { API_BASE_URL, apiDownload, apiRequest } from './api';
 
 const query = (params = {}) => {
   const clean = Object.fromEntries(Object.entries(params).filter(([, value]) => value !== '' && value != null));
@@ -54,3 +54,5 @@ export const sendPromotion = (data) => apiRequest('/api/v1/admin/promotions', { 
 export const getGamesRanking = (days = 7) => apiRequest('/api/v1/admin/reports/games-ranking?days=' + days);
 // HU72: usuarios activos por día (30 días) e índice DAU/MAU.
 export const getRetention = () => apiRequest('/api/v1/admin/reports/retention');
+// HU73: informe consolidado de negocio en Excel (queda registrado en la auditoría).
+export const downloadBusinessReport = (params) => apiDownload('/api/v1/admin/reports/business.xlsx' + query(params));

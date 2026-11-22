@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import audit_logs, audit_transactions, kpis, monitor, reports, views
+from . import audit_logs, audit_transactions, business_report, kpis, monitor, reports, views
 
 urlpatterns = [
     path("users", views.AdminUserListView.as_view(), name="admin-users"),
@@ -16,6 +16,7 @@ urlpatterns = [
     path("reports/financial-flow", reports.FinancialFlowView.as_view(), name="admin-financial-flow"),
     path("reports/games-ranking", reports.GamesRankingView.as_view(), name="admin-games-ranking"),
     path("reports/retention", reports.RetentionView.as_view(), name="admin-retention"),
+    path("reports/business.xlsx", business_report.BusinessReportView.as_view(), name="admin-business-report"),
     path("audit/transactions", audit_transactions.TransactionAuditView.as_view(), name="admin-audit-transactions"),
     path("audit/transactions/export", audit_transactions.TransactionExportView.as_view(), name="admin-audit-transactions-export"),
     path("audit-logs", audit_logs.AuditLogListView.as_view(), name="admin-audit-logs"),

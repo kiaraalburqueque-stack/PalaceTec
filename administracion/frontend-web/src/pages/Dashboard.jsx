@@ -3,6 +3,7 @@ import { getFinancialFlow, getKpis, getRetention } from '../services/adminServic
 import KpiCard from '../components/KpiCard';
 import FinancialChart from '../components/FinancialChart';
 import RetentionChart from '../components/RetentionChart';
+import BusinessReport from '../components/BusinessReport';
 import Loading from '../components/Loading';
 import { credits, dateTime } from '../utils/format';
 
@@ -36,5 +37,6 @@ export default function Dashboard() {
     </div>}
     <FinancialChart data={flow} />
     <RetentionChart data={retention} />
+    <BusinessReport />
   </section>;
 }
