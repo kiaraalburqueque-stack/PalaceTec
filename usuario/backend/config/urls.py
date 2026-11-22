@@ -20,9 +20,11 @@ from django.contrib import admin
 from django.urls import include, path
 from accounts.views import AdminStatusView
 from notifications.views import NotificationListView
+from config.health import healthcheck
 from roulette.history import BetDetailView, BetHistoryExportView, BetHistoryView, StatsSummaryView
 
 urlpatterns = [
+    path('healthcheck', healthcheck, name='healthcheck'),
     path('api/v1/casino/', include('casino.urls')),
     path('api/v1/assistant/', include('assistant.urls')),
     path('api/v1/stats/summary', StatsSummaryView.as_view(), name='stats-summary'),
