@@ -13,3 +13,4 @@ target/
 usuario/backend/media/
 dump.rdb
 .run/
+usuario/backend/logs/

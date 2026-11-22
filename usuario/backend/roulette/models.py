@@ -27,8 +27,14 @@ class Game(models.Model):
     # HU60: reglas y tabla de pagos [{bet, description, pays, probability}].
     rules = models.TextField(blank=True)
     payout_table = models.JSONField(default=list, blank=True)
+    # HU61: juegos sin salas (blackjack y deportes) se enlazan con su pantalla y con las jugadas Play.kind.
+    play_kind = models.CharField(max_length=12, blank=True, default="")
+    play_path = models.CharField(max_length=60, blank=True, default="")
+    # HU64: destacado en el carrusel del inicio (máximo 5 juegos).
+    is_featured = models.BooleanField(default=False)
 
     class Meta:
+        indexes = [models.Index(fields=["is_published", "category"], name="game_published_category")]
         constraints = [
             models.CheckConstraint(condition=Q(min_bet__gt=0) & Q(max_bet__gte=models.F("min_bet")), name="game_valid_bet_limits"),
             models.CheckConstraint(condition=Q(rtp__gt=0) & Q(rtp__lte=100), name="game_valid_rtp"),
@@ -126,3 +132,14 @@ class RepeatOperation(models.Model):
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=["user", "reference"], name="unique_user_repeat_reference")]
+
+
+class FavoriteGame(models.Model):
+    """HU63: juego marcado como favorito por un jugador; se conserva entre sesiones."""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="favorite_games")
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="favorited_by")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "favorite_games"
+        constraints = [models.UniqueConstraint(fields=["user", "game"], name="unique_user_favorite_game")]

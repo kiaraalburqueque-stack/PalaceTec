@@ -30,8 +30,8 @@ export default function GameRulesModal({ gameId, onClose }) {
       <small>RTP (retorno teórico al jugador) es el porcentaje de lo apostado que el juego devuelve a largo plazo. Créditos virtuales, sin dinero real.</small>
       <div className="rules-actions">
         <button type="button" className="close-modal-button" onClick={onClose}>Cerrar</button>
-        <button type="button" className="place-bet-button" disabled={!rules.play_room_id}
-          onClick={() => { onClose(); navigate(`/ruleta/${rules.play_room_id}`); }}>Jugar ahora</button>
+        <button type="button" className="place-bet-button" disabled={!rules.play_room_id && !rules.play_path}
+          onClick={() => { onClose(); navigate(rules.play_path || `/ruleta/${rules.play_room_id}`); }}>Jugar ahora</button>
       </div>
     </>}
   </DialogModal>;

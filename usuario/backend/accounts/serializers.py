@@ -77,7 +77,8 @@ AVATARS = tuple(f"/avatars/avatar-{index}.svg" for index in range(1, 7))
 
 class ProfileSerializer(serializers.ModelSerializer):
     nickname = serializers.RegexField(r"\A[a-zA-Z0-9_]{3,30}\Z", required=False)
-    avatar_url = serializers.ChoiceField(choices=AVATARS, required=False)
+    # Uno de los seis avatares predeterminados; la foto propia (HU65) se sube por /users/avatar.
+    avatar_url = serializers.CharField(required=False, max_length=100)
     phone = serializers.RegexField(r"\A\+?[0-9 ()-]{7,20}\Z", required=False, allow_blank=True)
 
     class Meta:
@@ -94,6 +95,11 @@ class ProfileSerializer(serializers.ModelSerializer):
             if any(not (char.isalpha() or char in " .'-") for char in value):
                 raise serializers.ValidationError({field: "Usa letras y separadores de nombre validos."})
         return attrs
+
+    def validate_avatar_url(self, value):
+        if value in AVATARS or (self.instance is not None and value == self.instance.avatar_url):
+            return value
+        raise serializers.ValidationError("Elige uno de los avatares disponibles o sube tu foto.")
 
     def validate_nickname(self, value):
         value = value.lower()

@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard';
 import TransactionAudit from './pages/TransactionAudit';
 import AuditLogs from './pages/AuditLogs';
 import Promotions from './pages/Promotions';
+import GamesRanking from './pages/GamesRanking';
 import './App.css';
 
 // Cada entrada agrega una opción del menú lateral y su ruta.
@@ -19,6 +20,7 @@ const SECTIONS = [
   { path: '/', label: 'Dashboard', icon: '📊', element: <Dashboard /> },
   { path: '/usuarios', label: 'Usuarios', icon: '👥', element: <Users /> },
   { path: '/juegos', label: 'Juegos', icon: '🎰', element: <Games /> },
+  { path: '/reportes/ranking', label: 'Ranking de juegos', icon: '🏆', element: <GamesRanking /> },
   { path: '/juego-responsable', label: 'Juego responsable', icon: '🛡️', element: <ResponsibleMonitor /> },
   { path: '/auditoria/transacciones', label: 'Transacciones', icon: '💳', element: <TransactionAudit /> },
   { path: '/auditoria/registro', label: 'Registro de auditoría', icon: '📜', element: <AuditLogs /> },

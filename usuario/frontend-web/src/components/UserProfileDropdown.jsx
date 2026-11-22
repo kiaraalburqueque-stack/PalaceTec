@@ -2,6 +2,7 @@
 import { useContext, useState } from 'react';
 import { logout } from '../services/authService';
 import { UserContext } from '../context/UserContext';
+import { avatarSrc } from '../utils/avatar';
 
 export default function UserProfileDropdown({ user, wallet }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,7 +21,7 @@ export default function UserProfileDropdown({ user, wallet }) {
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className="profile-avatar">
-          {user.avatar_url ? <img src={user.avatar_url} alt="Avatar" width="32" height="32" /> : user.nickname.charAt(0).toUpperCase()}
+          {user.avatar_url ? <img src={avatarSrc(user.avatar_url)} alt="Avatar" width="32" height="32" /> : user.nickname.charAt(0).toUpperCase()}
         </span>
         <span>{user.nickname}</span>
         <span>{isOpen ? '▲' : '▼'}</span>

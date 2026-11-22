@@ -4,6 +4,7 @@ import useUser from '../hooks/useUser';
 import { getBetHistory } from '../services/historyService';
 import DateRangeFilter from '../components/DateRangeFilter';
 import BetDetailModal from '../components/BetDetailModal';
+import ExportButtons from '../components/ExportButtons';
 const statuses = { PENDING: 'Pendiente', WON: 'Ganada', LOST: 'Perdida', PUSH: 'Empate' };
 export default function HistoryPage() {
   const { user, loading: sessionLoading } = useUser();
@@ -25,6 +26,7 @@ export default function HistoryPage() {
   if (!user) return <Navigate to="/login" replace />;
   return <main className="main-sections"><section className="bet-controls history-panel"><h1>Mi historial de apuestas</h1>
     <DateRangeFilter disabled={loading} onApply={(value) => { setLoading(true); setPage(1); setFilters(value); }} />
+    <ExportButtons filters={filters} />
     {loading && <p role="status">Consultando apuestas...</p>}
     {error && <p role="alert">{error}</p>}
     {!loading && !error && data && <>
