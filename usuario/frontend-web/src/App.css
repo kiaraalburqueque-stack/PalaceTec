@@ -1110,3 +1110,10 @@ a { text-decoration: none; }
 .avatar-upload { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; margin-top: 18px; }
 .avatar-upload small[role="alert"] { color: #ff9b9b; }
 .avatar-upload-ok { color: #6fe6a8; }
+
+/* Sprint 4 · HU66: exportar historial */
+.export-buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 6px 0 14px; }
+.export-buttons button { background: #171c24; color: #f4f5f7; border: 1px solid #3a4350; border-radius: 8px; padding: 8px 14px; cursor: pointer; }
+.export-buttons button:hover:not(:disabled) { border-color: #ff822c; color: #ffb06a; }
+.export-buttons button:disabled { opacity: .6; cursor: wait; }
+.export-buttons [role="alert"] { color: #ff9b9b; margin: 0; }

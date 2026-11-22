@@ -1,6 +1,8 @@
+from rest_framework import serializers
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from .models import Bet
+from .queries import DateRangeInput
 from .serializers import HistoryBetSerializer
 from .views import AuthenticatedView
 
@@ -64,3 +66,35 @@ class BetDetailView(AuthenticatedView):
                       "winning_color": None if number is None else "verde" if number == 0 else "rojo" if number in RED_NUMBERS else "negro"},
         })
         return Response(data)
+
+
+class ExportQuery(DateRangeInput):
+    format = serializers.ChoiceField(choices=["xlsx", "pdf"], error_messages={
+        "invalid_choice": "Formato no válido. Usa xlsx o pdf."})
+
+
+class BetHistoryExportView(AuthenticatedView):
+    """HU66: GET /users/bets-history/export?format=xlsx|pdf&startDate=&endDate= con las apuestas propias."""
+
+    def perform_content_negotiation(self, request, force=False):
+        # ?format=xlsx es un parámetro de la historia, no la sobrescritura de formato de DRF.
+        renderer = self.get_renderers()[0]
+        return renderer, renderer.media_type
+
+    def get(self, request):
+        from django.http import HttpResponse
+        from .history_export import build_pdf, build_xlsx, export_rows, file_name
+        query = ExportQuery(data=request.query_params)
+        query.is_valid(raise_exception=True)
+        params = query.validated_data
+        start, end = params.get("startDate"), params.get("endDate")
+        rows = export_rows(request.user, request.query_params)
+        if params["format"] == "xlsx":
+            content = build_xlsx(request.user, rows, start, end)
+            content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        else:
+            content, content_type = build_pdf(request.user, rows, start, end), "application/pdf"
+        response = HttpResponse(content, content_type=content_type)
+        response["Content-Disposition"] = f'attachment; filename="{file_name(start, end, params["format"])}"'
+        response["Access-Control-Expose-Headers"] = "Content-Disposition"
+        return response
