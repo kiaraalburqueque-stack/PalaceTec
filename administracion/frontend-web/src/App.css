@@ -180,3 +180,11 @@ details summary { cursor: pointer; color: var(--accent-2); font-size: 13px; }
 .ranking-credits > span:first-child { display: block; margin-bottom: 5px; }
 .ranking-bar { display: block; height: 8px; border-radius: 999px; background: #262d38; overflow: hidden; }
 .ranking-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+
+/* Sprint 4 · HU72: retención DAU/MAU */
+.retention-card { margin-top: 18px; }
+.retention-index { display: flex; flex-direction: column; align-items: flex-end; padding: 8px 14px; border-radius: 10px; background: var(--panel-2); border: 1px solid var(--border); }
+.retention-index strong { font-size: 26px; color: var(--accent-2); line-height: 1; }
+.retention-index span { font-size: 11px; color: var(--muted); letter-spacing: 1px; }
+.retention-line { fill: none; stroke: var(--blue); stroke-width: 2.5; stroke-linejoin: round; }
+.retention-dot { fill: var(--blue); stroke: var(--panel); stroke-width: 1.5; }

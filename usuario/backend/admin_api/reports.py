@@ -1,4 +1,4 @@
-"""Reportes del panel: flujo financiero (HU48) y ranking de popularidad de juegos (HU71)."""
+"""Reportes del panel: flujo financiero (HU48), ranking de juegos (HU71) y retención DAU/MAU (HU72)."""
 from datetime import timedelta
 from decimal import Decimal
 
@@ -96,3 +96,46 @@ class GamesRankingView(AdminView):
         first, last, start, end = lima_range(days)
         return Response({"days": days, "from": first.isoformat(), "to": last.isoformat(), "timezone": "America/Lima",
                          **games_ranking(start, end)})
+
+
+# HU72: retención de jugadores. Un usuario activo es el que jugó al menos una ronda ese día (hora de Lima).
+RETENTION_DAYS = 30
+RETENTION_CACHE_SECONDS = 60
+
+
+def active_users_by_day(start, end):
+    """{fecha de Lima: {user_id, ...}} con quienes apostaron en ruleta, blackjack o deportes."""
+    days = {}
+    for model in (Bet, Play):
+        rows = (model.objects.filter(created_at__gte=start, created_at__lt=end)
+                .annotate(day=TruncDate("created_at", tzinfo=LIMA)).values_list("day", "user_id").distinct())
+        for day, user_id in rows:
+            days.setdefault(day, set()).add(user_id)
+    return days
+
+
+def retention(first, last):
+    """DAU de cada día del rango, MAU (activos distintos del rango) e índice DAU/MAU = DAU promedio / MAU."""
+    start, end = day_bounds(first)[0], day_bounds(last)[1]
+    by_day = active_users_by_day(start, end)
+    count = (last - first).days + 1
+    series = [{"date": (first + timedelta(days=offset)).isoformat(),
+               "dau": len(by_day.get(first + timedelta(days=offset), ()))} for offset in range(count)]
+    mau = len(set().union(*by_day.values())) if by_day else 0
+    average = sum(point["dau"] for point in series) / count if count else 0
+    return {"from": first.isoformat(), "to": last.isoformat(), "timezone": "America/Lima", "days": series,
+            "mau": mau, "average_dau": round(average, 2), "today_dau": series[-1]["dau"] if series else 0,
+            "dau_mau_ratio": round(average * 100 / mau, 2) if mau else 0.0}
+
+
+class RetentionView(AdminView):
+    def get(self, request):
+        from django.core.cache import cache
+        first, last, _, _ = lima_range(RETENTION_DAYS)
+        key = f"admin:retention:{last.isoformat()}"
+        data = cache.get(key)
+        cached = data is not None
+        if not cached:
+            data = retention(first, last)
+            cache.set(key, data, RETENTION_CACHE_SECONDS)
+        return Response({**data, "cached": cached, "cache_seconds": RETENTION_CACHE_SECONDS})

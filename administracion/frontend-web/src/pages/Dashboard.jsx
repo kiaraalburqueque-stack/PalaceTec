@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { getFinancialFlow, getKpis } from '../services/adminService';
+import { getFinancialFlow, getKpis, getRetention } from '../services/adminService';
 import KpiCard from '../components/KpiCard';
 import FinancialChart from '../components/FinancialChart';
+import RetentionChart from '../components/RetentionChart';
 import Loading from '../components/Loading';
 import { credits, dateTime } from '../utils/format';
 
@@ -10,8 +11,13 @@ export default function Dashboard() {
   const [kpis, setKpis] = useState(null);
   const [flow, setFlow] = useState(null);
   const [error, setError] = useState('');
-  const load = useCallback(() => Promise.all([getKpis(), getFinancialFlow(30)])
-    .then(([k, f]) => { setKpis(k); setFlow(f); setError(''); }).catch((err) => setError(err.message)), []);
+  const [retention, setRetention] = useState(null);
+  const load = useCallback(() => {
+    // HU72: la retención se consulta aparte para que su falla no oculte los KPIs.
+    getRetention().then(setRetention).catch(() => setRetention(null));
+    return Promise.all([getKpis(), getFinancialFlow(30)])
+      .then(([k, f]) => { setKpis(k); setFlow(f); setError(''); }).catch((err) => setError(err.message));
+  }, []);
   useEffect(() => {
     void load();
     const timer = setInterval(load, 60000);
@@ -29,5 +35,6 @@ export default function Dashboard() {
       <KpiCard label="Ganancia simulada" value={credits(kpis.profit_today)} change={kpis.profit_change_pct} previous={credits(kpis.profit_yesterday)} />
     </div>}
     <FinancialChart data={flow} />
+    <RetentionChart data={retention} />
   </section>;
 }

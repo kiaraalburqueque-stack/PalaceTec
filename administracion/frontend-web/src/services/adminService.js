@@ -52,3 +52,5 @@ export const sendPromotion = (data) => apiRequest('/api/v1/admin/promotions', { 
 
 // HU71: ranking de popularidad de juegos (7 o 30 días).
 export const getGamesRanking = (days = 7) => apiRequest('/api/v1/admin/reports/games-ranking?days=' + days);
+// HU72: usuarios activos por día (30 días) e índice DAU/MAU.
+export const getRetention = () => apiRequest('/api/v1/admin/reports/retention');
