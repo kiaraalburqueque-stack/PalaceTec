@@ -21,6 +21,8 @@ export const getAdminGames = () => apiRequest('/api/v1/admin/games');
 export const updateGame = (id, data) => apiRequest(`/api/v1/admin/games/${id}`, { method: 'PUT', body: JSON.stringify(data) });
 export const softDeleteGame = (id) => apiRequest(`/api/v1/admin/games/${id}/soft-delete`, { method: 'PATCH', body: '{}' });
 export const restoreGame = (id) => apiRequest(`/api/v1/admin/games/${id}/restore`, { method: 'PATCH', body: '{}' });
+// HU64: destacado en el carrusel del jugador (máximo 5).
+export const setGameFeatured = (id, isFeatured) => apiRequest(`/api/v1/admin/games/${id}/featured`, { method: 'PATCH', body: JSON.stringify({ is_featured: isFeatured }) });
 
 export async function createGame(formData) {
   // Multipart para enviar la portada: se arma la petición a mano (apiRequest envía JSON).

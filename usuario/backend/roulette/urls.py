@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import (FavoriteGameListView, FavoriteToggleView, GameCategoryCountView, GameRulesView, RecommendationView,
+from .views import (FavoriteGameListView, FavoriteToggleView, FeaturedGameListView, GameCategoryCountView, GameRulesView, RecommendationView,
                     RoomListView, RoomStateView, BetView, GameListView, PreviousBetsView, RepeatBetsView)
 
 urlpatterns = [
@@ -9,6 +9,7 @@ urlpatterns = [
     path("games/categories", GameCategoryCountView.as_view(), name="game-categories"),
     path("games/favorites", FavoriteGameListView.as_view(), name="game-favorites"),
     path("games/recommendations", RecommendationView.as_view(), name="game-recommendations"),
+    path("games/featured", FeaturedGameListView.as_view(), name="games-featured"),
     path("games/<int:game_id>/favorite", FavoriteToggleView.as_view(), name="game-favorite-toggle"),
     path("games/<int:game_id>/rules", GameRulesView.as_view(), name="game-rules"),
     path("rooms/<int:room_id>/bets", BetView.as_view(), name="room-bets"),

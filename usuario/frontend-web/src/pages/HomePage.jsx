@@ -2,6 +2,7 @@
 import GameCatalog from '../components/GameCatalog';
 import GameShortcuts from '../components/GameShortcuts';
 import ForYou from '../components/ForYou';
+import FeaturedCarousel from '../components/FeaturedCarousel';
 import useUser from '../hooks/useUser';
 import { Link } from 'react-router-dom';
 
@@ -16,7 +17,7 @@ export default function HomePage() {
       <div className="casino-features"><span>◉ Ruleta europea</span><span>↗ Saldo en tiempo real</span><span>♧ Créditos virtuales</span><span>✓ Sesión protegida</span></div>
       <div id="salas" />
       <GameShortcuts />
-      {loading ? <p role="status">Consultando sesión...</p> : user ? <><ForYou /><GameCatalog /></> : <section className="main-sections"><h1>Bienvenido a PalaceTec</h1><p>Crea tu cuenta y recibe 1,000 créditos virtuales.</p><Link to="/registro">Crear cuenta</Link> · <Link to="/login">Iniciar sesión</Link></section>}
+      {loading ? <p role="status">Consultando sesión...</p> : user ? <><FeaturedCarousel /><ForYou /><GameCatalog /></> : <section className="main-sections"><h1>Bienvenido a PalaceTec</h1><p>Crea tu cuenta y recibe 1,000 créditos virtuales.</p><Link to="/registro">Crear cuenta</Link> · <Link to="/login">Iniciar sesión</Link></section>}
     </main>
   );
 }

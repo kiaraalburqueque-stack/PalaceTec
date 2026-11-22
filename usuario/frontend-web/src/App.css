@@ -1092,3 +1092,15 @@ a { text-decoration: none; }
 .for-you-blocked { color: #c9d0db; background: #1b222c; border: 1px solid #303743; border-radius: 12px; padding: 14px 16px; }
 @media (max-width: 900px) { .for-you-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 520px) { .for-you-grid { grid-template-columns: 1fr; } }
+
+/* Sprint 4 · HU64: carrusel de destacados */
+.featured-carousel { position: relative; margin: 28px 0 4px; text-align: left; }
+.featured-slide { min-height: 210px; padding: 30px 34px; border-radius: 18px; border: 1px solid #3a3226; background: radial-gradient(ellipse at 85% 50%, #5a3a1d, #1c1712 55%, #12100d); background-size: cover; background-position: center; display: flex; flex-direction: column; justify-content: center; gap: 10px; animation: catalog-fade .35s ease-out; }
+.featured-slide h2 { margin: 0; font-size: 32px; color: #fff; letter-spacing: -.6px; }
+.featured-slide p { margin: 0; color: #d3d8e0; font-size: 14px; }
+.featured-slide .primary-action { align-self: flex-start; }
+.featured-controls { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 10px; }
+.featured-controls > button { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #3a4350; background: #171c24; color: #f4f5f7; font-size: 18px; cursor: pointer; }
+.featured-dots { display: flex; gap: 6px; }
+.featured-dots button { width: 9px; height: 9px; padding: 0; border-radius: 50%; border: 0; background: #4a5464; cursor: pointer; }
+.featured-dots button[aria-current="true"] { background: #ff822c; width: 22px; border-radius: 999px; }

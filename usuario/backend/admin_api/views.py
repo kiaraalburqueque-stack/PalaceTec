@@ -9,7 +9,7 @@ from realtime.events import after_commit
 from .base import AdminPagination, AdminView
 from .models import SanctionLog
 from roulette.models import Game, Room
-from .serializers import PromotionInput, AdminGameSerializer, AdminUserSerializer, UserListQuery, UserStatusInput
+from .serializers import FeaturedInput, PromotionInput, AdminGameSerializer, AdminUserSerializer, UserListQuery, UserStatusInput
 
 
 class AdminUserListView(AdminView):
@@ -137,7 +137,8 @@ class AdminGameSoftDeleteView(AdminView):
             if game.deleted_at is None:
                 game.is_published = False
                 game.deleted_at = timezone.now()
-                game.save(update_fields=["is_published", "deleted_at"])
+                game.is_featured = False  # HU64: un juego desactivado deja el carrusel y libera su lugar.
+                game.save(update_fields=["is_published", "deleted_at", "is_featured"])
                 for room_id in game.rooms.values_list("id", flat=True):
                     after_commit(f"room.{room_id}", "room:closed", {"room_id": room_id, "reason": "game_deactivated"})
         return Response(AdminGameSerializer(game, context={"request": request}).data)
@@ -150,6 +151,33 @@ class AdminGameRestoreView(AdminView):
             game.deleted_at = None
             game.is_published = True
             game.save(update_fields=["is_published", "deleted_at"])
+        return Response(AdminGameSerializer(game, context={"request": request}).data)
+
+
+MAX_FEATURED = 5
+
+
+class AdminGameFeaturedView(AdminView):
+    """HU64: marca o quita un juego del carrusel de destacados (máximo 5). La auditoría la registra el middleware."""
+
+    def patch(self, request, game_id):
+        data = FeaturedInput(data=request.data)
+        data.is_valid(raise_exception=True)
+        featured = data.validated_data["is_featured"]
+        with transaction.atomic():
+            # Bloquea los destacados actuales para que dos administradores no superen el tope a la vez.
+            current = list(Game.objects.select_for_update().filter(is_featured=True).values_list("id", flat=True))
+            game = get_object_or_404(Game.objects.select_for_update(), pk=game_id)
+            if featured and not game.is_featured:
+                if game.deleted_at is not None or not game.is_published:
+                    return Response({"code": "game_unavailable",
+                                     "detail": "Solo se pueden destacar juegos publicados y activos."}, status=400)
+                if len(current) >= MAX_FEATURED:
+                    return Response({"code": "featured_limit",
+                                     "detail": f"Ya hay {MAX_FEATURED} juegos destacados. Quita uno antes de destacar otro."}, status=400)
+            if game.is_featured != featured:
+                game.is_featured = featured
+                game.save(update_fields=["is_featured"])
         return Response(AdminGameSerializer(game, context={"request": request}).data)
 
 

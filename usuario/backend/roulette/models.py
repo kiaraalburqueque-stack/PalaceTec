@@ -30,6 +30,8 @@ class Game(models.Model):
     # HU61: juegos sin salas (blackjack y deportes) se enlazan con su pantalla y con las jugadas Play.kind.
     play_kind = models.CharField(max_length=12, blank=True, default="")
     play_path = models.CharField(max_length=60, blank=True, default="")
+    # HU64: destacado en el carrusel del inicio (máximo 5 juegos).
+    is_featured = models.BooleanField(default=False)
 
     class Meta:
         indexes = [models.Index(fields=["is_published", "category"], name="game_published_category")]

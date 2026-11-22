@@ -10,6 +10,7 @@ urlpatterns = [
     path("games/<int:game_id>", views.AdminGameDetailView.as_view(), name="admin-game-detail"),
     path("games/<int:game_id>/soft-delete", views.AdminGameSoftDeleteView.as_view(), name="admin-game-soft-delete"),
     path("games/<int:game_id>/restore", views.AdminGameRestoreView.as_view(), name="admin-game-restore"),
+    path("games/<int:game_id>/featured", views.AdminGameFeaturedView.as_view(), name="admin-game-featured"),
     path("responsible-gaming/users", monitor.ResponsibleMonitorView.as_view(), name="admin-responsible-users"),
     path("kpis", kpis.KpiView.as_view(), name="admin-kpis"),
     path("reports/financial-flow", reports.FinancialFlowView.as_view(), name="admin-financial-flow"),

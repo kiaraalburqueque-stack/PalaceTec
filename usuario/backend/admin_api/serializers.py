@@ -86,8 +86,8 @@ class AdminGameSerializer(serializers.ModelSerializer):
     class Meta:
         model = Game
         fields = ["id", "slug", "title", "category", "min_bet", "max_bet", "rtp", "is_published",
-                  "cover", "cover_url", "rooms", "rules", "payout_table", "created_at", "deleted_at"]
-        read_only_fields = ["id", "created_at", "deleted_at"]
+                  "cover", "cover_url", "rooms", "rules", "payout_table", "created_at", "deleted_at", "is_featured"]
+        read_only_fields = ["id", "created_at", "deleted_at", "is_featured"]
 
     def get_cover_url(self, game):
         if not game.cover:
@@ -134,3 +134,7 @@ class PromotionInput(serializers.Serializer):
     title = serializers.CharField(min_length=3, max_length=120)
     message = serializers.CharField(min_length=5, max_length=500)
     send_email = serializers.BooleanField(required=False, default=False)
+
+
+class FeaturedInput(serializers.Serializer):
+    is_featured = serializers.BooleanField()

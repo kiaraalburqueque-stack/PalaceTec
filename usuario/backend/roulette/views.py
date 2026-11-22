@@ -170,3 +170,14 @@ class RecommendationView(AuthenticatedView):
     def get(self, request):
         from .recommendations import recommend
         return Response(recommend(request.user, request))
+
+
+class FeaturedGameListView(AuthenticatedView):
+    """HU64: juegos destacados para el carrusel del inicio; excluye los desactivados."""
+
+    def get(self, request):
+        from .catalog import available_games, favorite_ids, game_payload
+        favorites = favorite_ids(request.user)
+        games = available_games().filter(is_featured=True)[:5]
+        rooms = dict(Room.objects.available().filter(game__in=[g.pk for g in games]).order_by("-id").values_list("game_id", "id"))
+        return Response([{**game_payload(game, request, favorites), "play_room_id": rooms.get(game.pk)} for game in games])

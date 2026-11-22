@@ -19,3 +19,6 @@ export function validateGame(values) {
 export function serverErrors(data = {}) {
   return Object.fromEntries(Object.entries(data).filter(([key]) => key !== 'detail').map(([key, value]) => [key, Array.isArray(value) ? value.join(' ') : String(value)]));
 }
+
+// HU64: máximo de juegos destacados en el carrusel del jugador.
+export const MAX_FEATURED = 5;

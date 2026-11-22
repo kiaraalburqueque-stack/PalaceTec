@@ -17,3 +17,5 @@ export const getFavoriteGames = (params) => apiRequest('/api/v1/games/favorites'
 export const toggleFavorite = (id) => apiRequest(`/api/v1/games/${id}/favorite`, { method: 'POST', body: '{}' });
 // HU70: recomendaciones de la sección Para ti.
 export const getRecommendations = () => apiRequest('/api/v1/games/recommendations');
+// HU64: juegos destacados del carrusel.
+export const getFeaturedGames = () => apiRequest('/api/v1/games/featured');
