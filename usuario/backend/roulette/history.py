@@ -43,3 +43,24 @@ class StatsSummaryView(AuthenticatedView):
         from casino.services import play_summary, merge_summary
         plays = filter_dates(Play.objects.filter(user=request.user), request.query_params)
         return Response({**merge_summary(settled_summary(bets), play_summary(plays)), "scope": "settled_bets", "timezone": "America/Lima"})
+
+
+class BetDetailView(AuthenticatedView):
+    """HU54: detalle completo de una apuesta pasada; solo su dueño puede consultarla."""
+
+    def get(self, request, bet_id):
+        from django.shortcuts import get_object_or_404
+        from .constants import RED_NUMBERS
+        # Filtrar por usuario responde 404 a terceros sin revelar que la apuesta existe.
+        bet = get_object_or_404(Bet.objects.select_related("round__room__game"), pk=bet_id, user=request.user)
+        number = bet.round.winning_number
+        data = HistoryBetSerializer(bet).data
+        data.update({
+            "room_name": bet.round.room.name,
+            "chip_count": len(bet.chips),
+            "round": {"id": bet.round_id, "status": bet.round.status, "opened_at": bet.round.opened_at.isoformat(),
+                      "settled_at": bet.round.settled_at.isoformat() if bet.round.settled_at else None,
+                      "winning_number": number,
+                      "winning_color": None if number is None else "verde" if number == 0 else "rojo" if number in RED_NUMBERS else "negro"},
+        })
+        return Response(data)

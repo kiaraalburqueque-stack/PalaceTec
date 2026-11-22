@@ -50,6 +50,9 @@ INSTALLED_APPS = [
     'roulette',
     'responsible',
     'casino',
+    'admin_api',
+    'stats',
+    'notifications',
 ]
 
 MIDDLEWARE = [
@@ -61,6 +64,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'admin_api.middleware.AdminAuditMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -103,6 +107,8 @@ if os.getenv('DB_ENGINE') == 'sqlite':
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
+            # Servidor, reloj de ruleta y WebSockets escriben a la vez: IMMEDIATE evita "database is locked".
+            'OPTIONS': {'transaction_mode': 'IMMEDIATE', 'timeout': 20},
         }
     }
 
@@ -143,6 +149,11 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# HU43: portadas de juegos guardadas en disco local durante el desarrollo.
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+GAME_COVER_MAX_BYTES = 2 * 1024 * 1024
+
 
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
@@ -153,7 +164,12 @@ MAILERS = {
     },
 }
 
-CORS_ALLOWED_ORIGINS = ["http://localhost:5173"]
+# Enlaces de los correos (HU55 y HU56) apuntan al frontend del jugador.
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+DEFAULT_FROM_EMAIL = 'PalaceTec <no-reply@palacetec.local>'
+
+# 5173: frontend del jugador; 5174: panel React de administración.
+CORS_ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:5174"]
 CORS_ALLOW_CREDENTIALS = True
 
 SIMPLE_JWT = {"ACCESS_TOKEN_LIFETIME": timedelta(minutes=15)}

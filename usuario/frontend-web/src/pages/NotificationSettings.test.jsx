@@ -1,0 +1,32 @@
+import { it, expect, vi, afterEach } from 'vitest';
+import { render, screen, cleanup } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
+import '@testing-library/jest-dom/vitest';
+import NotificationSettings from './NotificationSettings';
+import { getNotificationPreferences, updateNotificationPreferences } from '../services/notificationService';
+const session = { user: { id: 1 }, loading: false };
+vi.mock('../hooks/useUser', () => ({ default: () => session }));
+vi.mock('../services/notificationService', () => ({ getNotificationPreferences: vi.fn(), updateNotificationPreferences: vi.fn() }));
+afterEach(() => { cleanup(); vi.clearAllMocks(); });
+it('HU58 desactiva promociones y guarda la preferencia', async () => {
+  getNotificationPreferences.mockResolvedValue({ promotions: true, security: true, game_alerts: true });
+  updateNotificationPreferences.mockResolvedValue({ promotions: false, security: true, game_alerts: true });
+  const user = userEvent.setup();
+  render(<MemoryRouter><NotificationSettings /></MemoryRouter>);
+  const promos = await screen.findByRole('switch', { name: 'Promociones' });
+  expect(promos).toHaveAttribute('aria-checked', 'true');
+  await user.click(promos);
+  expect(updateNotificationPreferences).toHaveBeenCalledWith({ promotions: false });
+  expect(await screen.findByText('Preferencias guardadas.')).toBeInTheDocument();
+  expect(screen.getByRole('switch', { name: 'Promociones' })).toHaveAttribute('aria-checked', 'false');
+});
+it('HU58 revierte el interruptor si el servidor falla', async () => {
+  getNotificationPreferences.mockResolvedValue({ promotions: true, security: true, game_alerts: true });
+  updateNotificationPreferences.mockRejectedValue(new Error('Sin conexión'));
+  const user = userEvent.setup();
+  render(<MemoryRouter><NotificationSettings /></MemoryRouter>);
+  await user.click(await screen.findByRole('switch', { name: 'Alertas de juego' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('Sin conexión');
+  expect(screen.getByRole('switch', { name: 'Alertas de juego' })).toHaveAttribute('aria-checked', 'true');
+});

@@ -77,6 +77,18 @@ class RouletteConsumer(AsyncJsonWebsocketConsumer):
             return 0
         return RoomConnection.objects.filter(channel_name=self.channel_name, room__is_active=True, user__is_active=True).update(expires_at=timezone.now()+timedelta(seconds=60))
 
+    def resume_state(self):
+        from .models import Bet
+        from .serializers import BetSerializer
+        state = room_state(self.room_id)
+        round = state["round"]
+        bets = []
+        # Solo se recuperan apuestas de una ronda abierta o cerrada sin liquidar; las ya cerradas no.
+        if round and round["status"] in ("OPEN", "CLOSED"):
+            bets = BetSerializer(Bet.objects.filter(user=self.scope["user"], round_id=round["id"]).order_by("id"), many=True).data
+        total = sum(float(bet["amount"]) for bet in bets)
+        return {"state": state, "round_id": round["id"] if round else None, "bets": bets, "total_amount": f"{total:.2f}"}
+
     async def heartbeat(self):
         while True:
             # La conexion tambien vence cuando vence el JWT, aunque no haya mensajes.
@@ -114,12 +126,20 @@ class RouletteConsumer(AsyncJsonWebsocketConsumer):
             await self.send_json({"event": "error", "data": {"detail": "Se requiere un objeto JSON."}})
         elif content.get("event") == "room:sync":
             await self.send_json({"event": "room:state", "data": await database_sync_to_async(room_state)(self.room_id)})
+        elif content.get("event") == "room:resume":
+            # HU59: tras una reconexión se devuelve la ronda y las apuestas aún vigentes del jugador.
+            await self.send_json({"event": "RECONNECT_SUCCESS", "data": await database_sync_to_async(self.resume_state)()})
         elif content.get("event") == "ping":
             await self.send_json({"event": "pong", "data": {}})
         else:
             await self.send_json({"event": "error", "data": {"detail": "Evento no permitido. Envia apuestas por HTTP."}})
 
     async def push_event(self, message):
+        if message["event"] == "FORCE_DISCONNECT":
+            # HU42: el administrador suspendió la cuenta; se avisa y se corta la conexión.
+            await self.send_json({"event": "FORCE_DISCONNECT", "data": message["data"]})
+            await self.close(code=4403)
+            return
         if message["event"] == "session:revoked" or time.time() >= self.token_expiry or not await self.refresh_connection():
             await self.close(code=4401)
             return

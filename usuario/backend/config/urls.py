@@ -14,20 +14,31 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from accounts.views import AdminStatusView
-from roulette.history import BetHistoryView, StatsSummaryView
+from notifications.views import NotificationListView
+from roulette.history import BetDetailView, BetHistoryView, StatsSummaryView
 
 urlpatterns = [
     path('api/v1/casino/', include('casino.urls')),
     path('api/v1/stats/summary', StatsSummaryView.as_view(), name='stats-summary'),
+    path('api/v1/stats/', include('stats.urls')),
     path('api/v1/users/bets-history', BetHistoryView.as_view(), name='bets-history'),
+    path('api/v1/users/bets/<int:bet_id>', BetDetailView.as_view(), name='bet-detail'),
     path('api/v1/responsible-gaming/', include('responsible.urls')),
     path('api/v1/admin/status', AdminStatusView.as_view(), name='admin-status'),
+    path('api/v1/admin/', include('admin_api.urls')),
     path('api/v1/auth/', include('accounts.urls')),
+    path('api/v1/notifications', NotificationListView.as_view(), name='notifications'),
+    path('api/v1/notifications/', include('notifications.urls')),
     path('api/v1/wallet/', include('wallet.urls')),
     path('api/v1/users/', include('accounts.profile_urls')),
     path('api/v1/', include('roulette.urls')),
     path('admin/', admin.site.urls),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

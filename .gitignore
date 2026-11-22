@@ -10,3 +10,5 @@ playwright-report/
 .vscode/
 .idea/
 target/
+usuario/backend/media/
+dump.rdb

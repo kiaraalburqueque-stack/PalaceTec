@@ -53,7 +53,13 @@ class LoginView(APIView):
             if user.locked_until:
                 user.failed_attempts = 0
                 user.locked_until = None
-            if not user.check_password(data["password"]) or not user.is_active:
+            password_ok = user.check_password(data["password"])
+            if password_ok and not user.is_active:
+                # HU42: cuenta suspendida por un administrador.
+                return Response({"code": "account_suspended",
+                                 "detail": "Tu cuenta está suspendida. Comunícate con soporte."},
+                                status=status.HTTP_403_FORBIDDEN)
+            if not password_ok:
                 user.failed_attempts += 1
                 if user.failed_attempts >= 5:
                     user.locked_until = now + timedelta(minutes=15)
@@ -77,6 +83,8 @@ class LoginView(APIView):
             AuthSession.objects.create(user=user, jti=token["jti"], started_at=now,
                 expires_at=datetime.fromtimestamp(token["exp"], datetime_timezone.utc),
                 refresh_expires_at=datetime.fromtimestamp(refresh["exp"], datetime_timezone.utc))
+            from .security import register_login
+            register_login(user, request)
         response = Response({"id": user.pk, "email": user.email})
         set_access_cookie(response, token)
         response.set_cookie(settings.JWT_REFRESH_COOKIE, str(refresh), path="/api/v1/auth/",

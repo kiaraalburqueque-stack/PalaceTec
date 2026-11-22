@@ -64,11 +64,13 @@ class BetView(AuthenticatedView):
 
 class GameListView(AuthenticatedView):
     def get(self, request):
-        games = Game.objects.filter(is_published=True, rooms__is_active=True).annotate(
-            min_bet=Min("rooms__min_bet", filter=Q(rooms__is_active=True)),
-            max_bet=Max("rooms__max_bet", filter=Q(rooms__is_active=True))).order_by("id")
+        games = Game.objects.filter(is_published=True, deleted_at__isnull=True, rooms__is_active=True).annotate(
+            room_min=Min("rooms__min_bet", filter=Q(rooms__is_active=True)),
+            room_max=Max("rooms__max_bet", filter=Q(rooms__is_active=True))).order_by("id")
         return Response([{"id": game.pk, "slug": game.slug, "title": game.title,
-            "min_bet": format(game.min_bet, ".2f"), "max_bet": format(game.max_bet, ".2f"),
+            "category": game.category, "rtp": format(game.rtp, ".2f"),
+            "cover_url": request.build_absolute_uri(game.cover.url) if game.cover else None,
+            "min_bet": format(game.room_min, ".2f"), "max_bet": format(game.room_max, ".2f"),
             "rooms_url": f"/api/v1/rooms?game={game.pk}"} for game in games])
 
 
@@ -99,3 +101,16 @@ class RepeatBetsView(AuthenticatedView):
             return Response({"code": code, "detail": str(exc)}, status=409 if code == "reference_conflict" else 400)
         return Response({"source_round_id": operation.source_round_id, "round_id": operation.target_round_id,
             "reference": str(operation.reference), "bets": BetSerializer(operation.bets.order_by("id"), many=True).data}, status=201 if created else 200)
+
+
+class GameRulesView(AuthenticatedView):
+    """HU60: reglas, tabla de pagos y RTP de un juego publicado."""
+
+    def get(self, request, game_id):
+        game = get_object_or_404(Game.objects.filter(is_published=True, deleted_at__isnull=True), pk=game_id)
+        room = Room.objects.available().filter(game=game).order_by("id").first()
+        return Response({"id": game.pk, "slug": game.slug, "title": game.title, "category": game.category,
+                         "rtp": format(game.rtp, ".2f"), "house_edge": format(100 - game.rtp, ".2f"),
+                         "min_bet": format(game.min_bet, ".2f"), "max_bet": format(game.max_bet, ".2f"),
+                         "rules": game.rules, "payout_table": game.payout_table,
+                         "play_room_id": room.pk if room else None})

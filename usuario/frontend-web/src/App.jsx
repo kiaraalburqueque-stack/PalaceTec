@@ -18,6 +18,10 @@ import AdminGate from './components/AdminGate';
 import StatsPage from './pages/StatsPage';
 import BlackjackPage from './pages/BlackjackPage';
 import SportsPage from './pages/SportsPage';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import NotMePage from './pages/NotMePage';
+import NotificationSettings from './pages/NotificationSettings';
 
 import './App.css';
 
@@ -60,8 +64,13 @@ function App() {
             <Route path="/ruleta/:roomId" element={<RoulettePage />} />
             <Route path="/registro" element={<RegisterPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
+            <Route path="/seguridad/no-fui-yo" element={<NotMePage />} />
+            <Route path="/seguridad/no-fui-yo/:token" element={<NotMePage />} />
             <Route path="/perfil" element={<ProfilePage />} />
             <Route path="/perfil/seguridad" element={<PasswordPage />} />
+            <Route path="/perfil/notificaciones" element={<NotificationSettings />} />
             <Route path="/juego-responsable" element={<ResponsiblePage />} />
             <Route path="/historial" element={<HistoryPage />} />
             <Route path="/estadisticas" element={<StatsPage />} />

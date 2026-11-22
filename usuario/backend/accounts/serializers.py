@@ -100,3 +100,15 @@ class ProfileSerializer(serializers.ModelSerializer):
         if User.objects.filter(nickname=value).exclude(pk=self.instance.pk).exists():
             raise serializers.ValidationError("Este apodo ya esta registrado.")
         return value
+
+
+class ForgotPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField(max_length=254)
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    token = serializers.CharField(max_length=128, trim_whitespace=True)
+    new_password = serializers.CharField(write_only=True, trim_whitespace=False, max_length=256)
+
+    def validate_new_password(self, value):
+        return RegisterSerializer().validate_password(value)

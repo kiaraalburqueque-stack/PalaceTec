@@ -1,6 +1,6 @@
 # Backend de PalaceTec
 
-Django REST Framework, sesiones JWT revocables, billetera y ruleta europea con WebSockets. El Sprint 2 agrega juego responsable, catálogo de juegos, historial, estadísticas y perfil ampliado. Consulta [SPRINT2_API.md](SPRINT2_API.md) para instalar las migraciones y conectar todas las funciones nuevas. Los contratos ampliados de esa guía prevalecen sobre los ejemplos históricos del Sprint 1 que siguen abajo.
+Django REST Framework, sesiones JWT revocables, billetera y ruleta europea con WebSockets. El Sprint 2 agrega juego responsable, catálogo de juegos, historial, estadísticas y perfil ampliado. El Sprint 3 agrega administración, estadísticas, notificaciones y seguridad: ver [SPRINT3_API.md](SPRINT3_API.md). Consulta [SPRINT2_API.md](SPRINT2_API.md) para instalar las migraciones y conectar todas las funciones nuevas. Los contratos ampliados de esa guía prevalecen sobre los ejemplos históricos del Sprint 1 que siguen abajo.
 
 ## Ejecutar y probar
 

@@ -129,5 +129,11 @@ class RouletteService:
             "color": "verde" if number == 0 else "rojo" if number in RED_NUMBERS else "negro",
             "parity": None if number == 0 else "par" if number % 2 == 0 else "impar",
             "settled_at": round.settled_at.isoformat()})
+        from notifications.models import Notification
+        from notifications.services import notify
+        by_id = {user.pk: user for user in users}
         for user_id, total in totals.items():
             after_commit(f"user.{user_id}", "round:winnings", {"round_id": round.pk, "payout": format(total, ".2f")})
+            if total > 0:
+                notify(by_id[user_id], Notification.Category.GAME, "¡Ganaste en la ruleta!",
+                       f"La ronda {round.pk} terminó en {number}. Recibiste {format(total, '.2f')} CRD.")

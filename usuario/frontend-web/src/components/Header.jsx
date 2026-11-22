@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { getWalletSummary } from '../services/walletService';
 import { formatCredits } from '../utils/walletUtils';
 import LowBalanceNotice from './LowBalanceNotice';
+import NotificationCenter from './NotificationCenter';
 
 export default function Header() {
   const { user, setUser } = useUser();
@@ -44,6 +45,7 @@ export default function Header() {
       <div className="header-account">
         {wallet?.is_low_balance && <LowBalanceNotice key={user.id} threshold={wallet.low_balance_threshold} />}
         {user && <div className="header-wallet" aria-label="Saldo de billetera"><span>MI SALDO</span><strong>{wallet ? formatCredits(Number(wallet.balance)) : 'Consultando…'}</strong></div>}
+        {user && <NotificationCenter key={user.id} userId={user.id} />}
         <UserProfileDropdown user={user} wallet={wallet} />
       </div>
     </header>

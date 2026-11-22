@@ -1,0 +1,12 @@
+:root {
+  color-scheme: dark;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  --bg: #0d1015; --panel: #161b23; --panel-2: #1d242f; --border: #2d3541; --text: #edf0f7; --muted: #8d9aad;
+  --accent: #ff822c; --accent-2: #ffb06a; --green: #3ccf8e; --red: #ff6b63; --blue: #6aa8ff; --purple: #b98cff;
+  background: var(--bg); color: var(--text);
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; background: var(--bg); }
+button, input, select, textarea { font: inherit; }
+a { color: var(--accent-2); text-decoration: none; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #ff9d57; outline-offset: 2px; }

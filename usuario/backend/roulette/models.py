@@ -1,17 +1,44 @@
+from decimal import Decimal
+
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
 
 
 class Game(models.Model):
+    class Category(models.TextChoices):
+        RULETA = "RULETA", "Ruleta"
+        CARTAS = "CARTAS", "Cartas"
+        DEPORTES = "DEPORTES", "Deportes virtuales"
+        OTROS = "OTROS", "Otros"
+
     slug = models.SlugField(unique=True)
     title = models.CharField(max_length=80)
     is_published = models.BooleanField(default=False)
+    # HU43: parámetros del catálogo administrables desde el panel.
+    category = models.CharField(max_length=10, choices=Category.choices, default=Category.RULETA)
+    min_bet = models.DecimalField(max_digits=12, decimal_places=2, default=10)
+    max_bet = models.DecimalField(max_digits=12, decimal_places=2, default=500)
+    rtp = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("97.30"))
+    cover = models.FileField(upload_to="games/covers/", blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    # HU45: borrado lógico; las rondas y apuestas pasadas se conservan (PROTECT).
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    # HU60: reglas y tabla de pagos [{bet, description, pays, probability}].
+    rules = models.TextField(blank=True)
+    payout_table = models.JSONField(default=list, blank=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(condition=Q(min_bet__gt=0) & Q(max_bet__gte=models.F("min_bet")), name="game_valid_bet_limits"),
+            models.CheckConstraint(condition=Q(rtp__gt=0) & Q(rtp__lte=100), name="game_valid_rtp"),
+        ]
 
 
 class RoomQuerySet(models.QuerySet):
     def available(self):
-        return self.filter(is_active=True).filter(Q(game__isnull=True) | Q(game__is_published=True))
+        return self.filter(is_active=True).filter(
+            Q(game__isnull=True) | Q(game__is_published=True, game__deleted_at__isnull=True))
 
 
 class Room(models.Model):

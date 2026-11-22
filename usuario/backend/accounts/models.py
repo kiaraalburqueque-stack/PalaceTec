@@ -72,3 +72,33 @@ class AuthSession(models.Model):
     expires_at = models.DateTimeField(db_index=True)
     refresh_expires_at = models.DateTimeField(null=True, blank=True)
     revoked_at = models.DateTimeField(null=True, blank=True)
+
+
+class PasswordResetToken(models.Model):
+    """HU55: solo se guarda el hash SHA-256 del token enviado por correo."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="password_reset_tokens")
+    token_hash = models.CharField(max_length=64, unique=True)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "password_reset_tokens"
+
+
+class LoginHistory(models.Model):
+    """HU56: accesos exitosos para detectar IP o dispositivo nuevos (sin geolocalización)."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="login_history")
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.CharField(max_length=255, blank=True)
+    is_new_ip = models.BooleanField(default=False)
+    is_new_device = models.BooleanField(default=False)
+    alert_sent = models.BooleanField(default=False)
+    reported_at = models.DateTimeField(null=True, blank=True)
+    # Hash SHA-256 del token del botón "No fui yo" (válido 24 horas desde el acceso).
+    report_token_hash = models.CharField(max_length=64, unique=True, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        db_table = "login_history"
+        ordering = ["-created_at", "-id"]
