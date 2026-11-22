@@ -1117,3 +1117,10 @@ a { text-decoration: none; }
 .export-buttons button:hover:not(:disabled) { border-color: #ff822c; color: #ffb06a; }
 .export-buttons button:disabled { opacity: .6; cursor: wait; }
 .export-buttons [role="alert"] { color: #ff9b9b; margin: 0; }
+
+/* Sprint 4 · HU67: juegos más jugados */
+.top-games-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 12px; }
+.top-games-label { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; margin-bottom: 5px; }
+.top-games-label span { color: #aeb7c4; white-space: nowrap; }
+.top-games-bar { height: 10px; border-radius: 999px; background: #232a35; overflow: hidden; }
+.top-games-bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #ff822c, #ffb06a); transition: width .4s ease-out; }

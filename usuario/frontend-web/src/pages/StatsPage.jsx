@@ -6,6 +6,7 @@ import DateRangeFilter from '../components/DateRangeFilter';
 import WinRateChart from '../components/WinRateChart';
 import BigWinCard from '../components/BigWinCard';
 import BalanceChart from '../components/BalanceChart';
+import TopGames from '../components/TopGames';
 import { getBiggestWin, getWinRate } from '../services/statsService';
 export default function StatsPage() {
   const { user, loading: sessionLoading } = useUser();
@@ -43,5 +44,6 @@ export default function StatsPage() {
     <WinRateChart data={winRate} />
     <BigWinCard loaded={bigWin.loaded} record={bigWin.record} />
     <BalanceChart />
+    <TopGames />
   </div></main>;
 }

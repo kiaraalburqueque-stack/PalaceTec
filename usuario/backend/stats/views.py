@@ -1,4 +1,4 @@
-"""Estadísticas privadas del jugador (HU51, HU52 y HU53)."""
+"""Estadísticas privadas del jugador (HU51, HU52, HU53 y HU67)."""
 from datetime import datetime, time, timedelta
 from decimal import Decimal
 from zoneinfo import ZoneInfo
@@ -99,3 +99,22 @@ class BalanceHistoryView(AuthenticatedView):
             series.append({"date": day.isoformat(), "balance": format(balance, ".2f"), "movements": count})
         return Response({"period": days, "opening_balance": format(opening, ".2f"),
                          "closing_balance": format(balance, ".2f"), "timezone": "America/Lima", "points": series})
+
+
+class TopGamesView(AuthenticatedView):
+    """HU67: los 5 juegos con más rondas (y luego más créditos apostados) del jugador."""
+
+    LIMIT = 5
+
+    def get(self, request):
+        from roulette.game_activity import activity_by_game
+        from roulette.models import Game
+        bets = filter_dates(Bet.objects.filter(user=request.user), request.query_params)
+        plays = filter_dates(Play.objects.filter(user=request.user), request.query_params)
+        activity = activity_by_game(bets, plays)
+        games = Game.objects.in_bulk(list(activity))
+        ranking = sorted(activity.values(), key=lambda item: (-item.rounds, -item.wagered, item.game_id))[:self.LIMIT]
+        return Response({"results": [{"game_id": item.game_id, "title": games[item.game_id].title,
+                                      "category": games[item.game_id].category, "rounds": item.rounds,
+                                      "wagered": format(item.wagered, ".2f")} for item in ranking],
+                         "total_rounds": sum(item.rounds for item in activity.values()), "timezone": "America/Lima"})
