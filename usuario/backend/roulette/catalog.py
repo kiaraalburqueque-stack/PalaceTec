@@ -1,0 +1,59 @@
+"""Catálogo del jugador: juegos disponibles y filtro por categoría (HU61)."""
+from django.db.models import Max, Min, Q
+from rest_framework import serializers
+
+from .models import Game
+
+# Slug de la URL -> categoría guardada en Game.category.
+CATEGORY_SLUGS = {
+    "ruleta": Game.Category.RULETA,
+    "cartas": Game.Category.CARTAS,
+    "deportes": Game.Category.DEPORTES,
+    "otros": Game.Category.OTROS,
+}
+SLUG_BY_CATEGORY = {value: key for key, value in CATEGORY_SLUGS.items()}
+
+
+class CatalogQuery(serializers.Serializer):
+    category = serializers.CharField(required=False, allow_blank=True, max_length=20)
+
+    def validate_category(self, value):
+        value = value.strip().lower()
+        if value and value not in CATEGORY_SLUGS:
+            raise serializers.ValidationError("Categoría no válida. Usa ruleta, cartas, deportes u otros.")
+        return value
+
+
+def available_games():
+    """Juegos publicados y activos: con al menos una sala activa o enlazados a su propia pantalla."""
+    return (Game.objects.filter(is_published=True, deleted_at__isnull=True)
+            .filter(Q(rooms__is_active=True) | ~Q(play_kind=""))
+            .annotate(room_min=Min("rooms__min_bet", filter=Q(rooms__is_active=True)),
+                      room_max=Max("rooms__max_bet", filter=Q(rooms__is_active=True)))
+            .order_by("id"))
+
+
+def filter_category(games, slug):
+    return games.filter(category=CATEGORY_SLUGS[slug]) if slug else games
+
+
+def category_counts(games):
+    """Cantidad de juegos por categoría, incluidas las que no tienen ninguno."""
+    counts = {slug: 0 for slug in CATEGORY_SLUGS}
+    for game in games:
+        counts[SLUG_BY_CATEGORY.get(game.category, "otros")] += 1
+    return {"total": sum(counts.values()),
+            "categories": [{"slug": slug, "label": CATEGORY_SLUGS[slug].label, "count": counts[slug]}
+                           for slug in CATEGORY_SLUGS]}
+
+
+def game_payload(game, request):
+    room_game = game.room_min is not None
+    return {"id": game.pk, "slug": game.slug, "title": game.title, "category": game.category,
+            "category_slug": SLUG_BY_CATEGORY.get(game.category, "otros"),
+            "rtp": format(game.rtp, ".2f"),
+            "cover_url": request.build_absolute_uri(game.cover.url) if game.cover else None,
+            "min_bet": format(game.room_min if room_game else game.min_bet, ".2f"),
+            "max_bet": format(game.room_max if room_game else game.max_bet, ".2f"),
+            "rooms_url": f"/api/v1/rooms?game={game.pk}" if room_game else None,
+            "play_path": game.play_path or None}

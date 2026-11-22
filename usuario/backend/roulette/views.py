@@ -1,4 +1,4 @@
-from django.db.models import Count, Q, Min, Max
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
@@ -62,16 +62,30 @@ class BetView(AuthenticatedView):
         return Response(BetSerializer(bet).data, status=201 if created else 200)
 
 
+def catalog_params(request):
+    from .catalog import CatalogQuery
+    query = CatalogQuery(data=request.query_params)
+    query.is_valid(raise_exception=True)
+    return query.validated_data
+
+
 class GameListView(AuthenticatedView):
+    """HU34 y HU61: juegos disponibles, con filtro opcional ?category=ruleta|cartas|deportes|otros."""
+
     def get(self, request):
-        games = Game.objects.filter(is_published=True, deleted_at__isnull=True, rooms__is_active=True).annotate(
-            room_min=Min("rooms__min_bet", filter=Q(rooms__is_active=True)),
-            room_max=Max("rooms__max_bet", filter=Q(rooms__is_active=True))).order_by("id")
-        return Response([{"id": game.pk, "slug": game.slug, "title": game.title,
-            "category": game.category, "rtp": format(game.rtp, ".2f"),
-            "cover_url": request.build_absolute_uri(game.cover.url) if game.cover else None,
-            "min_bet": format(game.room_min, ".2f"), "max_bet": format(game.room_max, ".2f"),
-            "rooms_url": f"/api/v1/rooms?game={game.pk}"} for game in games])
+        from .catalog import available_games, filter_category, game_payload
+        params = catalog_params(request)
+        games = filter_category(available_games(), params.get("category"))
+        return Response([game_payload(game, request) for game in games])
+
+
+class GameCategoryCountView(AuthenticatedView):
+    """HU61: contador de juegos disponibles por categoría para las pestañas del catálogo."""
+
+    def get(self, request):
+        from .catalog import available_games, category_counts
+        catalog_params(request)
+        return Response(category_counts(available_games()))
 
 
 class PreviousBetsView(AuthenticatedView):
@@ -113,4 +127,4 @@ class GameRulesView(AuthenticatedView):
                          "rtp": format(game.rtp, ".2f"), "house_edge": format(100 - game.rtp, ".2f"),
                          "min_bet": format(game.min_bet, ".2f"), "max_bet": format(game.max_bet, ".2f"),
                          "rules": game.rules, "payout_table": game.payout_table,
-                         "play_room_id": room.pk if room else None})
+                         "play_room_id": room.pk if room else None, "play_path": game.play_path or None})

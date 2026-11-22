@@ -1,10 +1,12 @@
 from django.urls import path
-from .views import GameRulesView, RoomListView, RoomStateView, BetView, GameListView, PreviousBetsView, RepeatBetsView
+from .views import (GameCategoryCountView, GameRulesView, RoomListView, RoomStateView, BetView, GameListView,
+                    PreviousBetsView, RepeatBetsView)
 
 urlpatterns = [
     path("rooms/<int:room_id>/bets/previous", PreviousBetsView.as_view(), name="previous-bets"),
     path("rooms/<int:room_id>/bets/repeat", RepeatBetsView.as_view(), name="repeat-bets"),
     path("games", GameListView.as_view(), name="games"),
+    path("games/categories", GameCategoryCountView.as_view(), name="game-categories"),
     path("games/<int:game_id>/rules", GameRulesView.as_view(), name="game-rules"),
     path("rooms/<int:room_id>/bets", BetView.as_view(), name="room-bets"),
     path("rooms", RoomListView.as_view(), name="rooms"),

@@ -1016,3 +1016,15 @@ a { text-decoration: none; }
 .game-cover { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px; border: 1px solid #2d3541; margin-bottom: 6px; }
 .game-meta { display: flex; gap: 10px; align-items: center; font-size: 12px; color: #9aa6b8; margin: 0; }
 .game-category { background: #2a2216; color: #ffb06a; border: 1px solid #5a4325; border-radius: 999px; padding: 2px 10px; font-weight: 700; }
+
+/* Sprint 4 · HU61: pestañas de categoría del catálogo */
+.category-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 6px; }
+.category-tabs button { display: inline-flex; align-items: center; gap: 7px; background: #171c24; color: #c9d0db; border: 1px solid #303743; border-radius: 999px; padding: 8px 14px; cursor: pointer; font-size: 13px; transition: background .2s, border-color .2s, color .2s; }
+.category-tabs button:hover { border-color: #cf7b40; color: #fff; }
+.category-tabs button.is-active { background: #ff822c; border-color: #ff822c; color: #14110d; font-weight: 700; }
+.tab-count { min-width: 20px; padding: 1px 7px; border-radius: 999px; background: #0007; font-size: 11px; text-align: center; }
+.category-tabs button.is-active .tab-count { background: #14110d33; }
+.catalog-fade { animation: catalog-fade .25s ease-out; }
+@keyframes catalog-fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.play-link { text-decoration: none; display: inline-flex; align-items: center; }
+@media (prefers-reduced-motion: reduce) { .catalog-fade { animation: none; } }
