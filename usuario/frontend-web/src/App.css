@@ -1079,3 +1079,16 @@ a { text-decoration: none; }
 .odds-card dt { color: #aeb7c4; font-size: 12px; }
 .odds-card dd { margin: 0; color: #f4f5f7; font-weight: 700; font-size: 13px; }
 .odds-card small { color: #aeb7c4; font-weight: 400; }
+
+/* Sprint 4 · HU70: sección Para ti */
+.for-you { padding: 28px 0 8px; text-align: left; }
+.for-you h2 { color: #f2f3f6; margin: 4px 0 14px; font-size: 24px; }
+.for-you-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.for-you-card { display: flex; flex-direction: column; gap: 8px; padding: 18px; background: linear-gradient(160deg, #1d2530, #151a22); border: 1px solid #303743; border-radius: 14px; transition: transform .15s, border-color .15s; }
+.for-you-card:hover { transform: translateY(-3px); border-color: #cf7b40; }
+.for-you-card h3 { margin: 0; color: #f5f6f8; font-size: 17px; }
+.for-you-card p { margin: 0; color: #ffb06a; font-size: 13px; flex: 1; }
+.for-you-card .game-category { align-self: flex-start; }
+.for-you-blocked { color: #c9d0db; background: #1b222c; border: 1px solid #303743; border-radius: 12px; padding: 14px 16px; }
+@media (max-width: 900px) { .for-you-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .for-you-grid { grid-template-columns: 1fr; } }

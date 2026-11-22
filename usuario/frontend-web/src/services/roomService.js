@@ -15,3 +15,5 @@ export const getGameRules = (id) => apiRequest(`/api/v1/games/${id}/rules`);
 // HU63: favoritos del jugador.
 export const getFavoriteGames = (params) => apiRequest('/api/v1/games/favorites' + query(params));
 export const toggleFavorite = (id) => apiRequest(`/api/v1/games/${id}/favorite`, { method: 'POST', body: '{}' });
+// HU70: recomendaciones de la sección Para ti.
+export const getRecommendations = () => apiRequest('/api/v1/games/recommendations');

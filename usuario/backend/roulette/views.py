@@ -162,3 +162,11 @@ class GameRulesView(AuthenticatedView):
                          "min_bet": format(game.min_bet, ".2f"), "max_bet": format(game.max_bet, ".2f"),
                          "rules": game.rules, "payout_table": game.payout_table,
                          "play_room_id": room.pk if room else None, "play_path": game.play_path or None})
+
+
+class RecommendationView(AuthenticatedView):
+    """HU70: sección Para ti con hasta 4 juegos y el motivo de cada uno."""
+
+    def get(self, request):
+        from .recommendations import recommend
+        return Response(recommend(request.user, request))
