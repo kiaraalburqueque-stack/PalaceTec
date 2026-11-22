@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'admin_api',
     'stats',
     'notifications',
+    'assistant',
 ]
 
 MIDDLEWARE = [
@@ -153,6 +154,8 @@ STATIC_URL = 'static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 GAME_COVER_MAX_BYTES = 2 * 1024 * 1024
+# HU65: fotos de avatar de hasta 2 MB, guardadas en media/avatars/.
+AVATAR_MAX_BYTES = 2 * 1024 * 1024
 
 
 # Email
@@ -206,6 +209,14 @@ CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 CSRF_COOKIE_SECURE = not DEBUG
 LOGIN_RATE_LIMIT = "30/min"
 EXCLUSION_HMAC_KEY = os.getenv("EXCLUSION_HMAC_KEY", SECRET_KEY)
+
+# HU68: asistente virtual. Sin clave responde con preguntas frecuentes (ver .env.example).
+ASSISTANT_PROVIDER = os.getenv('ASSISTANT_PROVIDER', 'faq')
+ASSISTANT_API_KEY = os.getenv('ASSISTANT_API_KEY', '')
+ASSISTANT_MODEL = os.getenv('ASSISTANT_MODEL', '')
+ASSISTANT_BASE_URL = os.getenv('ASSISTANT_BASE_URL', '')
+ASSISTANT_TIMEOUT = int(os.getenv('ASSISTANT_TIMEOUT', '10'))
+ASSISTANT_RATE_LIMIT = '20/min'
 
 # Conexion directa: no confiar en X-Forwarded-For enviado por el cliente.
 REST_FRAMEWORK = {"NUM_PROXIES": 0}

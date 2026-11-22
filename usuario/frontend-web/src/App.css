@@ -1016,3 +1016,111 @@ a { text-decoration: none; }
 .game-cover { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px; border: 1px solid #2d3541; margin-bottom: 6px; }
 .game-meta { display: flex; gap: 10px; align-items: center; font-size: 12px; color: #9aa6b8; margin: 0; }
 .game-category { background: #2a2216; color: #ffb06a; border: 1px solid #5a4325; border-radius: 999px; padding: 2px 10px; font-weight: 700; }
+
+/* Sprint 4 · HU61: pestañas de categoría del catálogo */
+.category-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 6px; }
+.category-tabs button { display: inline-flex; align-items: center; gap: 7px; background: #171c24; color: #c9d0db; border: 1px solid #303743; border-radius: 999px; padding: 8px 14px; cursor: pointer; font-size: 13px; transition: background .2s, border-color .2s, color .2s; }
+.category-tabs button:hover { border-color: #cf7b40; color: #fff; }
+.category-tabs button.is-active { background: #ff822c; border-color: #ff822c; color: #14110d; font-weight: 700; }
+.tab-count { min-width: 20px; padding: 1px 7px; border-radius: 999px; background: #0007; font-size: 11px; text-align: center; }
+.category-tabs button.is-active .tab-count { background: #14110d33; }
+.catalog-fade { animation: catalog-fade .25s ease-out; }
+@keyframes catalog-fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.play-link { text-decoration: none; display: inline-flex; align-items: center; }
+@media (prefers-reduced-motion: reduce) { .catalog-fade { animation: none; } }
+
+/* Sprint 4 · HU62: búsqueda de juegos */
+.search-input { display: flex; align-items: center; gap: 8px; max-width: 420px; margin: 14px 0 4px; padding: 0 12px; background: #171c24; border: 1px solid #303743; border-radius: 10px; color: #8995a6; }
+.search-input:focus-within { border-color: #ff822c; }
+.search-input input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: #f4f5f7; padding: 10px 0; font-size: 14px; }
+.search-input button { background: transparent; border: 0; color: #aeb7c4; font-size: 20px; line-height: 1; cursor: pointer; padding: 4px; }
+.search-input button:hover { color: #fff; }
+.empty-search { margin: 18px 0; padding: 18px; border: 1px dashed #3a4350; border-radius: 12px; color: #c9d0db; }
+.empty-suggestions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Sprint 4 · HU63: favoritos */
+.game-card-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.game-card-title h3 { margin: 0; }
+.favorite-button { flex: none; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; border: 1px solid #3a4350; background: #12161d; color: #aeb7c4; font-size: 18px; cursor: pointer; transition: transform .15s, color .15s, border-color .15s; }
+.favorite-button:hover { border-color: #ff5b7f; color: #ff5b7f; }
+.favorite-button.is-active { color: #ff5b7f; border-color: #ff5b7f; background: #2a1720; }
+.favorite-button:active { transform: scale(.9); }
+.favorite-button:disabled { opacity: .6; cursor: wait; }
+.favorite-error { color: #ff9b9b; }
+
+/* Sprint 4 · HU68: asistente virtual flotante */
+.assistant-widget { position: fixed; right: 20px; bottom: 20px; z-index: 900; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+.assistant-bubble { width: 56px; height: 56px; border-radius: 50%; border: 0; background: #ff822c; color: #14110d; font-size: 24px; cursor: pointer; box-shadow: 0 10px 24px #0009; transition: transform .15s; }
+.assistant-bubble:hover { transform: scale(1.06); }
+.assistant-panel { width: min(360px, calc(100vw - 40px)); max-height: min(560px, calc(100vh - 120px)); display: flex; flex-direction: column; background: #151a22; border: 1px solid #303743; border-radius: 16px; overflow: hidden; box-shadow: 0 18px 40px #000b; text-align: left; }
+.assistant-panel header { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: #1b222c; border-bottom: 1px solid #2a313c; }
+.assistant-panel header small { display: block; color: #8995a6; font-size: 11px; margin-top: 2px; }
+.assistant-close { background: transparent; border: 0; color: #c9d0db; font-size: 22px; cursor: pointer; }
+.assistant-messages { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 8px; min-height: 160px; }
+.assistant-message { max-width: 85%; padding: 9px 12px; border-radius: 12px; font-size: 13px; line-height: 1.5; white-space: pre-wrap; }
+.assistant-message.from-user { align-self: flex-end; background: #ff822c; color: #14110d; border-bottom-right-radius: 4px; }
+.assistant-message.from-assistant { align-self: flex-start; background: #222a35; color: #e6ebf3; border-bottom-left-radius: 4px; }
+.assistant-typing, .assistant-empty { color: #8995a6; font-size: 12px; margin: 0; }
+.assistant-typing { font-style: italic; }
+.assistant-error { color: #ff9b9b; font-size: 12px; margin: 0 14px; }
+.assistant-suggestions { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px 8px; }
+.assistant-suggestions button { background: transparent; border: 1px solid #3a4350; color: #c9d0db; border-radius: 999px; padding: 5px 10px; font-size: 11px; cursor: pointer; }
+.assistant-suggestions button:hover { border-color: #ff822c; color: #ffb06a; }
+.assistant-panel form { display: flex; gap: 8px; padding: 10px 14px; border-top: 1px solid #2a313c; }
+.assistant-panel form input { flex: 1; min-width: 0; background: #0f1319; border: 1px solid #303743; border-radius: 8px; color: #f4f5f7; padding: 8px 10px; }
+.assistant-panel form button { background: #ff822c; border: 0; border-radius: 8px; color: #14110d; font-weight: 700; padding: 0 12px; cursor: pointer; }
+.assistant-panel form button:disabled { opacity: .5; cursor: not-allowed; }
+.assistant-reminder { padding: 0 14px 12px; color: #8995a6; font-size: 10.5px; }
+
+/* Sprint 4 · HU69: tarjeta de probabilidades */
+.odds-card { margin: 10px 0 2px; padding: 10px 12px; border: 1px solid #ff822c66; border-radius: 10px; background: #1a1410; display: grid; gap: 6px; }
+.odds-card .odds-title { color: #ffb06a; font-weight: 700; font-size: 13px; }
+.odds-card div:not(.odds-title) { display: flex; justify-content: space-between; gap: 10px; }
+.odds-card dt { color: #aeb7c4; font-size: 12px; }
+.odds-card dd { margin: 0; color: #f4f5f7; font-weight: 700; font-size: 13px; }
+.odds-card small { color: #aeb7c4; font-weight: 400; }
+
+/* Sprint 4 · HU70: sección Para ti */
+.for-you { padding: 28px 0 8px; text-align: left; }
+.for-you h2 { color: #f2f3f6; margin: 4px 0 14px; font-size: 24px; }
+.for-you-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.for-you-card { display: flex; flex-direction: column; gap: 8px; padding: 18px; background: linear-gradient(160deg, #1d2530, #151a22); border: 1px solid #303743; border-radius: 14px; transition: transform .15s, border-color .15s; }
+.for-you-card:hover { transform: translateY(-3px); border-color: #cf7b40; }
+.for-you-card h3 { margin: 0; color: #f5f6f8; font-size: 17px; }
+.for-you-card p { margin: 0; color: #ffb06a; font-size: 13px; flex: 1; }
+.for-you-card .game-category { align-self: flex-start; }
+.for-you-blocked { color: #c9d0db; background: #1b222c; border: 1px solid #303743; border-radius: 12px; padding: 14px 16px; }
+@media (max-width: 900px) { .for-you-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .for-you-grid { grid-template-columns: 1fr; } }
+
+/* Sprint 4 · HU64: carrusel de destacados */
+.featured-carousel { position: relative; margin: 28px 0 4px; text-align: left; }
+.featured-slide { min-height: 210px; padding: 30px 34px; border-radius: 18px; border: 1px solid #3a3226; background: radial-gradient(ellipse at 85% 50%, #5a3a1d, #1c1712 55%, #12100d); background-size: cover; background-position: center; display: flex; flex-direction: column; justify-content: center; gap: 10px; animation: catalog-fade .35s ease-out; }
+.featured-slide h2 { margin: 0; font-size: 32px; color: #fff; letter-spacing: -.6px; }
+.featured-slide p { margin: 0; color: #d3d8e0; font-size: 14px; }
+.featured-slide .primary-action { align-self: flex-start; }
+.featured-controls { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 10px; }
+.featured-controls > button { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #3a4350; background: #171c24; color: #f4f5f7; font-size: 18px; cursor: pointer; }
+.featured-dots { display: flex; gap: 6px; }
+.featured-dots button { width: 9px; height: 9px; padding: 0; border-radius: 50%; border: 0; background: #4a5464; cursor: pointer; }
+.featured-dots button[aria-current="true"] { background: #ff822c; width: 22px; border-radius: 999px; }
+
+/* Sprint 4 · HU65: foto de avatar */
+.avatar-current, .avatar-preview { border-radius: 50%; object-fit: cover; border: 2px solid #3a4350; }
+.avatar-upload { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; margin-top: 18px; }
+.avatar-upload small[role="alert"] { color: #ff9b9b; }
+.avatar-upload-ok { color: #6fe6a8; }
+
+/* Sprint 4 · HU66: exportar historial */
+.export-buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 6px 0 14px; }
+.export-buttons button { background: #171c24; color: #f4f5f7; border: 1px solid #3a4350; border-radius: 8px; padding: 8px 14px; cursor: pointer; }
+.export-buttons button:hover:not(:disabled) { border-color: #ff822c; color: #ffb06a; }
+.export-buttons button:disabled { opacity: .6; cursor: wait; }
+.export-buttons [role="alert"] { color: #ff9b9b; margin: 0; }
+
+/* Sprint 4 · HU67: juegos más jugados */
+.top-games-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 12px; }
+.top-games-label { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; margin-bottom: 5px; }
+.top-games-label span { color: #aeb7c4; white-space: nowrap; }
+.top-games-bar { height: 10px; border-radius: 999px; background: #232a35; overflow: hidden; }
+.top-games-bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #ff822c, #ffb06a); transition: width .4s ease-out; }

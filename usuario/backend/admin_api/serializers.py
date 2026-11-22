@@ -53,15 +53,17 @@ COVER_SIGNATURES = {
 COVER_EXTENSIONS = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png", "webp": "image/webp"}
 
 
-def validate_cover(upload):
-    """HU43: solo JPG, PNG o WEBP de hasta 2 MB; se revisa la firma real del archivo."""
-    from django.conf import settings
+def validate_image_upload(upload, max_bytes, subject):
+    """Solo JPG, PNG o WEBP hasta max_bytes; se revisa la firma real del archivo (HU43 y HU65).
+
+    Devuelve el tipo MIME según la extensión. `subject` arma los mensajes ("La portada", "La foto").
+    """
     extension = upload.name.rsplit(".", 1)[-1].lower() if "." in upload.name else ""
     kind = COVER_EXTENSIONS.get(extension)
     if kind is None:
-        raise serializers.ValidationError("La portada debe ser JPG, PNG o WEBP.")
-    if upload.size > settings.GAME_COVER_MAX_BYTES:
-        raise serializers.ValidationError("La portada no debe superar 2 MB.")
+        raise serializers.ValidationError(f"{subject} debe ser JPG, PNG o WEBP.")
+    if upload.size > max_bytes:
+        raise serializers.ValidationError(f"{subject} no debe superar {max_bytes // (1024 * 1024)} MB.")
     head = upload.read(12)
     upload.seek(0)
     valid = any(head.startswith(signature) for signature in COVER_SIGNATURES[kind])
@@ -69,6 +71,13 @@ def validate_cover(upload):
         valid = valid and head[8:12] == b"WEBP"
     if not valid:
         raise serializers.ValidationError("El contenido del archivo no corresponde a una imagen válida.")
+    return kind
+
+
+def validate_cover(upload):
+    """HU43: solo JPG, PNG o WEBP de hasta 2 MB; se revisa la firma real del archivo."""
+    from django.conf import settings
+    validate_image_upload(upload, settings.GAME_COVER_MAX_BYTES, "La portada")
     return upload
 
 
@@ -86,8 +95,8 @@ class AdminGameSerializer(serializers.ModelSerializer):
     class Meta:
         model = Game
         fields = ["id", "slug", "title", "category", "min_bet", "max_bet", "rtp", "is_published",
-                  "cover", "cover_url", "rooms", "rules", "payout_table", "created_at", "deleted_at"]
-        read_only_fields = ["id", "created_at", "deleted_at"]
+                  "cover", "cover_url", "rooms", "rules", "payout_table", "created_at", "deleted_at", "is_featured"]
+        read_only_fields = ["id", "created_at", "deleted_at", "is_featured"]
 
     def get_cover_url(self, game):
         if not game.cover:
@@ -134,3 +143,7 @@ class PromotionInput(serializers.Serializer):
     title = serializers.CharField(min_length=3, max_length=120)
     message = serializers.CharField(min_length=5, max_length=500)
     send_email = serializers.BooleanField(required=False, default=False)
+
+
+class FeaturedInput(serializers.Serializer):
+    is_featured = serializers.BooleanField()

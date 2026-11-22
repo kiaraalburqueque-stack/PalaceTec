@@ -11,6 +11,7 @@ vi.mock('../services/statsService', () => ({
   getWinRate: vi.fn().mockResolvedValue({ won: 1, lost: 1, push: 0, total: 2, win_rate: 50 }),
   getBiggestWin: vi.fn().mockResolvedValue({ record: null }),
   getBalanceHistory: vi.fn().mockResolvedValue({ opening_balance: '0.00', closing_balance: '0.00', points: [] }),
+  getTopGames: vi.fn().mockResolvedValue({ results: [], total_rounds: 0 }),
 }));
 it('HU40 distingue pago de neto y consulta el rango seleccionado', async () => {
   getStatsSummary.mockResolvedValue({ total_wagered: '100.00', total_paid: '80.00', net: '-20.00' });

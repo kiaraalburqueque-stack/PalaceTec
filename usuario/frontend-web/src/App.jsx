@@ -22,6 +22,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import NotMePage from './pages/NotMePage';
 import NotificationSettings from './pages/NotificationSettings';
+import AssistantChat from './components/AssistantChat';
 
 import './App.css';
 
@@ -80,6 +81,7 @@ function App() {
         </div>
         <footer className="app-footer"><span>♛ PalaceTec · Casino virtual</span><span>Créditos simulados. Sin dinero real. Solo mayores de 18 años.</span></footer>
       </div>
+      <AssistantChat />
     </UserProvider>
   );
 }

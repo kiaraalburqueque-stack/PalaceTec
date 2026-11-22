@@ -1,4 +1,4 @@
-from django.db.models import Count, Q, Min, Max
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
@@ -62,16 +62,64 @@ class BetView(AuthenticatedView):
         return Response(BetSerializer(bet).data, status=201 if created else 200)
 
 
+def catalog_params(request):
+    from .catalog import CatalogQuery
+    query = CatalogQuery(data=request.query_params)
+    query.is_valid(raise_exception=True)
+    return query.validated_data
+
+
 class GameListView(AuthenticatedView):
+    """HU34, HU61 y HU62: juegos disponibles con ?category=ruleta|cartas|deportes|otros y ?search=texto."""
+
     def get(self, request):
-        games = Game.objects.filter(is_published=True, deleted_at__isnull=True, rooms__is_active=True).annotate(
-            room_min=Min("rooms__min_bet", filter=Q(rooms__is_active=True)),
-            room_max=Max("rooms__max_bet", filter=Q(rooms__is_active=True))).order_by("id")
-        return Response([{"id": game.pk, "slug": game.slug, "title": game.title,
-            "category": game.category, "rtp": format(game.rtp, ".2f"),
-            "cover_url": request.build_absolute_uri(game.cover.url) if game.cover else None,
-            "min_bet": format(game.room_min, ".2f"), "max_bet": format(game.room_max, ".2f"),
-            "rooms_url": f"/api/v1/rooms?game={game.pk}"} for game in games])
+        from .catalog import apply_search, available_games, favorite_ids, filter_category, game_payload
+        params = catalog_params(request)
+        games = apply_search(filter_category(available_games(), params.get("category")), params.get("search"))
+        favorites = favorite_ids(request.user)
+        return Response([game_payload(game, request, favorites) for game in games])
+
+
+class GameCategoryCountView(AuthenticatedView):
+    """HU61: contador de juegos disponibles por categoría para las pestañas del catálogo."""
+
+    def get(self, request):
+        from .catalog import apply_search, available_games, category_counts, favorite_ids
+        params = catalog_params(request)
+        games = apply_search(available_games(), params.get("search"))
+        favorites = favorite_ids(request.user)
+        return Response({**category_counts(games), "favorites": sum(1 for game in games if game.pk in favorites)})
+
+
+class FavoriteGameListView(AuthenticatedView):
+    """HU63: favoritos disponibles del jugador, del más reciente al más antiguo."""
+
+    def get(self, request):
+        from .catalog import apply_search, available_games, game_payload
+        from .models import FavoriteGame
+        params = catalog_params(request)
+        order = list(FavoriteGame.objects.filter(user=request.user).order_by("-created_at", "-id").values_list("game_id", flat=True))
+        games = {game.pk: game for game in apply_search(available_games().filter(pk__in=order), params.get("search"))}
+        return Response([game_payload(games[pk], request, frozenset(order)) for pk in order if pk in games])
+
+
+class FavoriteToggleView(AuthenticatedView):
+    """HU63: marca o desmarca un juego como favorito del jugador autenticado."""
+
+    def post(self, request, game_id):
+        from django.db import IntegrityError, transaction
+        from .catalog import available_games
+        from .models import FavoriteGame
+        deleted, _ = FavoriteGame.objects.filter(user=request.user, game_id=game_id).delete()
+        if deleted:
+            return Response({"game_id": game_id, "is_favorite": False})
+        get_object_or_404(available_games(), pk=game_id)
+        try:
+            with transaction.atomic():
+                FavoriteGame.objects.create(user=request.user, game_id=game_id)
+        except IntegrityError:
+            pass  # Dos clics simultáneos: el favorito ya quedó guardado.
+        return Response({"game_id": game_id, "is_favorite": True})
 
 
 class PreviousBetsView(AuthenticatedView):
@@ -113,4 +161,23 @@ class GameRulesView(AuthenticatedView):
                          "rtp": format(game.rtp, ".2f"), "house_edge": format(100 - game.rtp, ".2f"),
                          "min_bet": format(game.min_bet, ".2f"), "max_bet": format(game.max_bet, ".2f"),
                          "rules": game.rules, "payout_table": game.payout_table,
-                         "play_room_id": room.pk if room else None})
+                         "play_room_id": room.pk if room else None, "play_path": game.play_path or None})
+
+
+class RecommendationView(AuthenticatedView):
+    """HU70: sección Para ti con hasta 4 juegos y el motivo de cada uno."""
+
+    def get(self, request):
+        from .recommendations import recommend
+        return Response(recommend(request.user, request))
+
+
+class FeaturedGameListView(AuthenticatedView):
+    """HU64: juegos destacados para el carrusel del inicio; excluye los desactivados."""
+
+    def get(self, request):
+        from .catalog import available_games, favorite_ids, game_payload
+        favorites = favorite_ids(request.user)
+        games = available_games().filter(is_featured=True)[:5]
+        rooms = dict(Room.objects.available().filter(game__in=[g.pk for g in games]).order_by("-id").values_list("game_id", "id"))
+        return Response([{**game_payload(game, request, favorites), "play_room_id": rooms.get(game.pk)} for game in games])
