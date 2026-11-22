@@ -1104,3 +1104,9 @@ a { text-decoration: none; }
 .featured-dots { display: flex; gap: 6px; }
 .featured-dots button { width: 9px; height: 9px; padding: 0; border-radius: 50%; border: 0; background: #4a5464; cursor: pointer; }
 .featured-dots button[aria-current="true"] { background: #ff822c; width: 22px; border-radius: 999px; }
+
+/* Sprint 4 · HU65: foto de avatar */
+.avatar-current, .avatar-preview { border-radius: 50%; object-fit: cover; border: 2px solid #3a4350; }
+.avatar-upload { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; margin-top: 18px; }
+.avatar-upload small[role="alert"] { color: #ff9b9b; }
+.avatar-upload-ok { color: #6fe6a8; }

@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import useUser from '../hooks/useUser';
 import { getUserProfile, updateProfile } from '../services/authService';
+import AvatarUpload from '../components/AvatarUpload';
+import { avatarSrc } from '../utils/avatar';
 
 function ProfileForm({ profile, onSaved }) {
+  const uploaded = profile.avatar_url?.startsWith('/media/') ? profile.avatar_url : null;
   const [values, setValues] = useState(() => ({ nickname: profile.nickname || '', avatar_url: profile.avatar_url || '/avatars/avatar-1.svg', first_name: profile.first_name || '', last_name: profile.last_name || '', phone: profile.phone || '' }));
   const [message, setMessage] = useState('');
   const [errors, setErrors] = useState({});
@@ -20,8 +23,8 @@ function ProfileForm({ profile, onSaved }) {
     <label>Correo<input value={profile.email} readOnly /></label><label>DNI<input value={profile.dni || ''} readOnly /></label>
     <form onSubmit={submit}>
       {[['nickname', 'Apodo'], ['first_name', 'Nombres'], ['last_name', 'Apellidos'], ['phone', 'Teléfono']].map(([name, title]) => <label key={name}>{title}<input name={name} value={values[name]} onChange={change} maxLength={name === 'nickname' ? 30 : name === 'phone' ? 20 : 80} minLength={name === 'nickname' && values[name] ? 3 : undefined} pattern={name === 'nickname' ? '[a-zA-Z0-9_]+' : undefined} type={name === 'phone' ? 'tel' : 'text'} aria-invalid={!!errors[name]} />{errors[name] && <small role="alert">{errors[name]}</small>}</label>)}
-      <label>Avatar<select name="avatar_url" value={values.avatar_url} onChange={change}>{[1,2,3,4,5,6].map((i) => <option key={i} value={'/avatars/avatar-' + i + '.svg'}>Avatar {i}</option>)}</select></label>
-      <img src={values.avatar_url} alt="Vista previa del avatar" width="80" height="80" />
+      <label>Avatar<select name="avatar_url" value={values.avatar_url} onChange={change}>{uploaded && <option value={uploaded}>Mi foto</option>}{[1,2,3,4,5,6].map((i) => <option key={i} value={'/avatars/avatar-' + i + '.svg'}>Avatar {i}</option>)}</select></label>
+      <img className="avatar-current" src={avatarSrc(values.avatar_url)} alt="Vista previa del avatar" width="80" height="80" />
       <button className="place-bet-button" disabled={saving}>{saving ? 'Guardando...' : 'Guardar perfil'}</button>
     </form>{message && <p role="status">{message}</p>}
   </section>;
@@ -36,7 +39,11 @@ export default function ProfilePage() {
     getUserProfile().then((data) => { if (active) setProfile(data); }).catch((err) => { if (active) setError(err.message); });
     return () => { active = false; };
   }, [user]);
+  function saved(result) {
+    setProfile(result);
+    setUser({ ...user, ...result, name: result.nickname || result.email.split('@')[0], nickname: result.nickname || result.email.split('@')[0] });
+  }
   if (loading) return <p role="status">Consultando sesión...</p>;
   if (!user) return <Navigate to="/login" replace />;
-  return <main className="main-sections">{error && <p role="alert">{error}</p>}{profile ? <ProfileForm profile={profile} onSaved={(result) => { setProfile(result); setUser({ ...user, ...result, name: result.nickname || result.email.split('@')[0], nickname: result.nickname || result.email.split('@')[0] }); }} /> : !error && <p role="status">Consultando perfil...</p>}</main>;
+  return <main className="main-sections">{error && <p role="alert">{error}</p>}{profile ? <><ProfileForm key={profile.avatar_url} profile={profile} onSaved={saved} /><AvatarUpload onUploaded={saved} /></> : !error && <p role="status">Consultando perfil...</p>}</main>;
 }

@@ -154,6 +154,8 @@ STATIC_URL = 'static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 GAME_COVER_MAX_BYTES = 2 * 1024 * 1024
+# HU65: fotos de avatar de hasta 2 MB, guardadas en media/avatars/.
+AVATAR_MAX_BYTES = 2 * 1024 * 1024
 
 
 # Email

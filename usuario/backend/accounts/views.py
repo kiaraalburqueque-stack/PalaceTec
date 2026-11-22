@@ -4,13 +4,15 @@ from math import ceil
 from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.utils import timezone
-from rest_framework import status
+from rest_framework import serializers, status
+from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
 from .authentication import CookieJWTAuthentication, enforce_csrf
+from .avatar import delete_uploaded, save_avatar
 from .throttles import LoginRateThrottle
 from django.middleware.csrf import get_token
 from .models import User, AuthSession
@@ -153,12 +155,36 @@ class ProfileView(APIView):
                 user = User.objects.select_for_update().get(pk=request.user.pk)
                 if request.auth:
                     CookieJWTAuthentication().get_user(request.auth)
+                previous_avatar = user.avatar_url
                 serializer = ProfileSerializer(user, data=request.data)
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
+                if user.avatar_url != previous_avatar:
+                    # HU65: al volver a un avatar predeterminado se borra la foto subida.
+                    transaction.on_commit(lambda: delete_uploaded(previous_avatar))
         except IntegrityError:
             return Response({"nickname": ["Este apodo ya esta registrado."]}, status=409)
         return Response(serializer.data)
+
+
+class AvatarUploadView(APIView):
+    """HU65: POST /api/v1/users/avatar con multipart/form-data (campo avatar)."""
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser]
+
+    def post(self, request):
+        upload = request.FILES.get("avatar")
+        if upload is None:
+            return Response({"avatar": ["Selecciona una imagen JPG, PNG o WEBP."]}, status=400)
+        try:
+            with transaction.atomic():
+                user = User.objects.select_for_update().get(pk=request.user.pk)
+                previous = save_avatar(user, upload)
+                transaction.on_commit(lambda: delete_uploaded(previous))
+        except serializers.ValidationError as exc:
+            return Response({"avatar": exc.detail}, status=400)
+        return Response(ProfileSerializer(user).data)
 
 
 class CSRFView(APIView):
