@@ -12,3 +12,4 @@ playwright-report/
 target/
 usuario/backend/media/
 dump.rdb
+.run/

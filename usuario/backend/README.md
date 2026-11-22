@@ -1,5 +1,21 @@
 # Backend de PalaceTec
 
+## Panel de administración Django
+
+El panel integrado está en `http://127.0.0.1:8000/admin/`. Para habilitar el ingreso local, desde esta carpeta instala las dependencias, configura la base de datos como se indica abajo y crea un administrador:
+
+```powershell
+python -m pip install -r requirements.txt
+$env:DB_ENGINE = "sqlite"
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver
+```
+
+El comando solicita correo, DNI de 8 dígitos, fecha de nacimiento y contraseña. Luego ingresa a `/admin/` con ese correo y contraseña. En el menú se pueden consultar Usuarios, Billeteras, Juegos, Salas, Rondas, Apuestas y los historiales relacionados. Los usuarios se buscan por correo, DNI o apodo; las listas principales incluyen filtros. Dentro de una billetera, el inline muestra sus transacciones.
+
+Para las capturas del avance, incluye la lista de usuarios, un formulario de usuario, la lista de juegos (o apuestas), y una búsqueda o filtro aplicado. La bitácora y las transacciones son de solo lectura. La lista de usuarios permite administrar permisos del personal; crea superusuarios con `createsuperuser` para garantizar el acceso completo.
+
 Django REST Framework, sesiones JWT revocables, billetera y ruleta europea con WebSockets. El Sprint 2 agrega juego responsable, catálogo de juegos, historial, estadísticas y perfil ampliado. El Sprint 3 agrega administración, estadísticas, notificaciones y seguridad: ver [SPRINT3_API.md](SPRINT3_API.md). Consulta [SPRINT2_API.md](SPRINT2_API.md) para instalar las migraciones y conectar todas las funciones nuevas. Los contratos ampliados de esa guía prevalecen sobre los ejemplos históricos del Sprint 1 que siguen abajo.
 
 ## Ejecutar y probar
@@ -17,13 +33,13 @@ Las pruebas preparan y destruyen una base temporal, sin aplicar cambios a la bas
 
 Antes de ejecutar el sistema, aplicar las migraciones existentes con `python manage.py migrate` en la base seleccionada. No generar migraciones adicionales para instalar el proyecto.
 
-Redis es compartido por Channels, el reloj, la cache y el limitador de intentos. Si tienes Docker, puedes iniciarlo con:
+Redis comparte Channels, la cache y el limitador de intentos entre procesos. Si tienes Docker, puedes iniciarlo con:
 
 ```powershell
 docker compose -f compose.redis.yml up -d
 ```
 
-Si Redis ya está instalado, basta usar ese servicio. La URL predeterminada es `redis://127.0.0.1:6379/0`; puede cambiarse con la variable `REDIS_URL`. Las pruebas aisladas usan memoria; la ejecución integrada necesita Redis compartido.
+Si Redis ya está instalado, basta usar ese servicio. La URL predeterminada es `redis://127.0.0.1:6379/0`; puede cambiarse con la variable `REDIS_URL`. En desarrollo local con `DB_ENGINE=sqlite` y sin `REDIS_URL`, el backend usa cache y Channels en memoria para que login, API y juegos puedan ejecutarse sin Docker. La ruleta consulta de nuevo su estado cada cinco segundos; para eventos instantáneos compartidos entre el reloj y el servidor, configura Redis.
 
 Despues de preparar la base y Redis, abre dos terminales con el mismo entorno:
 
