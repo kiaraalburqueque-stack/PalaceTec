@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { getGameCategories, getGames } from '../services/roomService';
+import { getFavoriteGames, getGameCategories, getGames } from '../services/roomService';
 import CasinoRoomCatalog from './CasinoRoomCatalog';
 import CategoryTabs from './CategoryTabs';
+import FavoriteButton from './FavoriteButton';
 import GameRulesModal from './GameRulesModal';
 import SearchInput from './SearchInput';
 import useDebounce from '../hooks/useDebounce';
@@ -35,7 +36,9 @@ export default function GameCatalog() {
   }, [search, setSearchParams]);
   useEffect(() => {
     let active = true;
-    getGames({ category, search }).then((data) => {
+    // HU63: la pestaña Favoritos consulta la lista guardada del jugador.
+    const request = category === 'favoritos' ? getFavoriteGames({ search }) : getGames({ category, search });
+    request.then((data) => {
       if (!active) return;
       setGames(data); setError('');
       setSelected((current) => data.some((game) => game.id === current && game.rooms_url) ? current
@@ -48,7 +51,13 @@ export default function GameCatalog() {
     if (slug) next.set('categoria', slug); else next.delete('categoria');
     setSearchParams(next);
   }
+  function favoriteChanged(id, isFavorite) {
+    setGames((current) => (category === 'favoritos' && !isFavorite ? current.filter((game) => game.id !== id)
+      : current.map((game) => game.id === id ? { ...game, is_favorite: isFavorite } : game)));
+    setCounts((current) => current && { ...current, favorites: Math.max(0, (current.favorites || 0) + (isFavorite ? 1 : -1)) });
+  }
   const tabs = [{ slug: '', label: 'Todos', count: counts?.total },
+    { slug: 'favoritos', label: 'Favoritos', count: counts?.favorites ?? 0 },
     ...(counts?.categories || []).map((item) => ({ slug: item.slug, label: item.label, count: item.count }))];
   return <section className="casino-catalog"><h2>Juegos disponibles</h2>
     <SearchInput value={text} onChange={setText} />
@@ -58,10 +67,10 @@ export default function GameCatalog() {
     {games?.length === 0 && (search ? <div className="empty-search" role="status"><p><strong>No se encontraron juegos.</strong> Revisa el nombre o explora una categoría:</p>
       <div className="empty-suggestions">{(counts?.categories || []).map((item) => <button key={item.slug} type="button" className="rules-button"
         onClick={() => { setText(''); changeCategory(item.slug); }}>{item.label}</button>)}</div></div>
-      : <p>No hay juegos publicados en esta categoría.</p>)}
+      : <p>{category === 'favoritos' ? 'Aún no tienes favoritos. Toca el corazón de un juego para guardarlo aquí.' : 'No hay juegos publicados en esta categoría.'}</p>)}
     <div className="casino-room-grid catalog-fade" key={category}>{games?.map((game) => <article className="bet-controls" key={game.id}>
       {game.cover_url && <img className="game-cover" src={game.cover_url} alt={`Portada de ${game.title}`} loading="lazy" />}
-      <h3>{game.title}</h3>
+      <div className="game-card-title"><h3>{game.title}</h3><FavoriteButton game={game} onChange={favoriteChanged} /></div>
       {game.category && <p className="game-meta"><span className="game-category">{CATEGORIES[game.category] || game.category}</span>{game.rtp && <span>RTP {game.rtp}%</span>}</p>}
       <p>Desde {game.min_bet} hasta {game.max_bet} CRD</p>
       <div className="game-card-actions">

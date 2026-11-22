@@ -4,8 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import '@testing-library/jest-dom/vitest';
 import GameCatalog from './GameCatalog';
-import { getGameCategories, getGames } from '../services/roomService';
-vi.mock('../services/roomService', () => ({ getGames: vi.fn(), getGameCategories: vi.fn() }));
+import { getFavoriteGames, getGameCategories, getGames, toggleFavorite } from '../services/roomService';
+vi.mock('../services/roomService', () => ({ getGames: vi.fn(), getGameCategories: vi.fn(), getFavoriteGames: vi.fn(), toggleFavorite: vi.fn() }));
 vi.mock('./CasinoRoomCatalog', () => ({ default: ({ gameId }) => <p>Salas del juego {gameId}</p> }));
 
 const roulette = { id: 4, title: 'Ruleta Europea', category: 'RULETA', min_bet: '10.00', max_bet: '500.00', rooms_url: '/api/v1/rooms?game=4', play_path: null };
@@ -78,4 +78,23 @@ it('HU62 el botón limpiar borra la búsqueda', async () => {
   await user.click(screen.getByRole('button', { name: 'Limpiar búsqueda' }));
   expect(input).toHaveValue('');
   expect(screen.queryByRole('button', { name: 'Limpiar búsqueda' })).not.toBeInTheDocument();
+});
+
+it('HU63 la pestaña Favoritos muestra la lista guardada y quita el juego al desmarcarlo', async () => {
+  const user = userEvent.setup();
+  getGameCategories.mockResolvedValue({ ...counts, favorites: 1 });
+  getFavoriteGames.mockResolvedValue([{ ...blackjack, is_favorite: true }]);
+  toggleFavorite.mockResolvedValue({ game_id: 7, is_favorite: false });
+  renderCatalog();
+  const tab = await screen.findByRole('tab', { name: /Favoritos/ });
+  expect(tab).toHaveTextContent('1');
+  await user.click(tab);
+  const heart = await screen.findByRole('button', { name: 'Quitar Blackjack 21 de favoritos' });
+  expect(heart).toHaveAttribute('aria-pressed', 'true');
+  expect(getFavoriteGames).toHaveBeenCalledWith({ search: '' });
+  expect(screen.getByTestId('location')).toHaveTextContent('?categoria=favoritos');
+  await user.click(heart);
+  expect(toggleFavorite).toHaveBeenCalledWith(7);
+  expect(await screen.findByText(/Aún no tienes favoritos/)).toBeInTheDocument();
+  expect(tab).toHaveTextContent('0');
 });

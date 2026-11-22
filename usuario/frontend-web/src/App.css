@@ -1037,3 +1037,13 @@ a { text-decoration: none; }
 .search-input button:hover { color: #fff; }
 .empty-search { margin: 18px 0; padding: 18px; border: 1px dashed #3a4350; border-radius: 12px; color: #c9d0db; }
 .empty-suggestions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Sprint 4 · HU63: favoritos */
+.game-card-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.game-card-title h3 { margin: 0; }
+.favorite-button { flex: none; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; border: 1px solid #3a4350; background: #12161d; color: #aeb7c4; font-size: 18px; cursor: pointer; transition: transform .15s, color .15s, border-color .15s; }
+.favorite-button:hover { border-color: #ff5b7f; color: #ff5b7f; }
+.favorite-button.is-active { color: #ff5b7f; border-color: #ff5b7f; background: #2a1720; }
+.favorite-button:active { transform: scale(.9); }
+.favorite-button:disabled { opacity: .6; cursor: wait; }
+.favorite-error { color: #ff9b9b; }

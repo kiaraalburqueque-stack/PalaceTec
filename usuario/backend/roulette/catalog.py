@@ -4,7 +4,7 @@ import unicodedata
 from django.db.models import Max, Min, Q
 from rest_framework import serializers
 
-from .models import Game
+from .models import FavoriteGame, Game
 
 # Slug de la URL -> categoría guardada en Game.category.
 CATEGORY_SLUGS = {
@@ -66,7 +66,12 @@ def category_counts(games):
                            for slug in CATEGORY_SLUGS]}
 
 
-def game_payload(game, request):
+def favorite_ids(user):
+    """HU63: IDs de los juegos favoritos del jugador autenticado."""
+    return set(FavoriteGame.objects.filter(user=user).values_list("game_id", flat=True))
+
+
+def game_payload(game, request, favorites=frozenset()):
     room_game = game.room_min is not None
     return {"id": game.pk, "slug": game.slug, "title": game.title, "category": game.category,
             "category_slug": SLUG_BY_CATEGORY.get(game.category, "otros"),
@@ -75,4 +80,5 @@ def game_payload(game, request):
             "min_bet": format(game.room_min if room_game else game.min_bet, ".2f"),
             "max_bet": format(game.room_max if room_game else game.max_bet, ".2f"),
             "rooms_url": f"/api/v1/rooms?game={game.pk}" if room_game else None,
-            "play_path": game.play_path or None}
+            "play_path": game.play_path or None,
+            "is_favorite": game.pk in favorites}

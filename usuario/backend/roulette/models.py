@@ -130,3 +130,14 @@ class RepeatOperation(models.Model):
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=["user", "reference"], name="unique_user_repeat_reference")]
+
+
+class FavoriteGame(models.Model):
+    """HU63: juego marcado como favorito por un jugador; se conserva entre sesiones."""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="favorite_games")
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="favorited_by")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "favorite_games"
+        constraints = [models.UniqueConstraint(fields=["user", "game"], name="unique_user_favorite_game")]
