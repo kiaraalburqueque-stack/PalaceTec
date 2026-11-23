@@ -79,6 +79,24 @@ class HU74HealthcheckTests(TestCase):
         self.assertIn("10061", redis["error"])
         self.assertIsInstance(redis["latency_ms"], float)
 
+    def test_hu74_use_redis_false_marks_redis_disabled_without_failing(self):
+        def must_not_run():
+            raise AssertionError("con USE_REDIS=false no se consulta Redis")
+        with self.settings(USE_REDIS=False):
+            response = self.get(redis=must_not_run)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual((data["status"], data["failed"]), ("ok", []))
+        self.assertEqual(data["services"]["redis"], {"status": "disabled"})
+
+    def test_hu74_use_redis_false_still_reports_other_failures(self):
+        def broken():
+            raise RuntimeError("sin capa")
+        with self.settings(USE_REDIS=False):
+            response = self.get(channels=broken)
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.json()["failed"], ["channels"])
+
     def test_hu74_player_does_not_see_detail_and_post_is_not_allowed(self):
         player = User.objects.create_user(email="p74@palacetec.pe", dni="74747475", birth_date="2000-01-01", password="Palace123!")
         Wallet.objects.create(user=player, balance=0)

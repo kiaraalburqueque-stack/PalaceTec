@@ -41,6 +41,15 @@ docker compose -f compose.redis.yml up -d
 
 Si Redis ya está instalado, basta usar ese servicio. La URL predeterminada es `redis://127.0.0.1:6379/0`; puede cambiarse con la variable `REDIS_URL`. En desarrollo local con `DB_ENGINE=sqlite` y sin `REDIS_URL`, el backend usa cache y Channels en memoria para que login, API y juegos puedan ejecutarse sin Docker. La ruleta consulta de nuevo su estado cada cinco segundos; para eventos instantáneos compartidos entre el reloj y el servidor, configura Redis.
 
+Para trabajar con PostgreSQL sin Redis, pon `USE_REDIS=false` en el `.env` (por defecto es `true`). Con cualquier motor de base de datos, Channels usa `InMemoryChannelLayer` y la cache usa `LocMemCache`, aunque exista `REDIS_URL`. El `GET /healthcheck` muestra Redis con estado `disabled`, sin consultarlo ni contarlo como falla, y responde 200 si la base de datos y la capa de canales están bien. Las mismas limitaciones de la memoria aplican aquí: cada proceso (`runserver` y `runroulette`) tiene su propia cache y sus propios canales, así que los eventos del reloj no llegan al instante y el límite de intentos de login es por proceso. No uses `USE_REDIS=false` en producción.
+
+| USE_REDIS | DB_ENGINE | REDIS_URL | Channels y cache |
+| --- | --- | --- | --- |
+| `true` (o sin definir) | distinto de sqlite | cualquiera | Redis |
+| `true` (o sin definir) | sqlite | definida | Redis |
+| `true` (o sin definir) | sqlite | sin definir | Memoria |
+| `false` | cualquiera | cualquiera | Memoria |
+
 Despues de preparar la base y Redis, abre dos terminales con el mismo entorno:
 
 ```powershell
