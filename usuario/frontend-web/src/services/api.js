@@ -1,4 +1,7 @@
-export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '');
+const localHost = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+  ? window.location.hostname
+  : 'localhost';
+export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || `http://${localHost}:8000`).replace(/\/$/, '');
 let renewal;
 export function endSession() {
   window.dispatchEvent(new Event('palacetec:session-ended'));

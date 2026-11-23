@@ -172,7 +172,10 @@ FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173')
 DEFAULT_FROM_EMAIL = 'PalaceTec <no-reply@palacetec.local>'
 
 # 5173: frontend del jugador; 5174: panel React de administración.
-CORS_ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:5174"]
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173", "http://127.0.0.1:5173",
+    "http://localhost:5174", "http://127.0.0.1:5174",
+]
 CORS_ALLOW_CREDENTIALS = True
 
 SIMPLE_JWT = {"ACCESS_TOKEN_LIFETIME": timedelta(minutes=15)}
@@ -190,18 +193,28 @@ PASSWORD_HASHERS = [
 
 ASGI_APPLICATION = "config.asgi.application"
 REDIS_URL = os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {"hosts": [REDIS_URL]},
+if os.getenv("DB_ENGINE") == "sqlite" and not os.getenv("REDIS_URL"):
+    # Desarrollo local sin Docker/Redis: conserva funcionales login, API y WebSockets.
+    CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "palacetec-local",
+        }
     }
-}
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": REDIS_URL,
+else:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {"hosts": [REDIS_URL]},
+        }
     }
-}
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": REDIS_URL,
+        }
+    }
 WEBSOCKET_ALLOWED_ORIGINS = CORS_ALLOWED_ORIGINS + ["http://localhost:8000", "http://127.0.0.1:8000"]
 
 

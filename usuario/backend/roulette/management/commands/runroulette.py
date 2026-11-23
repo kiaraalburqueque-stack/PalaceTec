@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = "Procesa rondas de 15 segundos; requiere Redis compartido con ASGI."
+    help = "Procesa rondas de 15 segundos; Redis habilita eventos compartidos instantáneos entre procesos."
 
     def add_arguments(self, parser):
         parser.add_argument("--once", action="store_true", help="Procesa un solo tick por sala.")
