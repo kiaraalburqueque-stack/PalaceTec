@@ -1,7 +1,7 @@
 # PalaceTec · Panel de administración (Sprint 3)
 
 Panel en React + Vite para las historias HU41 a HU50. Consume la app `admin_api` del backend Django
-(`usuario/backend`), que comparte la misma base de datos que el jugador.
+(`administracion/backend`), que comparte la misma base de datos que el jugador.
 
 ## Ejecutar
 

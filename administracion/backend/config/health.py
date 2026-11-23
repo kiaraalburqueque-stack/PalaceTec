@@ -1,6 +1,7 @@
 """HU74: GET /healthcheck revisa la base de datos, Redis y la capa de canales de Django Channels.
 
-Responde 200 si todo está bien y 503 indicando qué servicio falló. La latencia y el error técnico
+Responde 200 si todo está bien y 503 indicando qué servicio falló. Con USE_REDIS=false, Redis aparece como
+"disabled" y no cuenta como falla. La latencia y el error técnico
 solo se muestran a administradores; el público solo ve el estado de cada servicio.
 """
 import asyncio
@@ -76,10 +77,18 @@ def is_admin(request):
     return bool(user and user.is_active and (user.is_staff or user.is_superuser))
 
 
+def is_disabled(name):
+    """Con USE_REDIS=false, Redis no se usa: no se consulta ni cuenta como falla."""
+    return name == "redis" and not getattr(settings, "USE_REDIS", True)
+
+
+DISABLED = {"status": "disabled", "latency_ms": None, "error": None}
+
+
 @require_GET
 def healthcheck(request):
-    results = {name: run_check(check) for name, check in CHECKS.items()}
-    failed = [name for name, result in results.items() if result["status"] != "ok"]
+    results = {name: dict(DISABLED) if is_disabled(name) else run_check(check) for name, check in CHECKS.items()}
+    failed = [name for name, result in results.items() if result["status"] == "error"]
     if failed:
         logger.error("Healthcheck con fallas: %s", ", ".join(failed))
     detailed = is_admin(request)

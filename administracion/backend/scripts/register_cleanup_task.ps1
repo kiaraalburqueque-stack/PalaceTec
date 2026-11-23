@@ -1,5 +1,5 @@
 # HU75: registra en el Programador de tareas de Windows la limpieza diaria de notificaciones (03:00).
-# Ejecutar una vez en PowerShell desde usuario/backend:  .\scripts\register_cleanup_task.ps1
+# Ejecutar una vez en PowerShell desde administracion/backend:  .\scripts\register_cleanup_task.ps1
 # Cada ejecución agrega su resultado a logs\cleanup_notifications.log.
 param([string]$Hora = "03:00", [string]$Nombre = "PalaceTec - Limpieza de notificaciones")
 

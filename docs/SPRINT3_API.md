@@ -5,7 +5,7 @@ notificaciones en tiempo real (`notifications`) y seguridad de la cuenta. Todo c
 
 ## Instalación
 
-Desde `usuario/backend`, con el entorno virtual activado (no hay dependencias nuevas):
+Desde `administracion/backend`, con el entorno virtual activado (no hay dependencias nuevas):
 
 ```powershell
 python manage.py migrate

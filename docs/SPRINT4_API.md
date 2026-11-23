@@ -2,11 +2,11 @@
 
 Amplía el backend del Sprint 3 con exploración del catálogo, el asistente virtual, recomendaciones, exportaciones,
 reportes de negocio, monitor de salud y limpieza de notificaciones. El plan y la trazabilidad están en
-[docs/SPRINT4.md](../../docs/SPRINT4.md).
+[docs/SPRINT4.md](SPRINT4.md).
 
 ## Instalación
 
-Desde `usuario/backend`, con el entorno virtual activado:
+Desde `administracion/backend`, con el entorno virtual activado:
 
 ```powershell
 python -m pip install -r requirements.txt   # nuevas: Pillow, openpyxl y reportlab

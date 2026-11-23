@@ -25,7 +25,7 @@ SQLite ignora select_for_update y usa bloqueos mas amplios para escritura: no ga
 
 ## Validacion
 
-Desde usuario/backend: `python manage.py test accounts wallet --settings=config.test_settings`.
+Desde administracion/backend: `python manage.py test accounts wallet --settings=config.test_settings`.
 El ejecutor de pruebas prepara y destruye una base temporal; no aplica cambios a la base de desarrollo. No se ejecuto migrate ni git push para esta entrega.
 
 

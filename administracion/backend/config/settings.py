@@ -193,7 +193,9 @@ PASSWORD_HASHERS = [
 
 ASGI_APPLICATION = "config.asgi.application"
 REDIS_URL = os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
-if os.getenv("DB_ENGINE") == "sqlite" and not os.getenv("REDIS_URL"):
+# USE_REDIS=false usa Channels y cache en memoria con cualquier motor de base de datos (por defecto true).
+USE_REDIS = os.getenv("USE_REDIS", "true").strip().lower() not in ("false", "0", "no", "off")
+if not USE_REDIS or (os.getenv("DB_ENGINE") == "sqlite" and not os.getenv("REDIS_URL")):
     # Desarrollo local sin Docker/Redis: conserva funcionales login, API y WebSockets.
     CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
     CACHES = {

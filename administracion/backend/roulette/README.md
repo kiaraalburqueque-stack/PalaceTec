@@ -32,6 +32,6 @@ Se recomienda entregar montos como Decimal o texto decimal para preservar la pre
 
 ## Pruebas
 
-Desde usuario/backend: `python manage.py test roulette --settings=config.test_settings`.
+Desde administracion/backend: `python manage.py test roulette --settings=config.test_settings`.
 Tambien se pueden ejecutar sin configurar Django ni una base: `python -m unittest discover -s . -p "test_hu1*.py"` (este patron incluye las cuatro historias de roulette).
 La integracion agrega modelos y migraciones para salas, rondas, apuestas y conexiones. Las migraciones estan generadas; no se aplicaron a la base de desarrollo en esta entrega.

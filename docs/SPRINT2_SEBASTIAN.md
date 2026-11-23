@@ -5,7 +5,7 @@ Rama de trabajo: `Sebastian`. El backend HU21–HU40 se recibió mediante el mer
 `c9c9eb9`; esta entrega integra las interfaces y sus pruebas sin cambiar el backend.
 
 El laboratorio enumera HU21–HU40 con títulos genéricos. La correspondencia
-funcional siguiente sigue la trazabilidad de `usuario/backend/SPRINT2_API.md`.
+funcional siguiente sigue la trazabilidad de [docs/SPRINT2_API.md](SPRINT2_API.md).
 Se conserva un commit de implementación por historia, más la validación conjunta.
 
 | Historia | Parte frontend / integración |
@@ -41,13 +41,13 @@ Desde `usuario/frontend-web`: `npm test`, `npm run lint`, `npm run build` y
 SQLite temporal y cache/canales en memoria; no sustituyen la prueba integrada
 con Redis ni las carreras de PostgreSQL. Ver el README del frontend para requisitos.
 
-Desde `usuario/backend`, con SQLite y `config.test_settings`, se ejecutaron las
+Desde `administracion/backend`, con SQLite y `config.test_settings`, se ejecutaron las
 151 pruebas existentes: 145 aprobadas y seis omitidas por requerir PostgreSQL.
 `manage.py check` y `makemigrations --check --dry-run` también aprobaron.
 La conexión local a PostgreSQL agotó su tiempo de espera y Redis no estaba
 disponible. Por eso no se atribuye a esta entrega una nueva validación de
 concurrencia con PostgreSQL/Redis. La validación anterior de Kiara se conserva
-documentada en `SPRINT2_API.md`.
+documentada en [SPRINT2_API.md](SPRINT2_API.md).
 
 ## Revisión antes del merge
 

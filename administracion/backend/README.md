@@ -16,11 +16,11 @@ El comando solicita correo, DNI de 8 dígitos, fecha de nacimiento y contraseña
 
 Para las capturas del avance, incluye la lista de usuarios, un formulario de usuario, la lista de juegos (o apuestas), y una búsqueda o filtro aplicado. La bitácora y las transacciones son de solo lectura. La lista de usuarios permite administrar permisos del personal; crea superusuarios con `createsuperuser` para garantizar el acceso completo.
 
-Django REST Framework, sesiones JWT revocables, billetera y ruleta europea con WebSockets. El Sprint 2 agrega juego responsable, catálogo de juegos, historial, estadísticas y perfil ampliado. El Sprint 3 agrega administración, estadísticas, notificaciones y seguridad: ver [SPRINT3_API.md](SPRINT3_API.md). El Sprint 4 agrega catálogo con filtros y favoritos, asistente virtual, recomendaciones, exportaciones, reportes, monitor de salud y limpieza de notificaciones: ver [SPRINT4_API.md](SPRINT4_API.md). Consulta [SPRINT2_API.md](SPRINT2_API.md) para instalar las migraciones y conectar todas las funciones nuevas. Los contratos ampliados de esa guía prevalecen sobre los ejemplos históricos del Sprint 1 que siguen abajo.
+Django REST Framework, sesiones JWT revocables, billetera y ruleta europea con WebSockets. El Sprint 2 agrega juego responsable, catálogo de juegos, historial, estadísticas y perfil ampliado. El Sprint 3 agrega administración, estadísticas, notificaciones y seguridad: ver [SPRINT3_API.md](../../docs/SPRINT3_API.md). El Sprint 4 agrega catálogo con filtros y favoritos, asistente virtual, recomendaciones, exportaciones, reportes, monitor de salud y limpieza de notificaciones: ver [SPRINT4_API.md](../../docs/SPRINT4_API.md). Consulta [SPRINT2_API.md](../../docs/SPRINT2_API.md) para instalar las migraciones y conectar todas las funciones nuevas. Los contratos ampliados de esa guía prevalecen sobre los ejemplos históricos del Sprint 1 que siguen abajo.
 
 ## Ejecutar y probar
 
-Desde `usuario/backend`, con el entorno virtual activado:
+Desde `administracion/backend`, con el entorno virtual activado:
 
 ```powershell
 python -m pip install -r requirements.txt
@@ -40,6 +40,15 @@ docker compose -f compose.redis.yml up -d
 ```
 
 Si Redis ya está instalado, basta usar ese servicio. La URL predeterminada es `redis://127.0.0.1:6379/0`; puede cambiarse con la variable `REDIS_URL`. En desarrollo local con `DB_ENGINE=sqlite` y sin `REDIS_URL`, el backend usa cache y Channels en memoria para que login, API y juegos puedan ejecutarse sin Docker. La ruleta consulta de nuevo su estado cada cinco segundos; para eventos instantáneos compartidos entre el reloj y el servidor, configura Redis.
+
+Para trabajar con PostgreSQL sin Redis, pon `USE_REDIS=false` en el `.env` (por defecto es `true`). Con cualquier motor de base de datos, Channels usa `InMemoryChannelLayer` y la cache usa `LocMemCache`, aunque exista `REDIS_URL`. El `GET /healthcheck` muestra Redis con estado `disabled`, sin consultarlo ni contarlo como falla, y responde 200 si la base de datos y la capa de canales están bien. Las mismas limitaciones de la memoria aplican aquí: cada proceso (`runserver` y `runroulette`) tiene su propia cache y sus propios canales, así que los eventos del reloj no llegan al instante y el límite de intentos de login es por proceso. No uses `USE_REDIS=false` en producción.
+
+| USE_REDIS | DB_ENGINE | REDIS_URL | Channels y cache |
+| --- | --- | --- | --- |
+| `true` (o sin definir) | distinto de sqlite | cualquiera | Redis |
+| `true` (o sin definir) | sqlite | definida | Redis |
+| `true` (o sin definir) | sqlite | sin definir | Memoria |
+| `false` | cualquiera | cualquiera | Memoria |
 
 Despues de preparar la base y Redis, abre dos terminales con el mismo entorno:
 
