@@ -4,6 +4,9 @@ import android.app.Application
 import com.tecsup.palacetec.data.local.SessionStore
 import com.tecsup.palacetec.data.remote.ApiFactory
 import com.tecsup.palacetec.data.repository.AuthRepository
+import com.tecsup.palacetec.data.repository.CatalogRepository
+import com.tecsup.palacetec.data.repository.DailyLimitRepository
+import com.tecsup.palacetec.data.repository.WalletRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -26,4 +29,7 @@ class AppContainer(app: Application) {
     private val api = ApiFactory.create(sessionStore, appScope)
 
     val authRepository = AuthRepository(api, sessionStore)
+    val walletRepository = WalletRepository(api)
+    val catalogRepository = CatalogRepository(api)
+    val dailyLimitRepository = DailyLimitRepository(api)
 }
