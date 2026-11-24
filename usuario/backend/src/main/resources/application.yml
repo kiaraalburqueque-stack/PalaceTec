@@ -12,6 +12,10 @@ spring:
     url: ${DB_URL}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
+    hikari:
+      data-source-properties:
+        # Sin esto, un error de PostgreSQL escribe en el log la fila completa (correo, DNI).
+        logServerErrorDetail: false
   jpa:
     open-in-view: false
     hibernate:
