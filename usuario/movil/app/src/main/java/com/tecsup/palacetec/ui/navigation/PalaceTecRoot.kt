@@ -42,6 +42,7 @@ import com.tecsup.palacetec.ui.auth.RegisterScreen
 import com.tecsup.palacetec.ui.bets.BetsScreen
 import com.tecsup.palacetec.ui.home.HomeScreen
 import com.tecsup.palacetec.ui.roulette.RouletteScreen
+import com.tecsup.palacetec.ui.wallet.WalletScreen
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
@@ -88,7 +89,7 @@ fun PalaceTecRoot(viewModel: SessionViewModel = appViewModel { SessionViewModel(
             composable(Tab.HOME.route) { HomeScreen(onPlayRoulette = { nav.openTab(Tab.ROULETTE) }) }
             composable(Tab.ROULETTE.route) { RouletteScreen() }
             composable(Tab.BETS.route) { BetsScreen() }
-            composable(Tab.WALLET.route) { }
+            composable(Tab.WALLET.route) { WalletScreen() }
         }
     }
 
