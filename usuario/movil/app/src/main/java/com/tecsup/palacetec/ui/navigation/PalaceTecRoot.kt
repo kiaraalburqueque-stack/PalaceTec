@@ -40,6 +40,7 @@ import com.tecsup.palacetec.ui.appViewModel
 import com.tecsup.palacetec.ui.auth.LoginScreen
 import com.tecsup.palacetec.ui.auth.RegisterScreen
 import com.tecsup.palacetec.ui.home.HomeScreen
+import com.tecsup.palacetec.ui.roulette.RouletteScreen
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
@@ -84,7 +85,7 @@ fun PalaceTecRoot(viewModel: SessionViewModel = appViewModel { SessionViewModel(
             composable(Routes.LOGIN) { LoginScreen(onRegister = { nav.navigate(Routes.REGISTER) }) }
             composable(Routes.REGISTER) { RegisterScreen(onBackToLogin = { nav.popBackStack() }) }
             composable(Tab.HOME.route) { HomeScreen(onPlayRoulette = { nav.openTab(Tab.ROULETTE) }) }
-            composable(Tab.ROULETTE.route) { }
+            composable(Tab.ROULETTE.route) { RouletteScreen() }
             composable(Tab.BETS.route) { }
             composable(Tab.WALLET.route) { }
         }
@@ -98,16 +99,23 @@ fun PalaceTecRoot(viewModel: SessionViewModel = appViewModel { SessionViewModel(
             nav.navigate(if (loggedIn) Tab.HOME.route else Routes.LOGIN) {
                 popUpTo(nav.graph.id) { inclusive = true }
             }
+            // Otro jugador no debe heredar el estado guardado de las pestañas.
+            if (!loggedIn) Tab.entries.forEach { nav.clearBackStack(it.route) }
         }
     }
 }
 
-/** Inicio queda siempre debajo: Atrás vuelve a él desde cualquier pestaña. */
+/** Inicio queda siempre debajo y cada pestaña conserva su estado (por ejemplo, la sala elegida). */
 private fun NavHostController.openTab(tab: Tab) {
     if (currentDestination?.route == tab.route) return
+    if (tab == Tab.HOME) {
+        popBackStack(Tab.HOME.route, inclusive = false, saveState = true)
+        return
+    }
     navigate(tab.route) {
-        popUpTo(Tab.HOME.route)
+        popUpTo(Tab.HOME.route) { saveState = true }
         launchSingleTop = true
+        restoreState = true
     }
 }
 

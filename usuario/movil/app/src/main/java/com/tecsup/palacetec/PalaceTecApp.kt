@@ -6,6 +6,8 @@ import com.tecsup.palacetec.data.remote.ApiFactory
 import com.tecsup.palacetec.data.repository.AuthRepository
 import com.tecsup.palacetec.data.repository.CatalogRepository
 import com.tecsup.palacetec.data.repository.DailyLimitRepository
+import com.tecsup.palacetec.data.repository.HistoryRepository
+import com.tecsup.palacetec.data.repository.RouletteRepository
 import com.tecsup.palacetec.data.repository.WalletRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,4 +34,6 @@ class AppContainer(app: Application) {
     val walletRepository = WalletRepository(api)
     val catalogRepository = CatalogRepository(api)
     val dailyLimitRepository = DailyLimitRepository(api)
+    val rouletteRepository = RouletteRepository(api)
+    val historyRepository = HistoryRepository(api)
 }
