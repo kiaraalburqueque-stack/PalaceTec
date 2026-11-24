@@ -1,0 +1,16 @@
+# Base exclusiva de pruebas. Nunca apuntar a palacetec: las pruebas borran datos.
+spring:
+  datasource:
+    url: ${TEST_DB_URL:jdbc:postgresql://localhost:5432/palacetec_spring_test}
+    username: ${TEST_DB_USER:${DB_USER:postgres}}
+    password: ${TEST_DB_PASSWORD:${DB_PASSWORD:}}
+    hikari:
+      maximum-pool-size: 12
+
+palacetec:
+  jwt:
+    secret: clave-ficticia-solo-para-pruebas-0123456789
+    expiration: 8h
+  exclusion-hmac-key: clave-hmac-ficticia-de-pruebas
+  media-base-url: http://localhost:8000
+  cors-allowed-origins: http://localhost:5173

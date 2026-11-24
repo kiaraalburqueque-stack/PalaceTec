@@ -15,3 +15,6 @@ administracion/backend/media/
 dump.rdb
 .run/
 administracion/backend/logs/
+# Backend del jugador (Spring Boot): configuracion local con secretos
+usuario/backend/application-local.yml
+usuario/backend/src/main/resources/application-local.yml

@@ -1,0 +1,38 @@
+# Sin secretos: los valores llegan por variables de entorno o por application-local.yml (fuera de git).
+# Ver application-example.yml.
+server:
+  port: 8080
+
+spring:
+  application:
+    name: palacetec-usuario
+  config:
+    import: optional:file:./application-local.yml
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      # El esquema lo administran las migraciones de Django: aquí solo se valida.
+      ddl-auto: validate
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  sql:
+    init:
+      mode: never
+  jackson:
+    deserialization:
+      accept-float-as-int: false
+
+palacetec:
+  jwt:
+    secret: ${JWT_SECRET}
+    # Igual que AUTH_SESSION_LIFETIME de Django. Formato Duration: 8h, 30m...
+    expiration: ${JWT_EXPIRATION:8h}
+  # Debe ser la misma clave que usa Django (EXCLUSION_HMAC_KEY o, si no existe, SECRET_KEY).
+  exclusion-hmac-key: ${EXCLUSION_HMAC_KEY}
+  # Django sirve las portadas de los juegos.
+  media-base-url: ${MEDIA_BASE_URL:http://localhost:8000}
+  cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
