@@ -49,7 +49,7 @@ object Routes {
     const val REGISTER = "register"
 }
 
-enum class Tab(val route: String, val label: String, val title: String, @DrawableRes val icon: Int) {
+enum class Tab(val route: String, val label: String, val title: String, @param:DrawableRes val icon: Int) {
     HOME("home", "Inicio", "PalaceTec", R.drawable.ic_home),
     ROULETTE("roulette", "Ruleta", "Ruleta", R.drawable.ic_roulette),
     BETS("bets", "Apuestas", "Mis apuestas", R.drawable.ic_bets),

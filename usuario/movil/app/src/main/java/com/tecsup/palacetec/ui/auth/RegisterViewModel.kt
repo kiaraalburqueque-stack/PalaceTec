@@ -64,7 +64,8 @@ class RegisterViewModel(private val auth: AuthRepository) : ViewModel() {
                     it.copy(
                         loading = false,
                         fieldErrors = error.fields,
-                        error = error.message.takeIf { error.fields.isEmpty() },
+                        // Un campo que no está en el formulario se muestra como error general.
+                        error = error.message.takeIf { error.fields.keys.none { name -> name in FIELDS } },
                     )
                 }
                 return@launch
@@ -76,5 +77,9 @@ class RegisterViewModel(private val auth: AuthRepository) : ViewModel() {
                 _state.update { it.copy(loading = false, registered = true) }
             }
         }
+    }
+
+    private companion object {
+        val FIELDS = setOf("email", "password", "dni", "birth_date")
     }
 }
