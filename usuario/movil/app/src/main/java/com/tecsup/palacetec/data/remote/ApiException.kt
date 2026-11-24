@@ -36,29 +36,39 @@ suspend fun <T> apiCall(block: suspend () -> T): T = withContext(Dispatchers.IO)
 }
 
 private fun parseError(error: HttpException): ApiException {
-    val json = try {
-        error.response()?.errorBody()?.string()?.let { JsonParser.parseString(it) }
-    } catch (_: JsonParseException) {
-        null
+    val body = try {
+        error.response()?.errorBody()?.string()
     } catch (_: IOException) {
         null
     }
-    val fallback = "Ocurrió un error (${error.code()}). Inténtalo nuevamente."
-    if (json == null || !json.isJsonObject) {
-        return ApiException(error.code(), null, json?.firstText() ?: fallback, cause = error)
+    return parseErrorBody(error.code(), body, error)
+}
+
+/** Entiende {detail}, {code, detail}, {campo: [mensaje]}, {campo: mensaje} y [mensaje]. */
+internal fun parseErrorBody(status: Int, body: String?, cause: Throwable? = null): ApiException {
+    val json = try {
+        body?.let { JsonParser.parseString(it) }
+    } catch (_: JsonParseException) {
+        null
     }
-    val body = json.asJsonObject
-    val detail = body.get("detail")?.firstText()
-    val fields = body.entrySet()
+    val fallback = "Ocurrió un error ($status). Inténtalo nuevamente."
+    if (json == null || !json.isJsonObject) {
+        // Un cuerpo que no es JSON (por ejemplo HTML) no se muestra al jugador.
+        val text = json?.takeIf { it.isJsonArray }?.firstText()
+        return ApiException(status, null, text ?: fallback, cause = cause)
+    }
+    val entries = json.asJsonObject
+    val detail = entries.get("detail")?.firstText()
+    val fields = entries.entrySet()
         .filter { it.key !in setOf("detail", "code", "retry_after") }
         .mapNotNull { (name, value) -> value.firstText()?.let { name to it } }
         .toMap()
     return ApiException(
-        status = error.code(),
-        code = body.get("code")?.firstText(),
+        status = status,
+        code = entries.get("code")?.firstText(),
         message = detail ?: fields.values.firstOrNull() ?: fallback,
         fields = fields,
-        cause = error,
+        cause = cause,
     )
 }
 

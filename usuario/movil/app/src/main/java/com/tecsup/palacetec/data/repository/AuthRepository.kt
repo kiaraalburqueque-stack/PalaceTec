@@ -15,6 +15,7 @@ class AuthRepository(
     private val historyDao: HistoryDao,
 ) {
     val session: StateFlow<Session> = sessionStore.session
+    val notice: StateFlow<String?> = sessionStore.notice
 
     suspend fun login(email: String, password: String) {
         val response = apiCall { api.login(LoginRequest(email, password)) }

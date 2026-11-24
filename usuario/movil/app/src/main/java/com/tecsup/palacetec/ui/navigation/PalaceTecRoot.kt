@@ -17,10 +17,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -66,43 +64,49 @@ class SessionViewModel(private val auth: AuthRepository) : ViewModel() {
     }
 }
 
+/** La sesión decide el flujo: al guardarse o perderse el token se cambia de navegación completa. */
 @Composable
 fun PalaceTecRoot(viewModel: SessionViewModel = appViewModel { SessionViewModel(it.authRepository) }) {
     val session by viewModel.session.collectAsStateWithLifecycle()
-    if (session == Session.Loading) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-        return
+    when (val current = session) {
+        Session.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        Session.LoggedOut -> AuthFlow()
+        // Otra sesión parte de cero: no hereda pestañas ni datos del jugador anterior.
+        is Session.LoggedIn -> key(current.token) { PlayerFlow(viewModel::logout) }
     }
-    val loggedIn = session is Session.LoggedIn
-    val start by rememberSaveable { mutableStateOf(if (loggedIn) Tab.HOME.route else Routes.LOGIN) }
-    val nav = rememberNavController()
-    val currentRoute = nav.currentBackStackEntryAsState().value?.destination?.route
-    val currentTab = Tab.entries.find { it.route == currentRoute }
+}
 
-    Scaffold(
-        topBar = { if (currentTab != null) PlayerTopBar(currentTab.title, viewModel::logout) },
-        bottomBar = { if (currentTab != null) PlayerNavigationBar(currentTab) { nav.openTab(it) } },
-    ) { padding ->
-        NavHost(nav, startDestination = start, modifier = Modifier.padding(padding).consumeWindowInsets(padding)) {
+@Composable
+private fun AuthFlow() {
+    val nav = rememberNavController()
+    Scaffold { padding ->
+        NavHost(
+            nav, startDestination = Routes.LOGIN, modifier = Modifier.padding(padding).consumeWindowInsets(padding),
+        ) {
             composable(Routes.LOGIN) { LoginScreen(onRegister = { nav.navigate(Routes.REGISTER) }) }
             composable(Routes.REGISTER) { RegisterScreen(onBackToLogin = { nav.popBackStack() }) }
+        }
+    }
+}
+
+@Composable
+private fun PlayerFlow(onLogout: () -> Unit) {
+    val nav = rememberNavController()
+    val currentRoute = nav.currentBackStackEntryAsState().value?.destination?.route
+    val currentTab = Tab.entries.find { it.route == currentRoute } ?: Tab.HOME
+    Scaffold(
+        topBar = { PlayerTopBar(currentTab.title, onLogout) },
+        bottomBar = { PlayerNavigationBar(currentTab) { nav.openTab(it) } },
+    ) { padding ->
+        NavHost(
+            nav, startDestination = Tab.HOME.route, modifier = Modifier.padding(padding).consumeWindowInsets(padding),
+        ) {
             composable(Tab.HOME.route) { HomeScreen(onPlayRoulette = { nav.openTab(Tab.ROULETTE) }) }
             composable(Tab.ROULETTE.route) { RouletteScreen() }
             composable(Tab.BETS.route) { BetsScreen() }
             composable(Tab.WALLET.route) { WalletScreen() }
-        }
-    }
-
-    // La sesión manda: al guardarse o perderse el token se cambia de flujo y se limpia la pila.
-    LaunchedEffect(loggedIn) {
-        val route = nav.currentDestination?.route ?: return@LaunchedEffect
-        val inAuth = route == Routes.LOGIN || route == Routes.REGISTER
-        if (loggedIn == inAuth) {
-            nav.navigate(if (loggedIn) Tab.HOME.route else Routes.LOGIN) {
-                popUpTo(nav.graph.id) { inclusive = true }
-            }
-            // Otro jugador no debe heredar el estado guardado de las pestañas.
-            if (!loggedIn) Tab.entries.forEach { nav.clearBackStack(it.route) }
         }
     }
 }

@@ -13,6 +13,7 @@ import com.tecsup.palacetec.data.repository.WalletRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class PalaceTecApp : Application() {
 
@@ -29,7 +30,11 @@ class PalaceTecApp : Application() {
 class AppContainer(app: Application) {
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val sessionStore = SessionStore(app, appScope)
-    private val api = ApiFactory.create(sessionStore, appScope)
+    private val api = ApiFactory.create(
+        baseUrl = BuildConfig.BASE_URL,
+        token = { sessionStore.token },
+        onRejected = { token, message -> appScope.launch { sessionStore.clearIfCurrent(token, message) } },
+    )
     private val historyDao = HistoryDatabase.create(app).historyDao()
 
     val authRepository = AuthRepository(api, sessionStore, historyDao)
@@ -37,5 +42,5 @@ class AppContainer(app: Application) {
     val catalogRepository = CatalogRepository(api)
     val dailyLimitRepository = DailyLimitRepository(api)
     val rouletteRepository = RouletteRepository(api)
-    val historyRepository = HistoryRepository(api, historyDao, sessionStore)
+    val historyRepository = HistoryRepository(api, historyDao, owner = { sessionStore.email })
 }

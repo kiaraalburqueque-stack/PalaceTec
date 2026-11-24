@@ -44,7 +44,9 @@ fun LoginScreen(
     viewModel: LoginViewModel = appViewModel { LoginViewModel(it.authRepository) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val notice by viewModel.notice.collectAsStateWithLifecycle()
     AuthLayout("Inicia sesión para jugar", modifier) {
+        if (state.error == null) notice?.let { ErrorText(it) }
         FormField(
             state.email, viewModel::onEmail, "Correo electrónico", state.emailError,
             enabled = !state.loading, keyboardType = KeyboardType.Email,

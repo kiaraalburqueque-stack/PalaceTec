@@ -23,6 +23,7 @@ class LoginViewModel(private val auth: AuthRepository) : ViewModel() {
 
     private val _state = MutableStateFlow(LoginUiState())
     val state: StateFlow<LoginUiState> = _state.asStateFlow()
+    val notice: StateFlow<String?> = auth.notice
 
     fun onEmail(value: String) = _state.update { it.copy(email = value, emailError = null, error = null) }
 

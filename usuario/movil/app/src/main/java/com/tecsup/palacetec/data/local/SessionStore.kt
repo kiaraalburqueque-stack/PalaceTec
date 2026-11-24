@@ -6,8 +6,10 @@ import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -37,7 +39,15 @@ class SessionStore(context: Context, scope: CoroutineScope) {
 
     val token: String? get() = (session.value as? Session.LoggedIn)?.token
 
+    val email: String? get() = (session.value as? Session.LoggedIn)?.email
+
+    private val _notice = MutableStateFlow<String?>(null)
+
+    /** Motivo por el que el backend cerró la sesión; se muestra en el login. */
+    val notice: StateFlow<String?> = _notice.asStateFlow()
+
     suspend fun save(token: String, email: String) {
+        _notice.value = null
         dataStore.edit {
             it[TOKEN] = token
             it[EMAIL] = email
@@ -45,12 +55,18 @@ class SessionStore(context: Context, scope: CoroutineScope) {
     }
 
     suspend fun clear() {
+        _notice.value = null
         dataStore.edit { it.clear() }
     }
 
     /** Solo cierra si el token rechazado sigue siendo el actual. */
-    suspend fun clearIfCurrent(rejectedToken: String) {
-        dataStore.edit { if (it[TOKEN] == rejectedToken) it.clear() }
+    suspend fun clearIfCurrent(rejectedToken: String, message: String?) {
+        dataStore.edit {
+            if (it[TOKEN] == rejectedToken) {
+                it.clear()
+                _notice.value = message ?: "Tu sesión terminó. Inicia sesión nuevamente."
+            }
+        }
     }
 
     private companion object {
