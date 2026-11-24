@@ -1,0 +1,29 @@
+package com.tecsup.palacetec
+
+import android.app.Application
+import com.tecsup.palacetec.data.local.SessionStore
+import com.tecsup.palacetec.data.remote.ApiFactory
+import com.tecsup.palacetec.data.repository.AuthRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+
+class PalaceTecApp : Application() {
+
+    lateinit var container: AppContainer
+        private set
+
+    override fun onCreate() {
+        super.onCreate()
+        container = AppContainer(this)
+    }
+}
+
+/** Inyección manual: una sola instancia de cada dependencia. */
+class AppContainer(app: Application) {
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val sessionStore = SessionStore(app, appScope)
+    private val api = ApiFactory.create(sessionStore, appScope)
+
+    val authRepository = AuthRepository(api, sessionStore)
+}
