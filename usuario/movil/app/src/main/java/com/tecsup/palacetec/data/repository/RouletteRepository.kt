@@ -2,7 +2,6 @@ package com.tecsup.palacetec.data.repository
 
 import com.tecsup.palacetec.data.remote.BetRequest
 import com.tecsup.palacetec.data.remote.BetResponse
-import com.tecsup.palacetec.data.remote.HistoryPage
 import com.tecsup.palacetec.data.remote.PalaceTecApi
 import com.tecsup.palacetec.data.remote.RoomState
 import com.tecsup.palacetec.data.remote.RouletteRoom
@@ -14,8 +13,4 @@ class RouletteRepository(private val api: PalaceTecApi) {
     suspend fun state(roomId: Long): RoomState = apiCall { api.roomState(roomId) }
 
     suspend fun placeBet(roomId: Long, request: BetRequest): BetResponse = apiCall { api.placeBet(roomId, request) }
-}
-
-class HistoryRepository(private val api: PalaceTecApi) {
-    suspend fun page(page: Int, pageSize: Int): HistoryPage = apiCall { api.betsHistory(page, pageSize) }
 }

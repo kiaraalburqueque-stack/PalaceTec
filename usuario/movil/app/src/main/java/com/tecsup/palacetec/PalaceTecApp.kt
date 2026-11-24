@@ -1,6 +1,7 @@
 package com.tecsup.palacetec
 
 import android.app.Application
+import com.tecsup.palacetec.data.local.HistoryDatabase
 import com.tecsup.palacetec.data.local.SessionStore
 import com.tecsup.palacetec.data.remote.ApiFactory
 import com.tecsup.palacetec.data.repository.AuthRepository
@@ -29,11 +30,12 @@ class AppContainer(app: Application) {
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val sessionStore = SessionStore(app, appScope)
     private val api = ApiFactory.create(sessionStore, appScope)
+    private val historyDao = HistoryDatabase.create(app).historyDao()
 
-    val authRepository = AuthRepository(api, sessionStore)
+    val authRepository = AuthRepository(api, sessionStore, historyDao)
     val walletRepository = WalletRepository(api)
     val catalogRepository = CatalogRepository(api)
     val dailyLimitRepository = DailyLimitRepository(api)
     val rouletteRepository = RouletteRepository(api)
-    val historyRepository = HistoryRepository(api)
+    val historyRepository = HistoryRepository(api, historyDao, sessionStore)
 }

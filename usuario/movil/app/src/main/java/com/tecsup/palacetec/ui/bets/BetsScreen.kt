@@ -65,7 +65,12 @@ fun BetsScreen(
         ) {
             if (state.items.isNotEmpty()) {
                 item {
-                    Text("${state.total} apuestas en total", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    val summary = when {
+                        !state.fromCache -> "${state.total} apuestas en total"
+                        state.loading -> "Actualizando…"
+                        else -> "Sin conexión: estas son las últimas apuestas guardadas."
+                    }
+                    Text(summary, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else if (state.error == null) {
                 item {

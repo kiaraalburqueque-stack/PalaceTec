@@ -1,5 +1,6 @@
 package com.tecsup.palacetec.data.repository
 
+import com.tecsup.palacetec.data.local.HistoryDao
 import com.tecsup.palacetec.data.local.Session
 import com.tecsup.palacetec.data.local.SessionStore
 import com.tecsup.palacetec.data.remote.LoginRequest
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 class AuthRepository(
     private val api: PalaceTecApi,
     private val sessionStore: SessionStore,
+    private val historyDao: HistoryDao,
 ) {
     val session: StateFlow<Session> = sessionStore.session
 
@@ -23,6 +25,9 @@ class AuthRepository(
         apiCall { api.register(RegisterRequest(email, password, dni, birthDate)) }
     }
 
-    /** El backend no tiene logout: basta con olvidar el token. */
-    suspend fun logout() = sessionStore.clear()
+    /** El backend no tiene logout: basta con olvidar el token y lo guardado en el celular. */
+    suspend fun logout() {
+        sessionStore.clear()
+        historyDao.deleteAll()
+    }
 }

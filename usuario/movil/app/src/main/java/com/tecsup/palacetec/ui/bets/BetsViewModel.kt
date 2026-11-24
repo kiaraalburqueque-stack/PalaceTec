@@ -19,6 +19,8 @@ data class BetsUiState(
     val total: Long = 0,
     val hasMore: Boolean = false,
     val error: String? = null,
+    /** true cuando se muestra la copia guardada en Room. */
+    val fromCache: Boolean = false,
 )
 
 class BetsViewModel(private val history: HistoryRepository) : ViewModel() {
@@ -33,8 +35,12 @@ class BetsViewModel(private val history: HistoryRepository) : ViewModel() {
         job?.cancel()
         _state.update { it.copy(loading = true, loadingMore = false, error = null) }
         job = viewModelScope.launch {
+            if (_state.value.items.isEmpty()) {
+                val saved = history.cached()
+                _state.update { it.copy(items = saved, fromCache = saved.isNotEmpty()) }
+            }
             try {
-                val first = history.page(1, PAGE_SIZE)
+                val first = history.refresh(PAGE_SIZE)
                 page = 1
                 _state.value = BetsUiState(
                     loading = false, items = first.results, total = first.count, hasMore = first.next != null,
