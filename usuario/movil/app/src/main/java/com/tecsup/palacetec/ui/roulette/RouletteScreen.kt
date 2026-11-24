@@ -59,7 +59,6 @@ import com.tecsup.palacetec.ui.theme.NegroRuleta
 import com.tecsup.palacetec.ui.theme.RojoRuleta
 import com.tecsup.palacetec.ui.theme.VerdeGanancia
 import com.tecsup.palacetec.ui.theme.VerdeRuleta
-import java.math.BigDecimal
 
 @Composable
 fun RouletteScreen(
@@ -215,13 +214,24 @@ private fun ResultText(result: RoundResult) {
     val staked = result.staked ?: return
     val payout = result.payout ?: return
     if (staked.signum() == 0) return
-    val won = payout > BigDecimal.ZERO
-    Text(
-        if (won) "¡Ganaste ${credits(payout.toPlainString())}! (apostaste ${credits(staked.toPlainString())})"
-        else "Esta vez no acertaste. Apostaste ${credits(staked.toPlainString())}.",
-        color = if (won) VerdeGanancia else MaterialTheme.colorScheme.error,
-        fontWeight = FontWeight.Bold,
-    )
+    // Cobrar un premio menor que lo apostado no es ganar.
+    val net = payout - staked
+    val title = when {
+        net.signum() > 0 -> "¡Ganaste ${credits(net.toPlainString())}!"
+        net.signum() == 0 -> "Recuperaste lo apostado."
+        else -> "Perdiste ${credits(net.negate().toPlainString())}."
+    }
+    Column {
+        Text(
+            title,
+            color = if (net.signum() < 0) MaterialTheme.colorScheme.error else VerdeGanancia,
+            fontWeight = FontWeight.Bold,
+        )
+        Text(
+            "Apostaste ${credits(staked.toPlainString())} y el premio fue ${credits(payout.toPlainString())}.",
+            style = MaterialTheme.typography.bodySmall,
+        )
+    }
 }
 
 @Composable

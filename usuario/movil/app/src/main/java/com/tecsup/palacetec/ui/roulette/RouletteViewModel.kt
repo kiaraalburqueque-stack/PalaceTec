@@ -173,7 +173,9 @@ class RouletteViewModel(
         val isNew = previous != null && previous.roundId != newest.roundId
         if (isNew || mine.isNotEmpty()) {
             pendingRounds.removeAll(mine.toSet())
-            showResult(table.roomId, newest, mine)
+            // Al volver tras varias rondas se muestra la mía, no el número de otra.
+            val winner = table.recentResults.find { it.roundId == mine.maxOrNull() } ?: newest
+            showResult(table.roomId, winner, mine)
         }
     }
 
@@ -183,9 +185,10 @@ class RouletteViewModel(
             try {
                 updateWallet()
                 if (myRounds.isEmpty()) return@launch
+                val round = myRounds.max()
                 // El premio sale del historial: lo calcula el backend, no la aplicación.
                 val bets = history.page(1, RESULT_PAGE_SIZE).results.filter {
-                    it.source == "roulette" && it.roomId == roomId && it.roundId in myRounds && it.payout != null
+                    it.source == "roulette" && it.roomId == roomId && it.roundId == round && it.payout != null
                 }
                 _state.update { current ->
                     val result = current.result
@@ -266,6 +269,8 @@ class RouletteViewModel(
                 } else {
                     showMessage(error.message, isError = true)
                 }
+                // El saldo pudo cambiar en otro dispositivo o la apuesta pudo entrar sin respuesta.
+                refreshWallet()
             }
         }
     }
