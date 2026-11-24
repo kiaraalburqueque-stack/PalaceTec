@@ -79,6 +79,35 @@ public abstract class ApiTest {
         return new Player(id, email, dni, token.value());
     }
 
+    protected long newGame(String name) {
+        return jdbc.queryForObject("""
+                insert into roulette_game (slug, title, is_published, category, cover, min_bet, max_bet, rtp,
+                    payout_table, rules, play_kind, play_path, is_featured)
+                values (?, ?, true, 'RULETA', '', 10, 500, 97.30, '[]', '', '', '', false)
+                returning id""", Long.class, "spring-test-" + name, "Juego " + name);
+    }
+
+    protected long newRoom(long game, int minBet, int maxBet) {
+        return jdbc.queryForObject("insert into rooms (name, is_active, min_bet, max_bet, game_id) "
+                + "values ('spring-test-sala', true, ?, ?, ?) returning id", Long.class, minBet, maxBet, game);
+    }
+
+    /** Ronda abierta como la crea runroulette; closesIn negativo simula un plazo vencido aún sin cerrar. */
+    protected long newOpenRound(long room, int closesIn) {
+        return jdbc.queryForObject("""
+                insert into game_rounds (room_id, status, opened_at, closes_at)
+                values (?, 'OPEN', now() - interval '1 minute', now() + make_interval(secs => ?))
+                returning id""", Long.class, room, closesIn);
+    }
+
+    protected long newSettledRound(long room, int number) {
+        return jdbc.queryForObject("""
+                insert into game_rounds (room_id, status, opened_at, closes_at, winning_number, settled_at)
+                values (?, 'SETTLED', clock_timestamp() - interval '20 seconds',
+                    clock_timestamp() - interval '5 seconds', ?, clock_timestamp())
+                returning id""", Long.class, room, number);
+    }
+
     protected long count(String table) {
         return jdbc.queryForObject("select count(*) from " + table, Long.class);
     }
