@@ -1,0 +1,157 @@
+package com.tecsup.palacetec.entity;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import java.time.Instant;
+import java.time.LocalDate;
+
+/** accounts.User de Django. La base no tiene valores por defecto: aquí se llenan todas las columnas NOT NULL. */
+@Entity
+@Table(name = "users")
+public class User {
+
+    public static final String DEFAULT_AVATAR = "/avatars/avatar-1.svg";
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, length = 128, updatable = false)
+    private String password;
+
+    @Column(name = "is_superuser", nullable = false, updatable = false)
+    private boolean superuser;
+
+    @Column(nullable = false, length = 254, updatable = false)
+    private String email;
+
+    @Column(nullable = false, length = 8, updatable = false)
+    private String dni;
+
+    @Column(name = "birth_date", nullable = false, updatable = false)
+    private LocalDate birthDate;
+
+    @Column(name = "is_active", nullable = false, updatable = false)
+    private boolean active;
+
+    @Column(name = "is_staff", nullable = false, updatable = false)
+    private boolean staff;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @Column(name = "failed_attempts", nullable = false)
+    private int failedAttempts;
+
+    @Column(name = "locked_until")
+    private Instant lockedUntil;
+
+    @Column(name = "avatar_url", nullable = false, length = 100, updatable = false)
+    private String avatarUrl;
+
+    @Column(length = 30, updatable = false)
+    private String nickname;
+
+    @Column(name = "auth_version", nullable = false, updatable = false)
+    private int authVersion;
+
+    @Column(name = "first_name", nullable = false, length = 80, updatable = false)
+    private String firstName;
+
+    @Column(name = "last_name", nullable = false, length = 80, updatable = false)
+    private String lastName;
+
+    @Column(nullable = false, length = 20, updatable = false)
+    private String phone;
+
+    @Column(name = "pause_until", updatable = false)
+    private Instant pauseUntil;
+
+    @Column(name = "self_excluded_until", updatable = false)
+    private Instant selfExcludedUntil;
+
+    protected User() {
+    }
+
+    public User(String email, String dni, LocalDate birthDate, String password, Instant createdAt) {
+        this.email = email;
+        this.dni = dni;
+        this.birthDate = birthDate;
+        this.password = password;
+        this.createdAt = createdAt;
+        this.active = true;
+        this.avatarUrl = DEFAULT_AVATAR;
+        this.firstName = "";
+        this.lastName = "";
+        this.phone = "";
+    }
+
+    public void registerLoginResult(int failedAttempts, Instant lockedUntil) {
+        this.failedAttempts = failedAttempts;
+        this.lockedUntil = lockedUntil;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getDni() {
+        return dni;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public int getFailedAttempts() {
+        return failedAttempts;
+    }
+
+    public Instant getLockedUntil() {
+        return lockedUntil;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public String getNickname() {
+        return nickname;
+    }
+
+    public int getAuthVersion() {
+        return authVersion;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public Instant getPauseUntil() {
+        return pauseUntil;
+    }
+
+    public Instant getSelfExcludedUntil() {
+        return selfExcludedUntil;
+    }
+}
