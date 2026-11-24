@@ -31,13 +31,14 @@ spring:
       accept-float-as-int: false
       fail-on-numbers-for-enums: true
 
+# Las claves vacías se rechazan al arrancar (PalaceTecProperties).
 palacetec:
   jwt:
-    secret: ${JWT_SECRET}
+    secret: ${JWT_SECRET:}
     # Igual que AUTH_SESSION_LIFETIME de Django. Formato Duration: 8h, 30m...
     expiration: ${JWT_EXPIRATION:8h}
   # Debe ser la misma clave que usa Django (EXCLUSION_HMAC_KEY o, si no existe, SECRET_KEY).
-  exclusion-hmac-key: ${EXCLUSION_HMAC_KEY}
+  exclusion-hmac-key: ${EXCLUSION_HMAC_KEY:}
   # Django sirve las portadas de los juegos.
   media-base-url: ${MEDIA_BASE_URL:http://localhost:8000}
   cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
