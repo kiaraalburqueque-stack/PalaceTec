@@ -29,6 +29,7 @@ spring:
   jackson:
     deserialization:
       accept-float-as-int: false
+      fail-on-numbers-for-enums: true
 
 palacetec:
   jwt:
