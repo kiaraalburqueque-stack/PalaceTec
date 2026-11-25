@@ -1,7 +1,6 @@
 package com.tecsup.palacetec.controller;
 
 import com.tecsup.palacetec.dto.ProfileResponse;
-import com.tecsup.palacetec.dto.WalletSummaryResponse;
 import com.tecsup.palacetec.security.PlayerPrincipal;
 import com.tecsup.palacetec.service.ProfileService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,10 +21,5 @@ public class ProfileController {
     @GetMapping("/users/me")
     public ProfileResponse me(@AuthenticationPrincipal PlayerPrincipal player) {
         return profiles.profile(player.userId());
-    }
-
-    @GetMapping("/wallet/summary")
-    public WalletSummaryResponse walletSummary(@AuthenticationPrincipal PlayerPrincipal player) {
-        return profiles.walletSummary(player.userId());
     }
 }
