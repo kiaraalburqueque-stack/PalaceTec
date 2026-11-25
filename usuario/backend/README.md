@@ -5,8 +5,8 @@ webp-imageio, Apache POI y OpenPDF). La usan el frontend React, con cookies, y l
 Usa **la misma base PostgreSQL que Django** (`administracion/backend`): no crea ni modifica tablas
 (`ddl-auto=validate`). Créditos virtuales, sin dinero real.
 
-Spring no abre, cierra ni liquida rondas: eso lo hace `python manage.py runroulette`, que debe estar corriendo
-con la misma base para poder apostar.
+Spring no abre, cierra ni liquida rondas, ni crea o liquida los encuentros de deportes, ni cierra las manos de blackjack
+abandonadas: eso lo hace `python manage.py runroulette`, que debe estar corriendo con la misma base para poder apostar.
 
 ## Requisitos
 
@@ -32,6 +32,10 @@ valores, o define las mismas claves como variables de entorno, que tienen priori
 | `COOKIE_SECURE` | No | `true` si el sitio se sirve por HTTPS (en Django, `DEBUG=False`). Por defecto `false` |
 | `LOGIN_RATE_LIMIT` | No | Solicitudes de autenticación por minuto y por IP. Por defecto `30` |
 | `FRONTEND_URL` | No | Adonde apuntan los enlaces de los correos. Por defecto `http://localhost:5173` |
+| `ASSISTANT_PROVIDER` | No | `faq` (por defecto), `gemini` u `openai`. Los mismos nombres que en Django |
+| `ASSISTANT_API_KEY` | No | Clave del proveedor de IA. Sin ella el asistente responde con preguntas frecuentes |
+| `ASSISTANT_MODEL` | No | Modelo. Por defecto `gemini-3.6-flash` o `gpt-4o-mini` |
+| `ASSISTANT_BASE_URL`, `ASSISTANT_TIMEOUT` | No | Servidor compatible con OpenAI y segundos de espera, por defecto `10` |
 | `MEDIA_ROOT` | No | Carpeta de fotos, la misma de Django. Por defecto `../../administracion/backend/media` (relativa a esta carpeta) |
 
 ## Ejecutar
@@ -97,6 +101,7 @@ Para usar React con este backend: `$env:VITE_API_BASE_URL = "http://localhost:80
 | GET `/rooms` | `?game=ID` | id, name, min_bet, max_bet, players |
 | GET `/rooms/{id}/state` | | Ronda actual, fichas, diez últimos resultados y números |
 | POST `/rooms/{id}/bets` | `{round_id, kind, selection, chips, reference}` | 201 al aceptar; 200 si se repite la misma referencia |
+| GET `/rooms/{id}/bets` | | Las últimas 100 apuestas propias en la sala |
 | GET `/rooms/{id}/bets/previous` | | `{source_round_id, bets}`: apuestas propias de la última ronda liquidada |
 | POST `/rooms/{id}/bets/repeat` | `{round_id, reference, source_round_id}`, el último opcional | 201 con las apuestas repetidas, todas o ninguna; 200 si se repite la misma referencia |
 | GET `/users/bets/{id}` | | Detalle de una apuesta propia y de su ronda |
@@ -105,6 +110,15 @@ Para usar React con este backend: `$env:VITE_API_BASE_URL = "http://localhost:80
 | GET `/stats/biggest-win` | | `{record}` con la mayor ganancia neta, o null |
 | GET `/stats/balance-history` | `?period=7\|30` | Saldo al cierre de cada día de Lima |
 | GET `/users/bets-history` | `?startDate=&endDate=&page=&page_size=` | `{count, next, previous, results}` (ruleta y casino) |
+| GET `/casino/blackjack` | | `{hand}`: la última mano propia, o null |
+| POST `/casino/blackjack` | `{amount, reference}`, de 10 a 500 | 201 con la mano nueva; 200 si se repite la misma referencia |
+| POST `/casino/blackjack/{id}/action` | `{action: hit\|stand, revision}` | La mano. Con otra revisión es un reintento y no reparte ni paga |
+| GET `/casino/sports/events` | | `{simulation, server_time, events}` con los 12 últimos encuentros |
+| GET `/casino/sports/tickets` | | Los 50 últimos boletos propios |
+| POST `/casino/sports/tickets` | `{event_id, selection, amount, quoted_odds, reference}` | 201 con el boleto; 200 si se repite la misma referencia |
+| GET `/assistant/chat` | | `{messages, reminder}` con los 30 últimos mensajes |
+| POST `/assistant/chat` | `{message}` | 201 `{question, reply, reminder}`. Hasta 20 por minuto y por jugador |
+| GET `/assistant/odds` | `?bet=straight&number=17` o `?bet=color&selection=rojo` | Probabilidad, pago y ventaja de la casa |
 
 Antes de la primera apuesta hay que fijar el límite diario.
 
@@ -118,13 +132,15 @@ Django: ahí están los enlaces para restablecer la contraseña.
 | 400 `{campo: ["mensaje"]}` | Datos inválidos |
 | 400 `{code, detail}` | `invalid_token` (enlace del correo), `bets_closed`, `insufficient_balance`, `daily_limit_required`, `daily_limit_exceeded`, `pause_active` |
 | 400 `{amount: "mensaje"}` | Fuera del mínimo o del máximo acumulado de la sala |
+| 400 `{detail}` | Mano de blackjack sin terminar, mercado cerrado o cuota distinta |
 | 400 `{source_round_id: "mensaje"}` | No hay una ronda anterior que repetir, o no es esa |
 | 401 `{detail}` | Sin sesión, vencida o revocada; credenciales inválidas. Una cookie inválida agrega `code` y `messages`, como SimpleJWT |
 | 403 `{code, detail}` | `access_not_allowed` (excluido o autoexcluido), `account_suspended` |
 | 403 `{detail: "CSRF: ..."}` | Escritura de la web sin un token CSRF válido o desde otro origen |
 | 404 `{detail}` | Sala, juego, apuesta, alerta o página inexistente, o de otro jugador |
-| 409 | Correo o DNI repetidos; `reference_conflict` si la referencia ya es de otra apuesta o repetición |
+| 409 | Correo o DNI repetidos; `reference_conflict` si la referencia ya es de otra apuesta, jugada, boleto o repetición |
 | 429 `{detail, retry_after}` | Cuenta bloqueada: 15 minutos tras 5 intentos fallidos o 24 horas con "No fui yo" |
+| 429 `{code, detail}` | `assistant_rate_limited`: más de 20 mensajes al asistente por minuto |
 | 429 `{detail}` | Más de 30 solicitudes de autenticación por minuto desde una IP |
 
 ## Cómo se comparte con Django
@@ -139,6 +155,9 @@ Django: ahí están los enlaces para restablecer la contraseña.
 - **Fotos:** `avatar_url` y la carpeta `media` son comunes.
 - **Repetir apuesta:** la referencia es común. Si se repite en un backend y se reintenta en el otro, responde la misma
   operación sin un segundo cargo.
+- **Casino:** una mano o un boleto empezado en un backend se puede seguir o reintentar en el otro. Spring paga el
+  blackjack; los deportes los paga Django al liquidar el encuentro.
+- **Asistente:** la conversación es común. La clave de IA nunca se escribe en el log ni sale en una respuesta.
 - **Apuestas:** los candados siguen el orden de Django (sala, ronda, usuario, billetera) y la referencia, el cupo diario
   y el saldo son comunes a los dos backends.
 
@@ -164,16 +183,29 @@ $env:DB_USER = "postgres"; $env:DB_PASSWORD = "tu_clave_local"
 .\mvnw.cmd test
 ```
 
+Ninguna prueba llama a una IA real: el asistente usa un proveedor simulado, y los clientes de Gemini y OpenAI se prueban
+contra un servidor local.
+
 `TEST_DB_URL`, `TEST_DB_USER` y `TEST_DB_PASSWORD` permiten usar otra base de pruebas. Si Django agrega migraciones,
 vuelve a correr `migrate` sobre ella.
 
 ## Pendiente y diferencias con Django
 
-- No hay WebSockets: aquí no se emiten `wallet:update`, `notification:new` ni `session:revoked`. La web ve los cambios al
-  volver a consultar.
-- Siguen solo en Django el casino (blackjack y deportes), el asistente, `GET /rooms/{id}/bets` y
-  `POST /responsible-gaming/excluded-people`, que es del administrador.
-- Las alertas de riesgo las crea Django al liquidar; aquí se consultan y se acepta su pausa.
+- Todas las rutas REST del jugador están migradas. `POST /responsible-gaming/excluded-people` es del administrador y
+  sigue en Django, igual que el panel (`/admin`) y `healthcheck`.
+- No hay WebSockets: `ws/roulette/{sala}/` y `ws/notifications/` siguen solo en Django, y aquí no se emiten
+  `wallet:update`, `notification:new`, `session:revoked` ni `responsible:risk-alert`. La web ve los cambios al volver a
+  consultar.
+- Las alertas de riesgo de ruleta y deportes las crea Django al liquidar; las de blackjack, el backend que termina la mano.
+- Casino: en una pausa, reintentar una jugada ya aceptada devuelve la misma jugada (200), como en la ruleta. Django
+  responde 400 `pause_active`. Ninguno cobra dos veces.
+- Asistente, comparado con Django:
+  - el modelo de Gemini por defecto es `gemini-3.6-flash`; el de Django, `gemini-2.0-flash`, fue retirado por Google;
+  - las preguntas y respuestas sobre el saldo o el límite no se envían a la IA dentro del historial;
+  - los signos no ocultan una palabra ("¿algún truco?" se bloquea, "¡Hola!" se entiende), "me preocupo" no se confunde
+    con "cupo" y una docena o columna que no existe no se responde como la primera;
+  - cualquier respuesta inesperada de la IA cae en las preguntas frecuentes; en Django dos casos dan un error 500;
+  - el límite por minuto se cuenta en la memoria de este proceso, aparte del de Django.
 - Exportar el historial: con más de 5000 apuestas se conservan las más recientes (Django, las más antiguas). El correo y
   el título del juego salen siempre como texto y sin caracteres de control; en Django, un correo con `<` da un error 500
   en el PDF, un carácter de control da un error 500 en el Excel y un título que empieza con `=` queda como fórmula.
