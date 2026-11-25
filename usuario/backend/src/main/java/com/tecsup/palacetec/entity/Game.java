@@ -1,5 +1,6 @@
 package com.tecsup.palacetec.entity;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -7,6 +8,8 @@ import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.Instant;
 import org.hibernate.annotations.Immutable;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 /** Catálogo administrado desde el panel de Django. */
 @Entity
@@ -50,6 +53,16 @@ public class Game {
     @Column(name = "play_path", nullable = false, length = 60)
     private String playPath;
 
+    @Column(name = "is_featured", nullable = false)
+    private boolean featured;
+
+    @Column(nullable = false, columnDefinition = "text")
+    private String rules;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "payout_table", nullable = false)
+    private JsonNode payoutTable;
+
     protected Game() {
     }
 
@@ -89,7 +102,24 @@ public class Game {
         return rtp;
     }
 
+    /** Clase de jugada de casino enlazada; vacía si el juego usa salas. */
+    public String getPlayKind() {
+        return playKind;
+    }
+
     public String getPlayPath() {
         return playPath;
+    }
+
+    public boolean isFeatured() {
+        return featured;
+    }
+
+    public String getRules() {
+        return rules;
+    }
+
+    public JsonNode getPayoutTable() {
+        return payoutTable;
     }
 }

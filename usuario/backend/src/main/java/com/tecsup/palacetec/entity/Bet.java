@@ -33,6 +33,10 @@ public class Bet {
     @Column(name = "session_id", updatable = false)
     private Long sessionId;
 
+    /** Repetición que creó la apuesta (HU35); null si se hizo a mano. */
+    @Column(name = "repeat_operation_id", updatable = false)
+    private Long repeatOperationId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "round_id", nullable = false, updatable = false)
     private GameRound round;
@@ -63,10 +67,11 @@ public class Bet {
     protected Bet() {
     }
 
-    public Bet(Long userId, Long sessionId, GameRound round, BetKind kind, String selection, List<Integer> chips,
-               BigDecimal amount, UUID reference, Instant createdAt) {
+    public Bet(Long userId, Long sessionId, Long repeatOperationId, GameRound round, BetKind kind, String selection,
+               List<Integer> chips, BigDecimal amount, UUID reference, Instant createdAt) {
         this.userId = userId;
         this.sessionId = sessionId;
+        this.repeatOperationId = repeatOperationId;
         this.round = round;
         this.kind = kind;
         this.selection = selection;

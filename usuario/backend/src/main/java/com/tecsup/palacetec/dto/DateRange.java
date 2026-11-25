@@ -15,6 +15,10 @@ public record DateRange(Instant start, Instant end) {
     private static final Instant MIN = Instant.parse("0001-01-01T00:00:00Z");
     private static final Instant MAX = Instant.parse("9999-12-31T00:00:00Z");
 
+    public static DateRange since(Instant start) {
+        return new DateRange(start, MAX);
+    }
+
     public static DateRange parse(String startDate, String endDate) {
         LocalDate start = date("startDate", startDate);
         LocalDate end = date("endDate", endDate);

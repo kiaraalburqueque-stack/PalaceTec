@@ -117,6 +117,32 @@ public abstract class ApiTest {
                 returning id""", Long.class, room, number);
     }
 
+    /** Apuesta de 'rojo' en esa ronda; payout null si está pendiente. Las fechas son textos de PostgreSQL. */
+    protected long newBet(Player owner, long round, String amount, String payout, String createdAt) {
+        return jdbc.queryForObject("""
+                insert into user_bets (user_id, round_id, kind, selection, chips, amount, payout, reference, created_at)
+                values (?, ?, 'COLOR', 'rojo', '[10]', cast(? as numeric), cast(? as numeric), gen_random_uuid(),
+                    cast(? as timestamptz))
+                returning id""", Long.class, owner.id(), round, amount, payout, createdAt);
+    }
+
+    protected long newPlay(Player owner, String kind, String amount, String payout, String createdAt) {
+        return jdbc.queryForObject("""
+                insert into casino_play (user_id, kind, amount, payout, reference, description, created_at, settled_at)
+                values (?, ?, cast(? as numeric), cast(? as numeric), gen_random_uuid(), 'Jugada',
+                    cast(? as timestamptz), case when cast(? as numeric) is null then null else now() end)
+                returning id""", Long.class, owner.id(), kind, amount, payout, createdAt, payout);
+    }
+
+    protected long seededGame(String slug) {
+        return jdbc.queryForObject("select id from roulette_game where slug = ?", Long.class, slug);
+    }
+
+    protected void dailyLimit(Player player, int amount) {
+        jdbc.update("insert into responsible_dailylimit (user_id, amount) values (?, ?) "
+                + "on conflict (user_id) do update set amount = excluded.amount", player.id(), amount);
+    }
+
     /** Primer grupo de la expresión; falla si no aparece. */
     protected static String firstMatch(String text, String regex) {
         Matcher matcher = Pattern.compile(regex).matcher(text);

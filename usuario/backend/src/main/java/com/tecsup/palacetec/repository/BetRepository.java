@@ -23,6 +23,34 @@ public interface BetRepository extends JpaRepository<Bet, Long> {
             where b.userId = :userId and b.id in :ids""")
     List<Bet> findForHistory(Long userId, Collection<Long> ids);
 
+    @Query("select b from Bet b join fetch b.round where b.userId = :userId and b.round.id = :roundId order by b.id")
+    List<Bet> findByRound(Long userId, Long roundId);
+
+    @Query("select b from Bet b join fetch b.round where b.repeatOperationId = :operationId order by b.id")
+    List<Bet> findByRepeatOperation(Long operationId);
+
+    /**
+     * Rondas y créditos por juego (null: salas sin juego), de un jugador o, sin él, de todos. Varias apuestas de un
+     * jugador en la misma ronda cuentan como una ronda.
+     */
+    @Query(nativeQuery = true, value = """
+            select g.game_id as gameId, count(*) as rounds, sum(g.total) as wagered from (
+                select s.game_id, b.round_id, b.user_id, sum(b.amount) as total
+                from user_bets b join game_rounds r on r.id = b.round_id join rooms s on s.id = r.room_id
+                where b.created_at >= :start and b.created_at < :end
+                  and (cast(:userId as bigint) is null or b.user_id = cast(:userId as bigint))
+                group by s.game_id, b.round_id, b.user_id
+            ) g group by g.game_id order by g.game_id""")
+    List<RoomActivity> sumActivity(Long userId, Instant start, Instant end);
+
+    interface RoomActivity {
+        Long getGameId();
+
+        long getRounds();
+
+        BigDecimal getWagered();
+    }
+
     long countByUserIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(Long userId, Instant start, Instant end);
 
     /** Ruleta y casino en una sola línea de tiempo, con el mismo orden que Django. */
