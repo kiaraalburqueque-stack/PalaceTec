@@ -10,6 +10,7 @@ import com.tecsup.palacetec.dto.RegisterRequest;
 import com.tecsup.palacetec.dto.RegisterResponse;
 import com.tecsup.palacetec.security.AuthGuard;
 import com.tecsup.palacetec.security.AuthGuard.Csrf;
+import com.tecsup.palacetec.security.ClientInfo;
 import com.tecsup.palacetec.security.Clients;
 import com.tecsup.palacetec.security.CsrfGuard;
 import com.tecsup.palacetec.security.PlayerPrincipal;
@@ -63,9 +64,10 @@ public class AuthController {
     public Object login(@RequestBody(required = false) JsonNode body, HttpServletRequest request,
                         HttpServletResponse response) {
         if (Clients.isNative(request)) {
-            return auth.login(LoginRequest.from(body, FieldMessages.MOBILE));
+            return auth.login(LoginRequest.from(body, FieldMessages.MOBILE), ClientInfo.of(request));
         }
-        AuthService.WebLogin login = auth.loginWeb(LoginRequest.from(body, FieldMessages.DJANGO));
+        AuthService.WebLogin login = auth.loginWeb(LoginRequest.from(body, FieldMessages.DJANGO),
+                ClientInfo.of(request));
         cookies.setAccess(response, login.access());
         cookies.setRefresh(response, login.refresh());
         return new AccountResponse(login.userId(), login.email());

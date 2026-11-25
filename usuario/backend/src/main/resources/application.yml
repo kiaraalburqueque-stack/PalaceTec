@@ -48,3 +48,5 @@ palacetec:
     cookie-secure: ${COOKIE_SECURE:false}
     # LOGIN_RATE_LIMIT de Django: solicitudes por minuto y por IP.
     login-rate-limit: ${LOGIN_RATE_LIMIT:30}
+    # Frontend React al que apuntan los enlaces de los correos.
+    frontend-url: ${FRONTEND_URL:http://localhost:5173}

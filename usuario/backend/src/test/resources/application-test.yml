@@ -18,3 +18,4 @@ palacetec:
     cookie-secure: false
     # El límite real se prueba aparte, sin acumular intentos entre casos.
     login-rate-limit: 1000
+    frontend-url: http://localhost:5173

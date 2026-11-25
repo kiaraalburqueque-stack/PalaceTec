@@ -31,7 +31,8 @@ public record PalaceTecProperties(
      *
      * @param cookieSecure cookies solo por HTTPS; en desarrollo local, sin HTTPS, debe ser false
      * @param loginRateLimit solicitudes de autenticación por minuto y por IP
+     * @param frontendUrl adonde apuntan los enlaces de los correos
      */
-    public record Web(boolean cookieSecure, @Min(1) int loginRateLimit) {
+    public record Web(boolean cookieSecure, @Min(1) int loginRateLimit, @NotBlank String frontendUrl) {
     }
 }

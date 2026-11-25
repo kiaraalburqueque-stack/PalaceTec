@@ -17,7 +17,7 @@ class LoginRateLimiterTest {
     private final Clock clock = mock(Clock.class);
     private final LoginRateLimiter limiter = new LoginRateLimiter(new PalaceTecProperties(
             new PalaceTecProperties.Jwt("x".repeat(32), Duration.ofHours(8)), "hmac", "http://localhost:8000",
-            List.of("http://localhost:5173"), new PalaceTecProperties.Web(false, 2)), clock);
+            List.of("http://localhost:5173"), new PalaceTecProperties.Web(false, 2, "http://localhost:5173")), clock);
 
     private void checkAt(long millis) {
         when(clock.millis()).thenReturn(millis);

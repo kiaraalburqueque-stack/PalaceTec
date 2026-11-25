@@ -109,6 +109,11 @@ public class User {
         return staff || superuser;
     }
 
+    /** Nombre con el que se saluda en los correos. */
+    public String getDisplayName() {
+        return nickname == null || nickname.isEmpty() ? email : nickname;
+    }
+
     public Long getId() {
         return id;
     }

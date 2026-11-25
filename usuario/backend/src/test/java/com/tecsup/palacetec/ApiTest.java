@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tecsup.palacetec.repository.UserRepository;
 import com.tecsup.palacetec.security.JwtService;
 import java.sql.Timestamp;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -29,6 +31,8 @@ public abstract class ApiTest {
     protected JdbcTemplate jdbc;
     @Autowired
     protected ObjectMapper mapper;
+    @Autowired
+    protected TestMailer mailer;
 
     @BeforeEach
     void cleanDatabase() {
@@ -37,6 +41,7 @@ public abstract class ApiTest {
         // CASCADE alcanza billeteras, sesiones, apuestas, límites, favoritos y jugadas; no salas ni juegos.
         jdbc.execute("truncate table users cascade");
         jdbc.update("delete from game_rounds");
+        mailer.clear();
         jdbc.update("delete from responsible_excludedperson");
         jdbc.update("delete from rooms where name like 'spring-test-%'");
         jdbc.update("delete from roulette_game where slug like 'spring-test-%'");
@@ -110,6 +115,13 @@ public abstract class ApiTest {
                 values (?, 'SETTLED', clock_timestamp() - interval '20 seconds',
                     clock_timestamp() - interval '5 seconds', ?, clock_timestamp())
                 returning id""", Long.class, room, number);
+    }
+
+    /** Primer grupo de la expresión; falla si no aparece. */
+    protected static String firstMatch(String text, String regex) {
+        Matcher matcher = Pattern.compile(regex).matcher(text);
+        assertThat(matcher.find()).as("%s en %s", regex, text).isTrue();
+        return matcher.group(1);
     }
 
     protected long count(String table) {

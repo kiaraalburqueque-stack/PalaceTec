@@ -30,7 +30,7 @@ class SchemaMappingTest extends ApiTest {
         assertThat(tables).containsExactlyInAnyOrder("users", "accounts_authsession", "wallets", "wallet_transactions",
                 "wallet_balances", "roulette_game", "rooms", "game_rounds", "user_bets", "responsible_dailylimit",
                 "responsible_dailyspending", "responsible_excludedperson", "favorite_games", "room_connections",
-                "casino_play", "notifications", "notification_settings");
+                "casino_play", "notifications", "notification_settings", "login_history");
     }
 
     @Test

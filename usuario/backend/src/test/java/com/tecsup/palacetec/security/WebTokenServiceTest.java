@@ -30,7 +30,8 @@ class WebTokenServiceTest {
     private static WebTokenService service(Instant now) {
         var properties = new PalaceTecProperties(
                 new PalaceTecProperties.Jwt("clave-ficticia-solo-para-pruebas-0123456789", Duration.ofHours(8)), "hmac",
-                "http://localhost:8000", List.of("http://localhost:5173"), new PalaceTecProperties.Web(false, 30));
+                "http://localhost:8000", List.of("http://localhost:5173"),
+                new PalaceTecProperties.Web(false, 30, "http://localhost:5173"));
         return new WebTokenService(properties, Clock.fixed(now, ZoneOffset.UTC));
     }
 
