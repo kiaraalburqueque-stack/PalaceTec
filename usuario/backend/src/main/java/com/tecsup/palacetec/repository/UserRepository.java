@@ -15,6 +15,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByDni(String dni);
 
+    boolean existsByNicknameAndIdNot(String nickname, Long id);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select u from User u where u.email = :email")
     Optional<User> lockByEmail(String email);

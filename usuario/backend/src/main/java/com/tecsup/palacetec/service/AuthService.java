@@ -17,7 +17,6 @@ import com.tecsup.palacetec.security.ClientInfo;
 import com.tecsup.palacetec.security.JwtService;
 import com.tecsup.palacetec.security.WebTokenService;
 import com.tecsup.palacetec.security.WebTokenService.WebToken;
-import java.sql.SQLException;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -33,7 +32,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AuthService {
 
-    private static final String UNIQUE_VIOLATION = "23505";
     private static final int MAX_FAILED_ATTEMPTS = 5;
     private static final Duration LOCK_DURATION = Duration.ofMinutes(15);
 
@@ -82,7 +80,7 @@ public class AuthService {
                     passwords.encode(request.password()));
             return new RegisterResponse(user.getId(), user.getEmail());
         } catch (DataIntegrityViolationException exception) {
-            if (isUniqueViolation(exception)) {
+            if (DatabaseErrors.isUniqueViolation(exception)) {
                 // Otra solicitud ganó la carrera; la transacción ya se revirtió completa.
                 throw new ApiException(HttpStatus.CONFLICT, null, "El correo o el DNI ya están registrados.");
             }
@@ -152,10 +150,5 @@ public class AuthService {
     private static LoginRejectedException locked(Instant until, Instant now) {
         long seconds = (long) Math.ceil(Duration.between(now, until).toMillis() / 1000.0);
         return LoginRejectedException.locked(Math.max(1, seconds));
-    }
-
-    private static boolean isUniqueViolation(DataIntegrityViolationException exception) {
-        return exception.getMostSpecificCause() instanceof SQLException sql
-                && UNIQUE_VIOLATION.equals(sql.getSQLState());
     }
 }

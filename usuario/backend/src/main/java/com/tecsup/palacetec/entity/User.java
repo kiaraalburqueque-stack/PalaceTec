@@ -55,22 +55,22 @@ public class User {
     @Column(name = "locked_until")
     private Instant lockedUntil;
 
-    @Column(name = "avatar_url", nullable = false, length = 100, updatable = false)
+    @Column(name = "avatar_url", nullable = false, length = 100)
     private String avatarUrl;
 
-    @Column(length = 30, updatable = false)
+    @Column(length = 30)
     private String nickname;
 
     @Column(name = "auth_version", nullable = false)
     private int authVersion;
 
-    @Column(name = "first_name", nullable = false, length = 80, updatable = false)
+    @Column(name = "first_name", nullable = false, length = 80)
     private String firstName;
 
-    @Column(name = "last_name", nullable = false, length = 80, updatable = false)
+    @Column(name = "last_name", nullable = false, length = 80)
     private String lastName;
 
-    @Column(nullable = false, length = 20, updatable = false)
+    @Column(nullable = false, length = 20)
     private String phone;
 
     @Column(name = "pause_until", updatable = false)
@@ -109,6 +109,16 @@ public class User {
     public void changePassword(String hash) {
         this.password = hash;
         this.authVersion++;
+    }
+
+    /** Los campos null se conservan. */
+    public void updateProfile(String newNickname, String newAvatarUrl, String newFirstName, String newLastName,
+                              String newPhone) {
+        nickname = newNickname == null ? nickname : newNickname;
+        avatarUrl = newAvatarUrl == null ? avatarUrl : newAvatarUrl;
+        firstName = newFirstName == null ? firstName : newFirstName;
+        lastName = newLastName == null ? lastName : newLastName;
+        phone = newPhone == null ? phone : newPhone;
     }
 
     public boolean isAdmin() {
