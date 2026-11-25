@@ -1,9 +1,14 @@
 package com.tecsup.palacetec
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.emptyPreferences
+import com.tecsup.palacetec.data.analytics.AnalyticsTracker
 import com.tecsup.palacetec.data.local.HistoryDao
 import com.tecsup.palacetec.data.local.HistoryEntity
 import com.tecsup.palacetec.data.remote.ApiFactory
 import com.tecsup.palacetec.data.remote.PalaceTecApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -13,6 +18,7 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import okhttp3.mockwebserver.SocketPolicy
+import java.math.BigDecimal
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -82,4 +88,31 @@ class FakeHistoryDao : HistoryDao {
     }
 
     override suspend fun deleteAll() = rows.clear()
+}
+
+class FakeAnalytics : AnalyticsTracker {
+    val events = CopyOnWriteArrayList<String>()
+
+    override fun login() {
+        events += "login"
+    }
+
+    override fun signUp() {
+        events += "sign_up"
+    }
+
+    override fun placeBet(amount: BigDecimal, game: String) {
+        events += "place_bet $amount $game"
+    }
+
+    override fun viewHistory() {
+        events += "view_history"
+    }
+}
+
+class MemoryDataStore : DataStore<Preferences> {
+    override val data = MutableStateFlow(emptyPreferences())
+
+    override suspend fun updateData(transform: suspend (t: Preferences) -> Preferences): Preferences =
+        transform(data.value).also { data.value = it }
 }

@@ -40,6 +40,8 @@ import com.tecsup.palacetec.ui.auth.RegisterScreen
 import com.tecsup.palacetec.ui.bets.BetsScreen
 import com.tecsup.palacetec.ui.home.HomeScreen
 import com.tecsup.palacetec.ui.roulette.RouletteScreen
+import com.tecsup.palacetec.ui.settings.PushPermissionRequest
+import com.tecsup.palacetec.ui.settings.SettingsScreen
 import com.tecsup.palacetec.ui.wallet.WalletScreen
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -54,6 +56,11 @@ enum class Tab(val route: String, val label: String, val title: String, @param:D
     ROULETTE("roulette", "Ruleta", "Ruleta", R.drawable.ic_roulette),
     BETS("bets", "Apuestas", "Mis apuestas", R.drawable.ic_bets),
     WALLET("wallet", "Billetera", "Billetera", R.drawable.ic_wallet),
+}
+
+/** Pantallas que se abren encima de una pestaña, con flecha para volver. */
+enum class Section(val route: String, val title: String) {
+    SETTINGS("settings", "Ajustes"),
 }
 
 class SessionViewModel(private val auth: AuthRepository) : ViewModel() {
@@ -96,9 +103,14 @@ private fun PlayerFlow(onLogout: () -> Unit) {
     val nav = rememberNavController()
     val currentRoute = nav.currentBackStackEntryAsState().value?.destination?.route
     val currentTab = Tab.entries.find { it.route == currentRoute } ?: Tab.HOME
+    val section = Section.entries.find { it.route == currentRoute }
+    PushPermissionRequest()
     Scaffold(
-        topBar = { PlayerTopBar(currentTab.title, onLogout) },
-        bottomBar = { PlayerNavigationBar(currentTab) { nav.openTab(it) } },
+        topBar = {
+            if (section != null) SectionTopBar(section.title, onBack = { nav.popBackStack() })
+            else PlayerTopBar(currentTab.title, onOpen = { nav.openSection(it) }, onLogout)
+        },
+        bottomBar = { if (section == null) PlayerNavigationBar(currentTab) { nav.openTab(it) } },
     ) { padding ->
         NavHost(
             nav, startDestination = Tab.HOME.route, modifier = Modifier.padding(padding).consumeWindowInsets(padding),
@@ -107,6 +119,7 @@ private fun PlayerFlow(onLogout: () -> Unit) {
             composable(Tab.ROULETTE.route) { RouletteScreen() }
             composable(Tab.BETS.route) { BetsScreen() }
             composable(Tab.WALLET.route) { WalletScreen() }
+            composable(Section.SETTINGS.route) { SettingsScreen() }
         }
     }
 }
@@ -125,17 +138,43 @@ private fun NavHostController.openTab(tab: Tab) {
     }
 }
 
+private fun NavHostController.openSection(section: Section) {
+    navigate(section.route) { launchSingleTop = true }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun PlayerTopBar(title: String, onLogout: () -> Unit) {
+private fun topBarColors() = TopAppBarDefaults.topAppBarColors(
+    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+    titleContentColor = MaterialTheme.colorScheme.primary,
+    navigationIconContentColor = MaterialTheme.colorScheme.secondary,
+    actionIconContentColor = MaterialTheme.colorScheme.secondary,
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SectionTopBar(title: String, onBack: () -> Unit) {
     TopAppBar(
         title = { Text(title, fontWeight = FontWeight.Bold) },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            titleContentColor = MaterialTheme.colorScheme.primary,
-            actionIconContentColor = MaterialTheme.colorScheme.secondary,
-        ),
+        colors = topBarColors(),
+        navigationIcon = {
+            IconButton(onClick = onBack) {
+                Icon(painterResource(R.drawable.ic_back), contentDescription = "Volver")
+            }
+        },
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PlayerTopBar(title: String, onOpen: (Section) -> Unit, onLogout: () -> Unit) {
+    TopAppBar(
+        title = { Text(title, fontWeight = FontWeight.Bold) },
+        colors = topBarColors(),
         actions = {
+            IconButton(onClick = { onOpen(Section.SETTINGS) }) {
+                Icon(painterResource(R.drawable.ic_settings), contentDescription = "Ajustes")
+            }
             IconButton(onClick = onLogout) {
                 Icon(painterResource(R.drawable.ic_logout), contentDescription = "Cerrar sesión")
             }

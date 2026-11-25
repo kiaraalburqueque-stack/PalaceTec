@@ -41,11 +41,11 @@ import com.tecsup.palacetec.ui.theme.VerdeGanancia
 @Composable
 fun BetsScreen(
     modifier: Modifier = Modifier,
-    viewModel: BetsViewModel = appViewModel { BetsViewModel(it.historyRepository) },
+    viewModel: BetsViewModel = appViewModel { BetsViewModel(it.historyRepository, it.analytics) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LifecycleStartEffect(Unit) {
-        viewModel.refresh()
+        viewModel.onVisible()
         onStopOrDispose { }
     }
 
