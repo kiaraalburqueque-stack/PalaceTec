@@ -70,6 +70,7 @@ Para usar React con este backend: `$env:VITE_API_BASE_URL = "http://localhost:80
 | POST `/auth/logout` | cookies o Bearer | `{detail}`. Revoca esa sesión y borra las cookies |
 | POST `/auth/forgot-password` | `{email}` | `{detail}`, igual exista o no la cuenta. El enlace sale por correo y vale 15 minutos |
 | POST `/auth/reset-password` | `{token, new_password}` | `{detail}`. Cierra todas las sesiones |
+| POST `/auth/not-me` | `{token}` | `{detail, locked_until}`. Botón "No fui yo" del correo de acceso nuevo: bloquea la cuenta 24 horas y cierra todas las sesiones. El enlace vale 24 horas; repetirlo no vuelve a bloquear |
 | GET y PUT `/users/me`, `/users/profile` | `{nickname, avatar_url, first_name, last_name, phone}`, todos opcionales | id, email, dni, nickname, avatar_url, first_name, last_name, phone |
 | POST `/users/avatar` | multipart, campo `avatar`: JPG, PNG o WEBP de hasta 2 MB | El perfil, con la foto en WEBP de 300 x 300 |
 | PUT `/users/change-password` | `{current_password, new_password}` | `{detail}`. Cierra todas las sesiones |
@@ -98,14 +99,14 @@ Django: ahí están los enlaces para restablecer la contraseña.
 | Estado | Cuándo |
 | --- | --- |
 | 400 `{campo: ["mensaje"]}` | Datos inválidos |
-| 400 `{code, detail}` | `bets_closed`, `insufficient_balance`, `daily_limit_required`, `daily_limit_exceeded`, `pause_active` |
+| 400 `{code, detail}` | `invalid_token` (enlace del correo), `bets_closed`, `insufficient_balance`, `daily_limit_required`, `daily_limit_exceeded`, `pause_active` |
 | 400 `{amount: "mensaje"}` | Fuera del mínimo o del máximo acumulado de la sala |
 | 401 `{detail}` | Sin sesión, vencida o revocada; credenciales inválidas. Una cookie inválida agrega `code` y `messages`, como SimpleJWT |
 | 403 `{code, detail}` | `access_not_allowed` (excluido o autoexcluido), `account_suspended` |
 | 403 `{detail: "CSRF: ..."}` | Escritura de la web sin un token CSRF válido o desde otro origen |
 | 404 `{detail}` | Sala o página inexistente |
 | 409 | Correo o DNI repetidos; `reference_conflict` si la referencia ya es de otra apuesta |
-| 429 `{detail, retry_after}` | Cuenta bloqueada 15 minutos tras 5 intentos fallidos |
+| 429 `{detail, retry_after}` | Cuenta bloqueada: 15 minutos tras 5 intentos fallidos o 24 horas con "No fui yo" |
 | 429 `{detail}` | Más de 30 solicitudes de autenticación por minuto desde una IP |
 
 ## Cómo se comparte con Django
@@ -150,8 +151,10 @@ vuelve a correr `migrate` sobre ella.
 
 - No hay WebSockets: aquí no se emiten `wallet:update`, `notification:new` ni `session:revoked`. La web ve los cambios al
   volver a consultar.
-- Siguen solo en Django `POST /auth/not-me` (el botón "No fui yo" del correo de acceso nuevo), casino, asistente,
-  estadísticas, detalle y exportación del historial, y el resto de juego responsable.
+- Siguen solo en Django casino, asistente, estadísticas, detalle y exportación del historial, y el resto de juego
+  responsable.
+- Repetir el enlace de "No fui yo" después de restablecer la contraseña responde 200 con `locked_until` nulo; Django
+  da un error 500.
 - No se escribe la auditoría (`admin_audit_logs`) de lo que un administrador haga en estas rutas.
 - El límite por IP se cuenta en la memoria de este proceso, aparte del de Django.
 - La app móvil no renueva su Bearer: al vencer se vuelve a iniciar sesión.
