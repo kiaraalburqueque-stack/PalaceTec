@@ -1,8 +1,12 @@
 package com.tecsup.palacetec.data.remote
 
+import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.PUT
+import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -37,4 +41,14 @@ interface PalaceTecApi {
 
     @GET("api/v1/users/bets-history")
     suspend fun betsHistory(@Query("page") page: Int, @Query("page_size") pageSize: Int): HistoryPage
+
+    @GET("api/v1/users/me")
+    suspend fun profile(): Profile
+
+    @PUT("api/v1/users/me")
+    suspend fun updateProfile(@Body request: ProfileUpdate): Profile
+
+    @Multipart
+    @POST("api/v1/users/avatar")
+    suspend fun uploadAvatar(@Part avatar: MultipartBody.Part): Profile
 }

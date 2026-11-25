@@ -6,6 +6,7 @@ import com.google.firebase.analytics.FirebaseAnalytics
 import com.tecsup.palacetec.data.analytics.AnalyticsTracker
 import com.tecsup.palacetec.data.analytics.FirebaseAnalyticsTracker
 import com.tecsup.palacetec.data.analytics.NoAnalytics
+import com.tecsup.palacetec.data.local.AndroidAvatarSource
 import com.tecsup.palacetec.data.local.HistoryDatabase
 import com.tecsup.palacetec.data.local.PushStore
 import com.tecsup.palacetec.data.local.SessionStore
@@ -17,6 +18,7 @@ import com.tecsup.palacetec.data.repository.AuthRepository
 import com.tecsup.palacetec.data.repository.CatalogRepository
 import com.tecsup.palacetec.data.repository.DailyLimitRepository
 import com.tecsup.palacetec.data.repository.HistoryRepository
+import com.tecsup.palacetec.data.repository.ProfileRepository
 import com.tecsup.palacetec.data.repository.PushRepository
 import com.tecsup.palacetec.data.repository.RouletteRepository
 import com.tecsup.palacetec.data.repository.WalletRepository
@@ -62,5 +64,6 @@ class AppContainer(app: Application) {
     val catalogRepository = CatalogRepository(api)
     val dailyLimitRepository = DailyLimitRepository(api)
     val rouletteRepository = RouletteRepository(api, analytics)
+    val profileRepository = ProfileRepository(api, AndroidAvatarSource(app), BuildConfig.BASE_URL)
     val historyRepository = HistoryRepository(api, historyDao, owner = { sessionStore.email })
 }

@@ -39,6 +39,8 @@ import com.tecsup.palacetec.ui.auth.LoginScreen
 import com.tecsup.palacetec.ui.auth.RegisterScreen
 import com.tecsup.palacetec.ui.bets.BetsScreen
 import com.tecsup.palacetec.ui.home.HomeScreen
+import com.tecsup.palacetec.ui.profile.ProfileLink
+import com.tecsup.palacetec.ui.profile.ProfileScreen
 import com.tecsup.palacetec.ui.roulette.RouletteScreen
 import com.tecsup.palacetec.ui.settings.PushPermissionRequest
 import com.tecsup.palacetec.ui.settings.SettingsScreen
@@ -60,6 +62,7 @@ enum class Tab(val route: String, val label: String, val title: String, @param:D
 
 /** Pantallas que se abren encima de una pestaña, con flecha para volver. */
 enum class Section(val route: String, val title: String) {
+    PROFILE("profile", "Mi perfil"),
     SETTINGS("settings", "Ajustes"),
 }
 
@@ -119,6 +122,13 @@ private fun PlayerFlow(onLogout: () -> Unit) {
             composable(Tab.ROULETTE.route) { RouletteScreen() }
             composable(Tab.BETS.route) { BetsScreen() }
             composable(Tab.WALLET.route) { WalletScreen() }
+            composable(Section.PROFILE.route) {
+                ProfileScreen(
+                    links = listOf(
+                        ProfileLink("Ajustes", R.drawable.ic_settings) { nav.openSection(Section.SETTINGS) },
+                    ),
+                )
+            }
             composable(Section.SETTINGS.route) { SettingsScreen() }
         }
     }
@@ -172,8 +182,8 @@ private fun PlayerTopBar(title: String, onOpen: (Section) -> Unit, onLogout: () 
         title = { Text(title, fontWeight = FontWeight.Bold) },
         colors = topBarColors(),
         actions = {
-            IconButton(onClick = { onOpen(Section.SETTINGS) }) {
-                Icon(painterResource(R.drawable.ic_settings), contentDescription = "Ajustes")
+            IconButton(onClick = { onOpen(Section.PROFILE) }) {
+                Icon(painterResource(R.drawable.ic_person), contentDescription = "Mi perfil")
             }
             IconButton(onClick = onLogout) {
                 Icon(painterResource(R.drawable.ic_logout), contentDescription = "Cerrar sesión")
