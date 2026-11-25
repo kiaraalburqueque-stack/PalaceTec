@@ -63,4 +63,13 @@ interface PalaceTecApi {
 
     @POST("api/v1/responsible-gaming/self-exclude")
     suspend fun selfExclude(@Body request: SelfExclusionRequest): SelfExclusionResponse
+
+    @GET("api/v1/notifications")
+    suspend fun notifications(): NotificationList
+
+    @POST("api/v1/notifications/{id}/read")
+    suspend fun markNotificationRead(@Path("id") id: Long): UnreadCount
+
+    @POST("api/v1/notifications/read-all")
+    suspend fun markAllNotificationsRead(): UnreadCount
 }

@@ -9,6 +9,7 @@ import com.tecsup.palacetec.data.analytics.NoAnalytics
 import com.tecsup.palacetec.data.local.AndroidAvatarSource
 import com.tecsup.palacetec.data.local.HistoryDatabase
 import com.tecsup.palacetec.data.local.PushStore
+import com.tecsup.palacetec.data.local.Session
 import com.tecsup.palacetec.data.local.SessionStore
 import com.tecsup.palacetec.data.local.pushDataStore
 import com.tecsup.palacetec.data.local.sessionDataStore
@@ -18,6 +19,7 @@ import com.tecsup.palacetec.data.repository.AuthRepository
 import com.tecsup.palacetec.data.repository.CatalogRepository
 import com.tecsup.palacetec.data.repository.DailyLimitRepository
 import com.tecsup.palacetec.data.repository.HistoryRepository
+import com.tecsup.palacetec.data.repository.NotificationRepository
 import com.tecsup.palacetec.data.repository.ProfileRepository
 import com.tecsup.palacetec.data.repository.PushRepository
 import com.tecsup.palacetec.data.repository.ResponsibleRepository
@@ -64,8 +66,15 @@ class AppContainer(app: Application) {
     val walletRepository = WalletRepository(api)
     val catalogRepository = CatalogRepository(api)
     val dailyLimitRepository = DailyLimitRepository(api)
+    val notificationRepository = NotificationRepository(api)
     val responsibleRepository = ResponsibleRepository(api)
     val rouletteRepository = RouletteRepository(api, analytics)
     val profileRepository = ProfileRepository(api, AndroidAvatarSource(app), BuildConfig.BASE_URL)
     val historyRepository = HistoryRepository(api, historyDao, owner = { sessionStore.email })
+
+    init {
+        appScope.launch {
+            sessionStore.session.collect { if (it is Session.LoggedOut) notificationRepository.reset() }
+        }
+    }
 }

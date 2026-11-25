@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -24,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
@@ -39,6 +42,8 @@ import com.tecsup.palacetec.ui.auth.LoginScreen
 import com.tecsup.palacetec.ui.auth.RegisterScreen
 import com.tecsup.palacetec.ui.bets.BetsScreen
 import com.tecsup.palacetec.ui.home.HomeScreen
+import com.tecsup.palacetec.ui.notifications.NotificationsScreen
+import com.tecsup.palacetec.ui.notifications.UnreadViewModel
 import com.tecsup.palacetec.ui.profile.ProfileLink
 import com.tecsup.palacetec.ui.profile.ProfileScreen
 import com.tecsup.palacetec.ui.responsible.ResponsibleScreen
@@ -63,6 +68,7 @@ enum class Tab(val route: String, val label: String, val title: String, @param:D
 
 /** Pantallas que se abren encima de una pestaña, con flecha para volver. */
 enum class Section(val route: String, val title: String) {
+    NOTIFICATIONS("notifications", "Notificaciones"),
     PROFILE("profile", "Mi perfil"),
     RESPONSIBLE("responsible", "Juego responsable"),
     SETTINGS("settings", "Ajustes"),
@@ -104,16 +110,25 @@ private fun AuthFlow() {
 }
 
 @Composable
-private fun PlayerFlow(onLogout: () -> Unit) {
+private fun PlayerFlow(
+    onLogout: () -> Unit,
+    unreadViewModel: UnreadViewModel = appViewModel { UnreadViewModel(it.notificationRepository) },
+) {
     val nav = rememberNavController()
     val currentRoute = nav.currentBackStackEntryAsState().value?.destination?.route
     val currentTab = Tab.entries.find { it.route == currentRoute } ?: Tab.HOME
     val section = Section.entries.find { it.route == currentRoute }
+    val unread by unreadViewModel.unread.collectAsStateWithLifecycle()
     PushPermissionRequest()
+    // La campana se actualiza al entrar, al volver a la app y al cambiar de pantalla.
+    LifecycleStartEffect(currentRoute) {
+        if (section != Section.NOTIFICATIONS) unreadViewModel.refresh()
+        onStopOrDispose { }
+    }
     Scaffold(
         topBar = {
             if (section != null) SectionTopBar(section.title, onBack = { nav.popBackStack() })
-            else PlayerTopBar(currentTab.title, onOpen = { nav.openSection(it) }, onLogout)
+            else PlayerTopBar(currentTab.title, unread, onOpen = { nav.openSection(it) }, onLogout)
         },
         bottomBar = { if (section == null) PlayerNavigationBar(currentTab) { nav.openTab(it) } },
     ) { padding ->
@@ -129,6 +144,7 @@ private fun PlayerFlow(onLogout: () -> Unit) {
             composable(Tab.ROULETTE.route) { RouletteScreen() }
             composable(Tab.BETS.route) { BetsScreen() }
             composable(Tab.WALLET.route) { WalletScreen() }
+            composable(Section.NOTIFICATIONS.route) { NotificationsScreen() }
             composable(Section.PROFILE.route) {
                 ProfileScreen(
                     links = listOf(
@@ -188,11 +204,19 @@ private fun SectionTopBar(title: String, onBack: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun PlayerTopBar(title: String, onOpen: (Section) -> Unit, onLogout: () -> Unit) {
+private fun PlayerTopBar(title: String, unread: Long, onOpen: (Section) -> Unit, onLogout: () -> Unit) {
     TopAppBar(
         title = { Text(title, fontWeight = FontWeight.Bold) },
         colors = topBarColors(),
         actions = {
+            IconButton(onClick = { onOpen(Section.NOTIFICATIONS) }) {
+                BadgedBox(badge = { if (unread > 0) Badge { Text(if (unread > 99) "99+" else "$unread") } }) {
+                    Icon(
+                        painterResource(R.drawable.ic_notifications),
+                        contentDescription = if (unread > 0) "Notificaciones: $unread sin leer" else "Notificaciones",
+                    )
+                }
+            }
             IconButton(onClick = { onOpen(Section.PROFILE) }) {
                 Icon(painterResource(R.drawable.ic_person), contentDescription = "Mi perfil")
             }
