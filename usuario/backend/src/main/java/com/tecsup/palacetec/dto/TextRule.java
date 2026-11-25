@@ -11,7 +11,7 @@ public final class TextRule {
     record Check(Predicate<String> accepts, String message) {
     }
 
-    private static final String PATTERN_MESSAGE = "This value does not match the required pattern.";
+    static final String PATTERN_MESSAGE = "This value does not match the required pattern.";
 
     final boolean required;
     boolean trim = true;

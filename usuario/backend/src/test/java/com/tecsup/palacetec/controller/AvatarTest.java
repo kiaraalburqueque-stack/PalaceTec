@@ -180,6 +180,33 @@ class AvatarTest extends ApiTest {
         assertThat(color(stored, 280, 150)).isEqualTo("azul");
     }
 
+    /** Java aclara los grises al convertirlos a RGB y no lee CMYK; Pillow no los altera. */
+    @Test
+    void keepsTheColorsOfGrayAndCmykImages() throws Exception {
+        Player player = newPlayer();
+        BufferedImage gray = new BufferedImage(80, 80, BufferedImage.TYPE_BYTE_GRAY);
+        Arrays.fill(((java.awt.image.DataBufferByte) gray.getRaster().getDataBuffer()).getData(), (byte) 100);
+        for (String format : new String[] {"png", "jpeg"}) {
+            BufferedImage stored = saved(uploaded(player, "gris." + format, "image/" + format, encode(gray, format)));
+            assertThat(new Color(stored.getRGB(150, 150)).getRed()).isBetween(97, 103);
+        }
+        var colors = new java.awt.image.ComponentColorModel(
+                java.awt.color.ColorSpace.getInstance(java.awt.color.ColorSpace.CS_GRAY), true, false,
+                java.awt.Transparency.TRANSLUCENT, java.awt.image.DataBuffer.TYPE_BYTE);
+        BufferedImage grayAlpha = new BufferedImage(colors, colors.createCompatibleWritableRaster(80, 80), false, null);
+        Arrays.fill(((java.awt.image.DataBufferByte) grayAlpha.getRaster().getDataBuffer()).getData(), (byte) 100);
+        Color translucent = new Color(saved(uploaded(player, "gris.png", "image/png", encode(grayAlpha, "png")))
+                .getRGB(150, 150), true);
+        assertThat(translucent.getAlpha()).isBetween(97, 103);
+        assertThat(translucent.getRed()).isBetween(95, 105);
+
+        // JPEG en CMYK guardado por Pillow: mitad roja y mitad azul.
+        byte[] cmyk = getClass().getResourceAsStream("/cmyk.jpg").readAllBytes();
+        BufferedImage stored = saved(uploaded(player, "cmyk.jpg", "image/jpeg", cmyk));
+        assertThat(color(stored, 20, 150)).isEqualTo("rojo");
+        assertThat(color(stored, 280, 150)).isEqualTo("azul");
+    }
+
     /** Dónde queda la mitad roja (la izquierda del archivo) según la orientación de la cámara. */
     @ParameterizedTest
     @CsvSource({"1, 20, 150", "2, 280, 150", "3, 280, 150", "4, 20, 150", "5, 150, 20", "6, 150, 20", "7, 150, 280",
@@ -237,6 +264,8 @@ class AvatarTest extends ApiTest {
         Arrays.fill(onlySignature, 8, 108, (byte) '0');
         rejected(upload(player, "foto.png", "image/png", onlySignature), BAD_CONTENT);
         rejected(upload(player, "foto.png", "image/png", Arrays.copyOf(png, png.length / 2)), BAD_CONTENT);
+        byte[] webp = encode(picture(600, 400, BufferedImage.TYPE_INT_RGB), "webp");
+        rejected(upload(player, "foto.webp", "image/webp", Arrays.copyOf(webp, webp.length / 2)), BAD_CONTENT);
         byte[] jpeg = encode(picture(600, 400, BufferedImage.TYPE_INT_RGB), "jpeg");
         rejected(upload(player, "foto.jpg", "image/jpeg", Arrays.copyOf(jpeg, jpeg.length / 2)),
                 "No se pudo procesar la imagen.");

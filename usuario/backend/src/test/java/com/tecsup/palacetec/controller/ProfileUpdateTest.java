@@ -92,7 +92,8 @@ class ProfileUpdateTest extends ApiTest {
             first_name | null                       | This field may not be null.
             phone      | "javascript:123"           | This value does not match the required pattern.
             phone      | "12345"                    | This value does not match the required pattern.
-            phone      | true                       | Not a valid string.
+            phone      | true                       | This value does not match the required pattern.
+            last_name  | true                       | Not a valid string.
             """)
     void rejectsInvalidValues(String field, String value, String message) throws Exception {
         Player player = newPlayer();

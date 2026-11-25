@@ -2,14 +2,11 @@ package com.tecsup.palacetec.media;
 
 import com.tecsup.palacetec.exception.InvalidFieldsException;
 import java.awt.Graphics2D;
-import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
-import java.awt.image.IndexColorModel;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Iterator;
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -29,6 +26,7 @@ public class AvatarImages {
     private static final int MAX_BYTES = 2 * 1024 * 1024;
     private static final int SIZE = 300;
     private static final float QUALITY = 0.85f;
+    private static final int CMYK_COMPONENTS = 4;
     /** Evita "bombas de descompresión" dentro de un archivo pequeño. */
     private static final long MAX_PIXELS = 25_000_000;
     /** A partir de aquí Pillow ni siquiera abre la imagen. */
@@ -51,17 +49,17 @@ public class AvatarImages {
         if (!kind.matches(content)) {
             throw invalid(BAD_CONTENT);
         }
-        BufferedImage square = crop(decode(content, kind));
+        // El recorte central es el mismo en cualquier orientación: se gira al final, ya reducido.
+        BufferedImage square = SquareResampler.fit(decode(content, kind), SIZE);
         return encode(orient(square, ExifOrientation.read(content, kind)));
     }
 
-    private static BufferedImage decode(byte[] content, ImageKind kind) {
-        Iterator<ImageReader> readers = ImageIO.getImageReadersByFormatName(kind.format());
-        ImageReader reader = readers.next();
+    private static PixelRows decode(byte[] content, ImageKind kind) {
+        ImageReader reader = ImageIO.getImageReadersByFormatName(kind.format()).next();
         try (var input = new MemoryCacheImageInputStream(new ByteArrayInputStream(content))) {
             reader.setInput(input);
             checkPixels(reader);
-            return pixels(reader, kind);
+            return pixels(reader, content, kind);
         } catch (IOException exception) {
             throw invalid(NOT_PROCESSED);
         } finally {
@@ -82,70 +80,30 @@ public class AvatarImages {
         }
     }
 
-    /** Un PNG dañado ya lo detecta la validación de Pillow; en los otros formatos falla al procesarlo. */
-    private static BufferedImage pixels(ImageReader reader, ImageKind kind) {
+    /** Pillow detecta un PNG o un WEBP dañado al validarlo; un JPEG, recién al procesarlo. */
+    private static PixelRows pixels(ImageReader reader, byte[] content, ImageKind kind) {
         try {
             // Un JPEG cortado no lanza excepción: se lee con el resto en gris y solo lo avisa.
             boolean[] truncated = {false};
             reader.addIIOReadWarningListener((source, warning) ->
                     truncated[0] |= warning.contains("premature end of data"));
-            BufferedImage image = reader.read(0);
+            JpegHeader jpeg = kind == ImageKind.JPEG ? JpegHeader.read(content) : null;
+            PixelRows rows = jpeg != null && jpeg.components() == CMYK_COMPONENTS
+                    ? PixelRows.ofCmyk(reader.readRaster(0, null), jpeg.ycck()) : PixelRows.of(reader.read(0));
             if (truncated[0]) {
                 throw invalid(NOT_PROCESSED);
             }
-            return image;
+            return rows;
         } catch (IOException | IllegalArgumentException | IllegalStateException | IndexOutOfBoundsException error) {
-            throw invalid(kind == ImageKind.PNG ? BAD_CONTENT : NOT_PROCESSED);
+            throw invalid(kind == ImageKind.JPEG ? NOT_PROCESSED : BAD_CONTENT);
         }
-    }
-
-    /** Cuadrado central reducido a 300 x 300. Reducir por mitades conserva el detalle que se perdería de un salto. */
-    private static BufferedImage crop(BufferedImage image) {
-        int side = Math.min(image.getWidth(), image.getHeight());
-        int x = (image.getWidth() - side) / 2;
-        int y = (image.getHeight() - side) / 2;
-        // Como en Django: en una imagen con paleta se ignora la transparencia.
-        boolean alpha = image.getColorModel().hasAlpha() && !(image.getColorModel() instanceof IndexColorModel);
-        BufferedImage current = null;
-        int size = side;
-        do {
-            int next = size >= 2 * SIZE ? size / 2 : SIZE;
-            BufferedImage target = new BufferedImage(next, next,
-                    alpha ? BufferedImage.TYPE_INT_ARGB_PRE : BufferedImage.TYPE_INT_RGB);
-            Graphics2D graphics = target.createGraphics();
-            graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, size >= 2 * SIZE
-                    ? RenderingHints.VALUE_INTERPOLATION_BILINEAR : RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-            graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-            if (current == null) {
-                graphics.drawImage(opaque(image), 0, 0, next, next, x, y, x + side, y + side, null);
-            } else {
-                graphics.drawImage(current, 0, 0, next, next, null);
-            }
-            graphics.dispose();
-            current = target;
-            size = next;
-        } while (size != SIZE);
-        return current;
-    }
-
-    /** Colores de la paleta sin su transparencia; las demás imágenes quedan igual. */
-    private static BufferedImage opaque(BufferedImage image) {
-        if (!(image.getColorModel() instanceof IndexColorModel palette) || !palette.hasAlpha()) {
-            return image;
-        }
-        int[] colors = new int[palette.getMapSize()];
-        palette.getRGBs(colors);
-        for (int i = 0; i < colors.length; i++) {
-            colors[i] |= 0xFF000000;
-        }
-        IndexColorModel solid = new IndexColorModel(palette.getPixelSize(), colors.length, colors, 0, false, -1,
-                image.getRaster().getTransferType());
-        return new BufferedImage(solid, image.getRaster(), false, null);
     }
 
     private static BufferedImage orient(BufferedImage square, int orientation) {
-        BufferedImage result = new BufferedImage(SIZE, SIZE, square.getColorModel().hasAlpha()
-                ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB);
+        if (orientation == ExifOrientation.NORMAL) {
+            return square;
+        }
+        BufferedImage result = new BufferedImage(SIZE, SIZE, square.getType());
         Graphics2D graphics = result.createGraphics();
         graphics.drawImage(square, transform(orientation), null);
         graphics.dispose();

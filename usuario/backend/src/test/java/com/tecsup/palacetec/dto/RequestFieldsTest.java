@@ -62,6 +62,15 @@ class RequestFieldsTest {
     }
 
     @Test
+    void aWrongTypeUsesTheMessageOfTheField() throws Exception {
+        RequestFields fields = fields("{\"email\": true, \"code\": []}");
+        fields.text("email", TextRule.required().email());
+        fields.text("code", TextRule.required().pattern("[a-z]+"));
+        assertThat(errors(fields)).isEqualTo(Map.of("email", List.of("Enter a valid email address."),
+                "code", List.of("This value does not match the required pattern.")));
+    }
+
+    @Test
     void trimsUnlessTheSpacesMatterAndAcceptsNumbers() {
         String noBreakSpace = Character.toString(0xA0);
         RequestFields fields = RequestFields.of(MAPPER.createObjectNode().put("a", noBreakSpace + " x ").put("n", 15)

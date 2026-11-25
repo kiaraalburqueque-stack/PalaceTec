@@ -194,7 +194,8 @@ class WebSessionTest extends ApiTest {
         csrfAnswer(secret, "-".repeat(64)).andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.detail").value(wrong + "has invalid characters."));
         csrfAnswer("corta", masked).andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.detail").value("CSRF: CSRF cookie has incorrect length."));
+                .andExpect(jsonPath("$.detail").value("CSRF: CSRF cookie has incorrect length."))
+                .andExpect(cookie().exists("csrftoken"));
         csrfAnswer(secret, masked).andExpect(status().isOk());
         csrfAnswer(secret, secret).andExpect(status().isOk());
         csrfAnswer(masked, masked).andExpect(status().isOk());

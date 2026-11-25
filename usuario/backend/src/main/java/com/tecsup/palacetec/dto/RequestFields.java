@@ -75,11 +75,19 @@ public final class RequestFields {
         }
         // Como CharField, un número se acepta y se convierte en texto.
         if (!node.isTextual() && !node.isNumber()) {
-            error(field, messages.notText());
+            error(field, typeProblem(rule));
             return null;
         }
         String value = rule.trim ? strip(node.asText()) : node.asText();
         return isValid(field, value, rule) ? value : null;
+    }
+
+    /** EmailField y RegexField usan su propio mensaje también para un valor que no es texto. */
+    private String typeProblem(TextRule rule) {
+        if (rule.email) {
+            return messages.email();
+        }
+        return rule.checks.isEmpty() ? messages.notText() : TextRule.PATTERN_MESSAGE;
     }
 
     private boolean isValid(String field, String value, TextRule rule) {

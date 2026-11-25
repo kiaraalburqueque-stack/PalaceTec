@@ -59,7 +59,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 WebToken token = webTokens.parse(access, WebTokenService.Type.ACCESS);
                 authenticate(PlayerPrincipal.web(token));
                 if (!SAFE_METHODS.contains(request.getMethod())) {
-                    csrf.enforce(request);
+                    csrf.enforce(request, response);
                 }
             }
         } catch (ApiException exception) {

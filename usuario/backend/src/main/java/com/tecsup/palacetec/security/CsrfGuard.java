@@ -46,14 +46,22 @@ public class CsrfGuard {
     public String issue(HttpServletRequest request, HttpServletResponse response) {
         String cookie = cookie(request);
         String secret = cookie == null || formatError(cookie) != null ? newSecret() : unmask(cookie);
-        response.addHeader(HttpHeaders.SET_COOKIE, ResponseCookie.from(COOKIE, secret).path("/").maxAge(COOKIE_AGE)
-                .sameSite("Lax").secure(secure).build().toString());
-        response.addHeader(HttpHeaders.VARY, HttpHeaders.COOKIE);
+        setCookie(response, secret);
         return mask(secret);
     }
 
-    /** enforce_csrf: 403 si la solicitud no demuestra venir del frontend. */
-    public void enforce(HttpServletRequest request) {
+    private void setCookie(HttpServletResponse response, String secret) {
+        response.addHeader(HttpHeaders.SET_COOKIE, ResponseCookie.from(COOKIE, secret).path("/").maxAge(COOKIE_AGE)
+                .sameSite("Lax").secure(secure).build().toString());
+        response.addHeader(HttpHeaders.VARY, HttpHeaders.COOKIE);
+    }
+
+    /** enforce_csrf: 403 si la solicitud no demuestra venir del frontend. Una cookie dañada se reemplaza. */
+    public void enforce(HttpServletRequest request, HttpServletResponse response) {
+        String cookie = cookie(request);
+        if (cookie != null && formatError(cookie) != null) {
+            setCookie(response, newSecret());
+        }
         rejection(request).ifPresent(reason -> {
             throw ApiException.forbidden("CSRF: " + reason);
         });

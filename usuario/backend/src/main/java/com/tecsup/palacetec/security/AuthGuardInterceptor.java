@@ -32,7 +32,7 @@ public class AuthGuardInterceptor implements HandlerInterceptor {
             case UNLESS_BEARER -> Clients.bearer(request) != null;
         };
         if (!exempt) {
-            csrf.enforce(request);
+            csrf.enforce(request, response);
         }
         return true;
     }

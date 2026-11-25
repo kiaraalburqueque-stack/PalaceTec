@@ -1,6 +1,5 @@
 package com.tecsup.palacetec.media;
 
-import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -22,31 +21,14 @@ final class ExifOrientation {
     static int read(byte[] content, ImageKind kind) {
         try {
             ByteBuffer tiff = switch (kind) {
-                case JPEG -> jpegExif(content);
+                case JPEG -> JpegHeader.read(content).exif();
                 case PNG -> pngExif(content);
                 case WEBP -> webpExif(content);
             };
             return tiff == null ? NORMAL : orientation(tiff);
-        } catch (IndexOutOfBoundsException | BufferUnderflowException | IllegalArgumentException exception) {
+        } catch (IndexOutOfBoundsException | ArithmeticException exception) {
             return NORMAL;
         }
-    }
-
-    private static ByteBuffer jpegExif(byte[] content) {
-        ByteBuffer data = ByteBuffer.wrap(content);
-        int position = 2;
-        while (position + 4 <= content.length && (data.get(position) & 0xFF) == 0xFF) {
-            int marker = data.get(position + 1) & 0xFF;
-            int length = data.getShort(position + 2) & 0xFFFF;
-            if (marker == 0xDA) {
-                return null; // Empiezan los píxeles.
-            }
-            if (marker == 0xE1 && ImageKind.hasText(content, position + 4, EXIF_HEADER)) {
-                return data.slice(position + 4 + EXIF_HEADER_LENGTH, length - 2 - EXIF_HEADER_LENGTH);
-            }
-            position += 2 + length;
-        }
-        return null;
     }
 
     private static ByteBuffer pngExif(byte[] content) {
@@ -54,11 +36,11 @@ final class ExifOrientation {
         int position = 8;
         while (position + 8 <= content.length) {
             int length = data.getInt(position);
-            if (ImageKind.hasText(content, position + 4, "eXIf")) {
-                return data.slice(position + 8, length);
-            }
             if (length < 0) {
                 return null;
+            }
+            if (ImageKind.hasText(content, position + 4, "eXIf")) {
+                return data.slice(position + 8, length);
             }
             position = Math.addExact(position, Math.addExact(length, ENTRY_SIZE));
         }
@@ -70,14 +52,14 @@ final class ExifOrientation {
         int position = 12;
         while (position + 8 <= content.length) {
             int length = data.getInt(position + 4);
+            if (length < 0) {
+                return null;
+            }
             if (ImageKind.hasText(content, position, "EXIF")) {
                 int header = ImageKind.hasText(content, position + 8, EXIF_HEADER) ? EXIF_HEADER_LENGTH : 0;
                 return data.slice(position + 8 + header, length - header);
             }
-            if (length < 0) {
-                return null;
-            }
-            position = Math.addExact(position, Math.addExact(8, length + (length & 1)));
+            position = Math.addExact(position, Math.addExact(8, Math.addExact(length, length & 1)));
         }
         return null;
     }
