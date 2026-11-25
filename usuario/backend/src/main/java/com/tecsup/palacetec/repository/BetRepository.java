@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -22,6 +23,13 @@ public interface BetRepository extends JpaRepository<Bet, Long> {
             select b from Bet b join fetch b.round r join fetch r.room s left join fetch s.game
             where b.userId = :userId and b.id in :ids""")
     List<Bet> findForHistory(Long userId, Collection<Long> ids);
+
+    /** De la más reciente a la más antigua. */
+    @Query("""
+            select b from Bet b join fetch b.round r join fetch r.room s left join fetch s.game
+            where b.userId = :userId and b.createdAt >= :start and b.createdAt < :end
+            order by b.createdAt desc, b.id desc""")
+    List<Bet> findForExport(Long userId, Instant start, Instant end, Limit limit);
 
     @Query("select b from Bet b join fetch b.round where b.userId = :userId and b.round.id = :roundId order by b.id")
     List<Bet> findByRound(Long userId, Long roundId);

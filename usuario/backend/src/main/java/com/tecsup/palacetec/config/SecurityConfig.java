@@ -74,7 +74,7 @@ public class SecurityConfig {
         cors.setAllowedMethods(List.of("DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT"));
         cors.setAllowedHeaders(List.of("Accept", "Authorization", "Content-Type", CsrfGuard.HEADER,
                 "X-Requested-With"));
-        cors.setExposedHeaders(List.of("Retry-After"));
+        cors.setExposedHeaders(List.of("Content-Disposition", "Retry-After"));
         cors.setMaxAge(Duration.ofDays(1));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", cors);

@@ -20,6 +20,8 @@
         <java.version>21</java.version>
         <jjwt.version>0.12.6</jjwt.version>
         <webp-imageio.version>0.10.2</webp-imageio.version>
+        <poi.version>5.4.1</poi.version>
+        <openpdf.version>2.2.4</openpdf.version>
         <!-- La que usa webp-imageio; Spring Boot trae una anterior. -->
         <kotlin.version>2.2.0</kotlin.version>
     </properties>
@@ -69,6 +71,17 @@
             <artifactId>webp-imageio</artifactId>
             <version>${webp-imageio.version}</version>
             <scope>runtime</scope>
+        </dependency>
+        <!-- Exportación del historial: Excel y PDF. -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${poi.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.librepdf</groupId>
+            <artifactId>openpdf</artifactId>
+            <version>${openpdf.version}</version>
         </dependency>
 
         <dependency>

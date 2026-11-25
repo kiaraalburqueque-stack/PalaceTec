@@ -48,6 +48,11 @@ public class Room {
         return name;
     }
 
+    /** Las salas antiguas sin juego asignado son de Ruleta Europea. */
+    public String getGameTitle() {
+        return game == null ? "Ruleta Europea" : game.getTitle();
+    }
+
     public BigDecimal getMinBet() {
         return minBet;
     }

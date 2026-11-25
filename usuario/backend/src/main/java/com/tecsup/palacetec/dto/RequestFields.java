@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.tecsup.palacetec.exception.InvalidFieldsException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.math.BigInteger;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -213,6 +214,32 @@ public final class RequestFields {
             return null;
         }
         return new UUID(number.shiftRight(Long.SIZE).longValue(), number.longValue());
+    }
+
+    /** DateField opcional de una consulta, donde un texto vacío equivale a no enviarlo. */
+    public LocalDate date(String field) {
+        String value = body.path(field).asText();
+        if (value.isEmpty()) {
+            return null;
+        }
+        LocalDate date = DateRange.parseDate(value);
+        if (date == null) {
+            error(field, "Date has wrong format. Use one of these formats instead: YYYY-MM-DD.");
+        }
+        return date;
+    }
+
+    /** ChoiceField obligatorio. */
+    public String choice(String field, String message, String... choices) {
+        JsonNode node = value(field, true);
+        if (node == null) {
+            return null;
+        }
+        if (!node.isTextual() || !List.of(choices).contains(node.textValue())) {
+            error(field, message);
+            return null;
+        }
+        return node.textValue();
     }
 
     /** Valor presente y no nulo; si falta o es null, anota el error que corresponda. */

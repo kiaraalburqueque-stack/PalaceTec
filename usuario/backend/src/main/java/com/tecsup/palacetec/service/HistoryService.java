@@ -1,5 +1,6 @@
 package com.tecsup.palacetec.service;
 
+import com.tecsup.palacetec.dto.BetDetailResponse;
 import com.tecsup.palacetec.dto.DateRange;
 import com.tecsup.palacetec.dto.HistoryItemResponse;
 import com.tecsup.palacetec.entity.Bet;
@@ -45,6 +46,15 @@ public class HistoryService {
         long number = number(page, pages);
         List<HistoryRow> rows = bets.findHistoryPage(userId, range.start(), range.end(), size, (number - 1) * size);
         return new HistoryPage(count, number, pages, items(userId, rows));
+    }
+
+    /** Filtrar por jugador responde 404 a terceros sin revelar que la apuesta existe. */
+    @Transactional(readOnly = true)
+    public BetDetailResponse detail(Long userId, long betId) {
+        Bet bet = bets.findForHistory(userId, List.of(betId)).stream().findFirst()
+                .orElseThrow(() -> ApiException.notFound("No Bet matches the given query."));
+        Short number = bet.getRound().getWinningNumber();
+        return BetDetailResponse.from(bet, number == null ? null : RouletteTable.color(number));
     }
 
     private List<HistoryItemResponse> items(Long userId, List<HistoryRow> rows) {

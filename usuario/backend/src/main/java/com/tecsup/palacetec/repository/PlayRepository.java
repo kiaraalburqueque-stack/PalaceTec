@@ -5,12 +5,19 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
 public interface PlayRepository extends Repository<Play, Long> {
 
     List<Play> findByUserIdAndIdIn(Long userId, Collection<Long> ids);
+
+    /** De la más reciente a la más antigua. */
+    @Query("""
+            select p from Play p where p.userId = :userId and p.createdAt >= :start and p.createdAt < :end
+            order by p.createdAt desc, p.id desc""")
+    List<Play> findForExport(Long userId, Instant start, Instant end, Limit limit);
 
     /** Cada jugada es una ronda; sin jugador, las de todos. */
     @Query(nativeQuery = true, value = """

@@ -50,6 +50,10 @@ public class Play {
         return kind;
     }
 
+    public String getKindLabel() {
+        return kind.equals("BLACKJACK") ? "Blackjack" : "Deportes simulados";
+    }
+
     public BigDecimal getAmount() {
         return amount;
     }
