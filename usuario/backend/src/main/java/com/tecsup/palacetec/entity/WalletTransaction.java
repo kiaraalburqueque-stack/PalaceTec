@@ -53,4 +53,12 @@ public class WalletTransaction {
         this.reference = reference;
         this.createdAt = createdAt;
     }
+
+    public BigDecimal getBalanceAfter() {
+        return balanceAfter;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
 }

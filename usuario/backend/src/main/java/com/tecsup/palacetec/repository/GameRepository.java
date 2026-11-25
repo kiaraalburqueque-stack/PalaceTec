@@ -2,6 +2,7 @@ package com.tecsup.palacetec.repository;
 
 import com.tecsup.palacetec.entity.Game;
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.Query;
@@ -24,6 +25,8 @@ public interface GameRepository extends Repository<Game, Long> {
     List<Game> findByPlayKindNotOrderById(String playKind);
 
     Optional<Game> findBySlug(String slug);
+
+    List<Game> findByIdIn(Collection<Long> ids);
 
     @Query("""
             select r.game.id as gameId, min(r.minBet) as minBet, max(r.maxBet) as maxBet

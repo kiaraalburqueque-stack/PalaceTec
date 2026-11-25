@@ -24,6 +24,27 @@ public interface BetRepository extends JpaRepository<Bet, Long> {
             where b.userId = :userId and b.id in :ids""")
     List<Bet> findForHistory(Long userId, Collection<Long> ids);
 
+    @Query("""
+            select coalesce(sum(b.amount), 0) as wagered, coalesce(sum(b.payout), 0) as paid from Bet b
+            where b.userId = :userId and b.createdAt >= :start and b.createdAt < :end
+              and b.payout is not null and b.round.status = com.tecsup.palacetec.entity.GameRound.Status.SETTLED""")
+    SettledTotals sumSettled(Long userId, Instant start, Instant end);
+
+    @Query("""
+            select count(case when b.payout > b.amount then 1 end) as won,
+                   count(case when b.payout < b.amount then 1 end) as lost,
+                   count(case when b.payout = b.amount then 1 end) as push
+            from Bet b
+            where b.userId = :userId and b.createdAt >= :start and b.createdAt < :end""")
+    OutcomeCounts countOutcomes(Long userId, Instant start, Instant end);
+
+    /** De mayor a menor ganancia neta; si empatan, primero la más antigua. */
+    @Query("""
+            select b from Bet b join fetch b.round r join fetch r.room s left join fetch s.game
+            where b.userId = :userId and b.payout > b.amount
+            order by b.payout - b.amount desc, b.createdAt, b.id""")
+    List<Bet> findWins(Long userId, Limit limit);
+
     /** De la más reciente a la más antigua. */
     @Query("""
             select b from Bet b join fetch b.round r join fetch r.room s left join fetch s.game

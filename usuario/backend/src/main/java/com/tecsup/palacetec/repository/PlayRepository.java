@@ -13,6 +13,27 @@ public interface PlayRepository extends Repository<Play, Long> {
 
     List<Play> findByUserIdAndIdIn(Long userId, Collection<Long> ids);
 
+    @Query("""
+            select coalesce(sum(p.amount), 0) as wagered, coalesce(sum(p.payout), 0) as paid from Play p
+            where p.userId = :userId and p.createdAt >= :start and p.createdAt < :end
+              and p.settledAt is not null""")
+    SettledTotals sumSettled(Long userId, Instant start, Instant end);
+
+    @Query("""
+            select count(case when p.payout > p.amount then 1 end) as won,
+                   count(case when p.payout < p.amount then 1 end) as lost,
+                   count(case when p.payout = p.amount then 1 end) as push
+            from Play p
+            where p.userId = :userId and p.createdAt >= :start and p.createdAt < :end""")
+    OutcomeCounts countOutcomes(Long userId, Instant start, Instant end);
+
+    /** De mayor a menor ganancia neta; si empatan, primero la más antigua. */
+    @Query("""
+            select p from Play p
+            where p.userId = :userId and p.payout > p.amount
+            order by p.payout - p.amount desc, p.createdAt, p.id""")
+    List<Play> findWins(Long userId, Limit limit);
+
     /** De la más reciente a la más antigua. */
     @Query("""
             select p from Play p where p.userId = :userId and p.createdAt >= :start and p.createdAt < :end

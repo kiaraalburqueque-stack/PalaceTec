@@ -39,6 +39,9 @@ public class Play {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
+    @Column(name = "settled_at")
+    private Instant settledAt;
+
     protected Play() {
     }
 

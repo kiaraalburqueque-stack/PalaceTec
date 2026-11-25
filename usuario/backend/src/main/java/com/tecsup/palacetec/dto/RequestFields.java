@@ -229,6 +229,19 @@ public final class RequestFields {
         return date;
     }
 
+    /** ChoiceField opcional de una consulta, donde un texto vacío equivale a no enviarlo. */
+    public String choiceOr(String field, String defaultValue, String... choices) {
+        String value = body.path(field).asText();
+        if (value.isEmpty()) {
+            return defaultValue;
+        }
+        if (!List.of(choices).contains(value)) {
+            error(field, "\"" + value + "\" is not a valid choice.");
+            return null;
+        }
+        return value;
+    }
+
     /** ChoiceField obligatorio. */
     public String choice(String field, String message, String... choices) {
         JsonNode node = value(field, true);
