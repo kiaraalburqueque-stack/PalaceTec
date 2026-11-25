@@ -20,3 +20,9 @@ palacetec:
     login-rate-limit: 1000
     frontend-url: http://localhost:5173
     media-root: ${java.io.tmpdir}/palacetec-spring-test-media
+  # Las pruebas nunca llaman a un proveedor de IA real, aunque application-local.yml tenga una clave.
+  assistant:
+    provider: faq
+    api-key: ""
+    model: ""
+    base-url: ""

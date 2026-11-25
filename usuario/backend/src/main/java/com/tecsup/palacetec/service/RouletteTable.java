@@ -36,6 +36,28 @@ public final class RouletteTable {
         }
     }
 
+    /** Pago total por crédito apostado, incluida la apuesta (roulette/payout.py). */
+    public static int totalReturn(BetKind kind) {
+        return switch (kind) {
+            case STRAIGHT_UP -> 36;
+            case COLOR, PARITY -> 2;
+            case DOZEN, COLUMN -> 3;
+        };
+    }
+
+    /** Con una selección ya validada. El cero solo gana en el pleno. */
+    public static boolean wins(BetKind kind, String selection, int number) {
+        if (kind == BetKind.STRAIGHT_UP) {
+            return number == Integer.parseInt(selection);
+        }
+        return number != 0 && switch (kind) {
+            case COLOR -> color(number).equals(selection);
+            case PARITY -> (number % 2 == 0) == selection.equals("par");
+            case DOZEN -> (number - 1) / 12 + 1 == Integer.parseInt(selection);
+            default -> (number - 1) % 3 + 1 == Integer.parseInt(selection);
+        };
+    }
+
     /** "0" a "36", sin ceros a la izquierda ni espacios. */
     private static boolean isNumber(String selection) {
         return selection.matches("[0-9]|[1-9][0-9]") && Integer.parseInt(selection) <= MAX_NUMBER;

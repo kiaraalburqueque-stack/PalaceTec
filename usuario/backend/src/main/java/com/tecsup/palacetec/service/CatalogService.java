@@ -10,6 +10,7 @@ import com.tecsup.palacetec.dto.Formats;
 import com.tecsup.palacetec.dto.GameCategory;
 import com.tecsup.palacetec.dto.GameResponse;
 import com.tecsup.palacetec.dto.GameRulesResponse;
+import com.tecsup.palacetec.dto.PlainText;
 import com.tecsup.palacetec.entity.Game;
 import com.tecsup.palacetec.entity.Room;
 import com.tecsup.palacetec.exception.ApiException;
@@ -19,7 +20,6 @@ import com.tecsup.palacetec.repository.GameRepository;
 import com.tecsup.palacetec.repository.GameRepository.RoomLimits;
 import com.tecsup.palacetec.repository.RoomRepository;
 import java.nio.charset.StandardCharsets;
-import java.text.Normalizer;
 import java.time.Clock;
 import java.util.Arrays;
 import java.util.List;
@@ -57,7 +57,7 @@ public class CatalogService {
     @Transactional(readOnly = true)
     public List<GameResponse> list(Long userId, String category, String search) {
         String slug = validCategory(category);
-        String term = normalize(validSearch(search));
+        String term = PlainText.normalize(validSearch(search));
         Function<Game, GameResponse> response = responses(favorites.findGameIds(userId));
         return games.findAvailable().stream()
                 .filter(game -> slug.isEmpty() || game.getCategory().equals(GameCategory.ofSlug(slug).name()))
@@ -132,12 +132,12 @@ public class CatalogService {
     }
 
     private List<Game> search(CatalogFilter filter) {
-        String term = normalize(filter.search());
+        String term = PlainText.normalize(filter.search());
         return games.findAvailable().stream().filter(game -> matches(game, term)).toList();
     }
 
     private static boolean matches(Game game, String term) {
-        return term.isEmpty() || normalize(game.getTitle()).contains(term);
+        return term.isEmpty() || PlainText.normalize(game.getTitle()).contains(term);
     }
 
     private GameResponse response(Game game, RoomLimits limits, boolean favorite) {
@@ -170,11 +170,5 @@ public class CatalogService {
 
     private static ApiException notFound() {
         return ApiException.notFound("No Game matches the given query.");
-    }
-
-    /** Minúsculas, sin tildes y con un solo espacio entre palabras. */
-    static String normalize(String text) {
-        String plain = Normalizer.normalize(text, Normalizer.Form.NFKD).replaceAll("\\p{M}+", "");
-        return plain.toUpperCase(Locale.ROOT).toLowerCase(Locale.ROOT).strip().replaceAll("\\s+", " ");
     }
 }

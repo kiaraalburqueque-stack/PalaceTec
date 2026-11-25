@@ -76,6 +76,11 @@ public final class RequestFields {
         return of(node);
     }
 
+    /** En una consulta, un campo opcional vacío equivale a no enviarlo. */
+    public boolean hasText(String field) {
+        return !body.path(field).asText().isEmpty();
+    }
+
     public boolean has(String field) {
         return body.has(field);
     }
@@ -166,6 +171,10 @@ public final class RequestFields {
 
     /** IntegerField con mínimo. Lo que no cabe en un bigint queda en Long.MAX_VALUE: ninguna fila tiene ese id. */
     public Long integer(String field, boolean required, long min) {
+        return integer(field, required, min, Long.MAX_VALUE);
+    }
+
+    public Long integer(String field, boolean required, long min, long max) {
         JsonNode node = value(field, required);
         if (node == null) {
             return null;
@@ -182,6 +191,10 @@ public final class RequestFields {
         BigInteger number = new BigInteger(text.replace("_", ""));
         if (number.compareTo(BigInteger.valueOf(min)) < 0) {
             error(field, "Ensure this value is greater than or equal to " + min + ".");
+            return null;
+        }
+        if (max != Long.MAX_VALUE && number.compareTo(BigInteger.valueOf(max)) > 0) {
+            error(field, "Ensure this value is less than or equal to " + max + ".");
             return null;
         }
         return number.min(BigInteger.valueOf(Long.MAX_VALUE)).longValue();
