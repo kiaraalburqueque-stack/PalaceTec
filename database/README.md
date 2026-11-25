@@ -3,7 +3,7 @@
 PalaceTec usa **una sola base de datos PostgreSQL** compartida por los dos backends:
 
 - `administracion/backend` (Django): dueño del esquema; lo crea y modifica con sus migraciones.
-- `usuario/backend` (Kotlin + Spring Boot, por construir): se conecta a la misma base y usa las tablas existentes.
+- `usuario/backend` (Java + Spring Boot): se conecta a la misma base y usa las tablas existentes, sin crear ni modificar ninguna.
 
 ## schema.sql
 
