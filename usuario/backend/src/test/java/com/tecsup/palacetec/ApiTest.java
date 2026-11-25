@@ -33,6 +33,8 @@ public abstract class ApiTest {
     protected ObjectMapper mapper;
     @Autowired
     protected TestMailer mailer;
+    @Autowired
+    protected TestDeck deck;
 
     @BeforeEach
     void cleanDatabase() {
@@ -41,7 +43,9 @@ public abstract class ApiTest {
         // CASCADE alcanza billeteras, sesiones, apuestas, límites, favoritos y jugadas; no salas ni juegos.
         jdbc.execute("truncate table users cascade");
         jdbc.update("delete from game_rounds");
+        jdbc.update("delete from casino_sportevent");
         mailer.clear();
+        deck.clear();
         jdbc.update("delete from responsible_excludedperson");
         jdbc.update("delete from rooms where name like 'spring-test-%'");
         jdbc.update("delete from roulette_game where slug like 'spring-test-%'");

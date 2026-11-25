@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.tecsup.palacetec.exception.InvalidFieldsException;
 import jakarta.servlet.http.HttpServletRequest;
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -31,7 +33,10 @@ public final class RequestFields {
     private static final Pattern INTEGER = Pattern.compile("[+-]?[0-9]+(_[0-9]+)*");
     private static final Pattern ZERO_DECIMALS = Pattern.compile("\\.0*\\s*$");
     private static final Pattern UUID_HEX = Pattern.compile("[0-9a-fA-F]{32}");
-    private static final int MAX_INTEGER_TEXT = 1000;
+    /** Sin infinitos ni NaN. El exponente se limita para que quepa en un BigDecimal. */
+    private static final Pattern DECIMAL =
+            Pattern.compile("[+-]?([0-9]+\\.?[0-9]*|\\.[0-9]+)([eE][+-]?[0-9]{1,6})?");
+    private static final int MAX_NUMBER_TEXT = 1000;
     private static final int UUID_BITS = 128;
     /** Desde aquí Python escribe un float con exponente, que int() no acepta. */
     private static final double FLOAT_EXPONENT = 1e16;
@@ -165,7 +170,7 @@ public final class RequestFields {
         if (node == null) {
             return null;
         }
-        if (node.isTextual() && node.textValue().length() > MAX_INTEGER_TEXT) {
+        if (node.isTextual() && node.textValue().length() > MAX_NUMBER_TEXT) {
             error(field, "String value too large.");
             return null;
         }
@@ -193,6 +198,55 @@ public final class RequestFields {
         boolean whole = node.isNumber() && node.doubleValue() == Math.rint(node.doubleValue())
                 && Math.abs(node.doubleValue()) < FLOAT_EXPONENT;
         return whole ? String.valueOf(node.longValue()) : "";
+    }
+
+    /** DecimalField con límites; los mensajes de rango muestran min y max tal como se escriben aquí. */
+    public BigDecimal decimal(String field, int maxDigits, int decimals, BigDecimal min, BigDecimal max) {
+        JsonNode node = value(field, true);
+        if (node == null) {
+            return null;
+        }
+        String text = node.isTextual() || node.isNumber() ? strip(node.asText()) : "";
+        if (text.length() > MAX_NUMBER_TEXT) {
+            error(field, "String value too large.");
+            return null;
+        }
+        String number = text.replace("_", "");
+        String problem = DECIMAL.matcher(number).matches() ? null : "A valid number is required.";
+        BigDecimal decimal = null;
+        if (problem == null) {
+            decimal = new BigDecimal(number);
+            problem = precisionProblem(decimal, maxDigits, decimals);
+        }
+        if (problem == null && min != null && decimal.compareTo(min) < 0) {
+            problem = "Ensure this value is greater than or equal to " + min.toPlainString() + ".";
+        }
+        if (problem == null && max != null && decimal.compareTo(max) > 0) {
+            problem = "Ensure this value is less than or equal to " + max.toPlainString() + ".";
+        }
+        if (problem != null) {
+            error(field, problem);
+            return null;
+        }
+        return decimal.setScale(decimals, RoundingMode.UNNECESSARY);
+    }
+
+    /** DecimalField.validate_precision. */
+    private static String precisionProblem(BigDecimal decimal, int maxDigits, int decimals) {
+        int digits = decimal.precision();
+        int places = Math.max(decimal.scale(), 0);
+        long total = decimal.scale() <= 0 ? (long) digits - decimal.scale() : Math.max(digits, places);
+        if (total > maxDigits) {
+            return "Ensure that there are no more than " + maxDigits + " digits in total.";
+        }
+        if (places > decimals) {
+            return "Ensure that there are no more than " + decimals + " decimal places.";
+        }
+        if (total - places > maxDigits - decimals) {
+            return "Ensure that there are no more than " + (maxDigits - decimals)
+                    + " digits before the decimal point.";
+        }
+        return null;
     }
 
     /** UUIDField: acepta las formas de uuid.UUID de Python y el entero de 128 bits. */
@@ -257,14 +311,14 @@ public final class RequestFields {
         return node.textValue();
     }
 
-    /** ChoiceField de enteros: compara el valor como texto, así que "7" y 7 son lo mismo. */
-    public Integer choice(String field, List<Integer> choices) {
+    /** ChoiceField: compara el valor como texto, así que "7" y 7 son lo mismo. */
+    public <T> T choice(String field, List<T> choices) {
         JsonNode node = value(field, true);
         if (node == null) {
             return null;
         }
         String text = node.isTextual() ? node.textValue() : pythonText(node);
-        for (Integer choice : choices) {
+        for (T choice : choices) {
             if (choice.toString().equals(text)) {
                 return choice;
             }

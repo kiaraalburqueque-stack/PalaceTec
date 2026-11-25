@@ -40,6 +40,11 @@ public class Wallet {
         bonusBalance = bonusBalance.subtract(amount).max(BigDecimal.ZERO);
     }
 
+    /** Los premios no son bono. */
+    public void credit(BigDecimal amount) {
+        balance = balance.add(amount);
+    }
+
     public Long getId() {
         return id;
     }
