@@ -1,5 +1,6 @@
 package com.tecsup.palacetec.service;
 
+import com.tecsup.palacetec.config.TimeConfig;
 import com.tecsup.palacetec.entity.AuthSession;
 import com.tecsup.palacetec.entity.User;
 import com.tecsup.palacetec.exception.ApiException;
@@ -55,6 +56,12 @@ public class SessionService {
         User user = users.lockById(player.userId()).orElseThrow(() -> unknownUser(player));
         check(player, user);
         return user;
+    }
+
+    /** Cierra todas las sesiones de los dos clientes. */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void revokeAll(User user) {
+        sessions.revokeAll(user.getId(), TimeConfig.now(clock));
     }
 
     private static ApiException unknownUser(PlayerPrincipal player) {

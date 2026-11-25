@@ -61,7 +61,7 @@ public class User {
     @Column(length = 30, updatable = false)
     private String nickname;
 
-    @Column(name = "auth_version", nullable = false, updatable = false)
+    @Column(name = "auth_version", nullable = false)
     private int authVersion;
 
     @Column(name = "first_name", nullable = false, length = 80, updatable = false)
@@ -103,6 +103,12 @@ public class User {
     /** Mismo password con un hash del algoritmo actual. */
     public void upgradeHash(String hash) {
         this.password = hash;
+    }
+
+    /** Los JWT emitidos antes dejan de valer. */
+    public void changePassword(String hash) {
+        this.password = hash;
+        this.authVersion++;
     }
 
     public boolean isAdmin() {
