@@ -1,6 +1,7 @@
 # Backend del jugador (Spring Boot)
 
-API del jugador de PalaceTec en Java 21 y Spring Boot 3.5 (Web, Data JPA, Security, Validation, PostgreSQL y jjwt).
+API del jugador de PalaceTec en Java 21 y Spring Boot 3.5 (Web, Data JPA, Security, Validation, PostgreSQL, jjwt y
+webp-imageio). La usan el frontend React, con cookies, y la app móvil, con Bearer.
 Usa **la misma base PostgreSQL que Django** (`administracion/backend`): no crea ni modifica tablas
 (`ddl-auto=validate`). Créditos virtuales, sin dinero real.
 
@@ -27,7 +28,11 @@ valores, o define las mismas claves como variables de entorno, que tienen priori
 | `EXCLUSION_HMAC_KEY` | Sí | **La misma de Django** (`EXCLUSION_HMAC_KEY` o, si no existe, su `SECRET_KEY`). Con otra clave no se reconoce a las personas excluidas |
 | `JWT_EXPIRATION` | No | Duración del JWT, por defecto `8h` |
 | `MEDIA_BASE_URL` | No | Servidor de las portadas, por defecto `http://localhost:8000` |
-| `CORS_ALLOWED_ORIGINS` | No | Por defecto `http://localhost:5173` |
+| `CORS_ALLOWED_ORIGINS` | No | Orígenes del frontend (CORS con cookies y CSRF). Por defecto `http://localhost:5173,http://127.0.0.1:5173` |
+| `COOKIE_SECURE` | No | `true` si el sitio se sirve por HTTPS (en Django, `DEBUG=False`). Por defecto `false` |
+| `LOGIN_RATE_LIMIT` | No | Solicitudes de autenticación por minuto y por IP. Por defecto `30` |
+| `FRONTEND_URL` | No | Adonde apuntan los enlaces de los correos. Por defecto `http://localhost:5173` |
+| `MEDIA_ROOT` | No | Carpeta de fotos, la misma de Django. Por defecto `../../administracion/backend/media` (relativa a esta carpeta) |
 
 ## Ejecutar
 
@@ -43,15 +48,38 @@ Queda en `http://localhost:8080`. En otra terminal, desde `administracion/backen
 
 ## Endpoints
 
-Base `/api/v1`, sin barra final. Salvo registro y login, todos exigen `Authorization: Bearer <access_token>`.
-No hay cookies ni CSRF. Rutas y campos JSON son los de Django; el dinero viaja como texto (`"100.00"`).
+Base `/api/v1`, sin barra final. Rutas, campos JSON y mensajes son los de Django; el dinero viaja como texto
+(`"100.00"`). Salvo las rutas públicas de `/auth`, todos exigen una sesión, que puede ser de dos tipos:
+
+- **Web (React):** JWT en cookies HttpOnly, como en Django: `access_token` (15 minutos) y `refresh_token` (8 horas, solo
+  viaja a `/api/v1/auth/`). Toda escritura exige `X-CSRFToken`, que se pide en `/auth/csrf`.
+- **App móvil:** `Authorization: Bearer <access_token>` (8 horas), sin cookies ni CSRF.
+
+En login y registro se considera app móvil a quien no envía ninguna cabecera propia de un navegador (`Origin`,
+`Referer`, `Cookie`, `Sec-Fetch-Site`, `X-CSRFToken`). A ese cliente nunca se le ponen cookies.
+
+Para usar React con este backend: `$env:VITE_API_BASE_URL = "http://localhost:8080"; npm run dev`.
 
 | Método y ruta | Entrada | Respuesta |
 | --- | --- | --- |
+| GET `/auth/csrf` | | `{csrfToken}` y cookie `csrftoken` |
 | POST `/auth/register` | `{email, password, dni, birth_date}` | 201 `{id, email}`. Crea la billetera con el bono de 1000 |
-| POST `/auth/login` | `{email, password}` | 200 `{id, email, access_token, token_type, expires_in}` |
-| GET `/users/me` | | id, email, dni, nickname, avatar_url, first_name, last_name, phone |
+| POST `/auth/login` | `{email, password}` | Web: 200 `{id, email}` y las cookies. Móvil: 200 `{id, email, access_token, token_type, expires_in}` |
+| GET `/auth/me` | | id, email, role (`USER` o `ADMIN`) |
+| POST `/auth/refresh` | cookie `refresh_token` | `{detail, session_started_at}` y otra cookie de acceso |
+| POST `/auth/logout` | cookies o Bearer | `{detail}`. Revoca esa sesión y borra las cookies |
+| POST `/auth/forgot-password` | `{email}` | `{detail}`, igual exista o no la cuenta. El enlace sale por correo y vale 15 minutos |
+| POST `/auth/reset-password` | `{token, new_password}` | `{detail}`. Cierra todas las sesiones |
+| GET y PUT `/users/me`, `/users/profile` | `{nickname, avatar_url, first_name, last_name, phone}`, todos opcionales | id, email, dni, nickname, avatar_url, first_name, last_name, phone |
+| POST `/users/avatar` | multipart, campo `avatar`: JPG, PNG o WEBP de hasta 2 MB | El perfil, con la foto en WEBP de 300 x 300 |
+| PUT `/users/change-password` | `{current_password, new_password}` | `{detail}`. Cierra todas las sesiones |
+| GET y PUT `/users/notification-preferences` | `{promotions, security, game_alerts}`, todos opcionales | Los tres valores |
+| GET `/wallet/balance` | | balance, low_balance_threshold, is_low_balance |
 | GET `/wallet/summary` | | balance, bonus_balance, winnings_balance, low_balance_threshold, is_low_balance |
+| POST `/wallet/pre-bet-check` | `{amount}` | balance, can_bet |
+| GET `/notifications` | | `{unread_count, results}` con las 30 últimas |
+| POST `/notifications/{id}/read` | | La notificación y unread_count |
+| POST `/notifications/read-all` | | `{updated, unread_count}` |
 | GET `/responsible-gaming/daily-limit` | | configured, limit, spent, remaining, pending_limit, effective_at, date, timezone |
 | POST `/responsible-gaming/daily-limit` | `{amount}` | Igual que el GET. Primer límite o reducción: inmediatos; aumento: en 24 horas |
 | GET `/games` | `?category=ruleta\|cartas\|deportes\|otros&search=` | Catálogo con límites, portada e is_favorite |
@@ -62,6 +90,9 @@ No hay cookies ni CSRF. Rutas y campos JSON son los de Django; el dinero viaja c
 
 Antes de la primera apuesta hay que fijar el límite diario.
 
+`GET /media/**` sirve las fotos de avatar y las portadas, sin sesión. Los correos se escriben en la consola, como en
+Django: ahí están los enlaces para restablecer la contraseña.
+
 ### Errores
 
 | Estado | Cuándo |
@@ -69,17 +100,24 @@ Antes de la primera apuesta hay que fijar el límite diario.
 | 400 `{campo: ["mensaje"]}` | Datos inválidos |
 | 400 `{code, detail}` | `bets_closed`, `insufficient_balance`, `daily_limit_required`, `daily_limit_exceeded`, `pause_active` |
 | 400 `{amount: "mensaje"}` | Fuera del mínimo o del máximo acumulado de la sala |
-| 401 `{detail}` | Sin token, vencido o revocado; credenciales inválidas |
+| 401 `{detail}` | Sin sesión, vencida o revocada; credenciales inválidas. Una cookie inválida agrega `code` y `messages`, como SimpleJWT |
 | 403 `{code, detail}` | `access_not_allowed` (excluido o autoexcluido), `account_suspended` |
+| 403 `{detail: "CSRF: ..."}` | Escritura de la web sin un token CSRF válido o desde otro origen |
 | 404 `{detail}` | Sala o página inexistente |
 | 409 | Correo o DNI repetidos; `reference_conflict` si la referencia ya es de otra apuesta |
 | 429 `{detail, retry_after}` | Cuenta bloqueada 15 minutos tras 5 intentos fallidos |
+| 429 `{detail}` | Más de 30 solicitudes de autenticación por minuto desde una IP |
 
 ## Cómo se comparte con Django
 
-- **Contraseñas:** formato `bcrypt_sha256$$2b$12$...`. Una cuenta creada en un backend entra en el otro.
+- **Contraseñas:** formato `bcrypt_sha256$$2b$12$...`. Una cuenta creada en un backend entra en el otro. También se
+  aceptan los hashes `pbkdf2_sha256` antiguos, que se actualizan al entrar.
 - **Sesiones:** cada login guarda una fila en `accounts_authsession`. Si Django la revoca, cambia la contraseña,
-  suspende o autoexcluye al jugador, el JWT de Spring deja de servir.
+  suspende o autoexcluye al jugador, el JWT de Spring deja de servir. El JWT de la web tiene las claims de SimpleJWT,
+  pero se firma con `JWT_SECRET`: una sesión abierta en un backend no sirve en el otro.
+- **Cookies:** se llaman igual en los dos backends y no distinguen puertos. En un mismo navegador, entrar en uno
+  reemplaza la sesión del otro en `localhost` (por ejemplo, la del panel de administración).
+- **Fotos:** `avatar_url` y la carpeta `media` son comunes.
 - **Apuestas:** los candados siguen el orden de Django (sala, ronda, usuario, billetera) y la referencia, el cupo diario
   y el saldo son comunes a los dos backends.
 
@@ -108,11 +146,14 @@ $env:DB_USER = "postgres"; $env:DB_PASSWORD = "tu_clave_local"
 `TEST_DB_URL`, `TEST_DB_USER` y `TEST_DB_PASSWORD` permiten usar otra base de pruebas. Si Django agrega migraciones,
 vuelve a correr `migrate` sobre ella.
 
-## Pendiente fuera de este MVP
+## Pendiente y diferencias con Django
 
-- No hay WebSockets: una apuesta hecha aquí no emite `wallet:update`; la web ve el saldo al resincronizar.
-- No hay refresh ni logout: al vencer el JWT se vuelve a iniciar sesión. El KPI de usuarios en línea cuenta estas
-  sesiones hasta que vencen (8 horas).
-- No se envía la alerta de acceso nuevo (HU56) ni se escribe `login_history`, para no dar por conocido un dispositivo
-  sin avisar.
-- No se replica el límite de 30 logins por minuto por IP; el bloqueo por cuenta sí.
+- No hay WebSockets: aquí no se emiten `wallet:update`, `notification:new` ni `session:revoked`. La web ve los cambios al
+  volver a consultar.
+- Siguen solo en Django `POST /auth/not-me` (el botón "No fui yo" del correo de acceso nuevo), casino, asistente,
+  estadísticas, detalle y exportación del historial, y el resto de juego responsable.
+- No se escribe la auditoría (`admin_audit_logs`) de lo que un administrador haga en estas rutas.
+- El límite por IP se cuenta en la memoria de este proceso, aparte del de Django.
+- La app móvil no renueva su Bearer: al vencer se vuelve a iniciar sesión.
+- Solo se aceptan cuerpos JSON (y multipart en el avatar); Django admite también formularios.
+- Un WEBP animado se rechaza como avatar; Django usa su primer fotograma.
