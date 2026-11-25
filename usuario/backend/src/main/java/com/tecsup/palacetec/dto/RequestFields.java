@@ -2,13 +2,21 @@ package com.tecsup.palacetec.dto;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.tecsup.palacetec.exception.InvalidFieldsException;
+import jakarta.servlet.http.HttpServletRequest;
+import java.math.BigInteger;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.springframework.http.HttpStatus;
 
 /**
@@ -20,6 +28,13 @@ public final class RequestFields {
     private static final String NON_FIELD = "non_field_errors";
     private static final Set<String> TRUE_VALUES = Set.of("t", "y", "yes", "true", "on", "1");
     private static final Set<String> FALSE_VALUES = Set.of("f", "n", "no", "false", "off", "0");
+    private static final Pattern INTEGER = Pattern.compile("[+-]?[0-9]+(_[0-9]+)*");
+    private static final Pattern ZERO_DECIMALS = Pattern.compile("\\.0*\\s*$");
+    private static final Pattern UUID_HEX = Pattern.compile("[0-9a-fA-F]{32}");
+    private static final int MAX_INTEGER_TEXT = 1000;
+    private static final int UUID_BITS = 128;
+    /** Desde aquí Python escribe un float con exponente, que int() no acepta. */
+    private static final double FLOAT_EXPONENT = 1e16;
     private static final char NULL_CHARACTER = 0;
     private static final char NEXT_LINE = 0x85;
 
@@ -47,6 +62,13 @@ public final class RequestFields {
                     "Invalid data. Expected a dictionary, but got " + pythonType(node) + ".");
         }
         return new RequestFields(node, messages);
+    }
+
+    /** Parámetros de la consulta: como en QueryDict, de uno repetido vale el último. */
+    public static RequestFields ofQuery(HttpServletRequest request) {
+        ObjectNode node = JsonNodeFactory.instance.objectNode();
+        request.getParameterMap().forEach((name, values) -> node.put(name, values[values.length - 1]));
+        return of(node);
     }
 
     public boolean has(String field) {
@@ -135,6 +157,155 @@ public final class RequestFields {
         }
         error(field, "Must be a valid boolean.");
         return null;
+    }
+
+    /** IntegerField con mínimo. Lo que no cabe en un bigint queda en Long.MAX_VALUE: ninguna fila tiene ese id. */
+    public Long integer(String field, boolean required, long min) {
+        JsonNode node = value(field, required);
+        if (node == null) {
+            return null;
+        }
+        if (node.isTextual() && node.textValue().length() > MAX_INTEGER_TEXT) {
+            error(field, "String value too large.");
+            return null;
+        }
+        String text = integerText(node);
+        if (!INTEGER.matcher(text).matches()) {
+            error(field, "A valid integer is required.");
+            return null;
+        }
+        BigInteger number = new BigInteger(text.replace("_", ""));
+        if (number.compareTo(BigInteger.valueOf(min)) < 0) {
+            error(field, "Ensure this value is greater than or equal to " + min + ".");
+            return null;
+        }
+        return number.min(BigInteger.valueOf(Long.MAX_VALUE)).longValue();
+    }
+
+    /** Texto que Python pasaría a int(), ya sin ".0" final; vacío si el valor no puede ser un entero. */
+    private static String integerText(JsonNode node) {
+        if (node.isTextual()) {
+            return strip(ZERO_DECIMALS.matcher(node.textValue()).replaceFirst(""));
+        }
+        if (node.isIntegralNumber()) {
+            return node.asText();
+        }
+        boolean whole = node.isNumber() && node.doubleValue() == Math.rint(node.doubleValue())
+                && Math.abs(node.doubleValue()) < FLOAT_EXPONENT;
+        return whole ? String.valueOf(node.longValue()) : "";
+    }
+
+    /** UUIDField: acepta las formas de uuid.UUID de Python y el entero de 128 bits. */
+    public UUID uuid(String field) {
+        JsonNode node = value(field, true);
+        if (node == null) {
+            return null;
+        }
+        BigInteger number = null;
+        if (node.isTextual()) {
+            String hex = node.textValue().replace("urn:", "").replace("uuid:", "")
+                    .replaceAll("^[{}]+|[{}]+$", "").replace("-", "");
+            number = UUID_HEX.matcher(hex).matches() ? new BigInteger(hex, 16) : null;
+        } else if (node.isIntegralNumber()) {
+            number = node.bigIntegerValue();
+        } else if (node.isBoolean()) {
+            number = node.booleanValue() ? BigInteger.ONE : BigInteger.ZERO;
+        }
+        if (number == null || number.signum() < 0 || number.bitLength() > UUID_BITS) {
+            error(field, "Must be a valid UUID.");
+            return null;
+        }
+        return new UUID(number.shiftRight(Long.SIZE).longValue(), number.longValue());
+    }
+
+    /** DateField opcional de una consulta, donde un texto vacío equivale a no enviarlo. */
+    public LocalDate date(String field) {
+        String value = body.path(field).asText();
+        if (value.isEmpty()) {
+            return null;
+        }
+        LocalDate date = DateRange.parseDate(value);
+        if (date == null) {
+            error(field, "Date has wrong format. Use one of these formats instead: YYYY-MM-DD.");
+        }
+        return date;
+    }
+
+    /** ChoiceField opcional de una consulta, donde un texto vacío equivale a no enviarlo. */
+    public String choiceOr(String field, String defaultValue, String... choices) {
+        String value = body.path(field).asText();
+        if (value.isEmpty()) {
+            return defaultValue;
+        }
+        if (!List.of(choices).contains(value)) {
+            error(field, "\"" + value + "\" is not a valid choice.");
+            return null;
+        }
+        return value;
+    }
+
+    /** ChoiceField obligatorio. */
+    public String choice(String field, String message, String... choices) {
+        JsonNode node = value(field, true);
+        if (node == null) {
+            return null;
+        }
+        if (!node.isTextual() || !List.of(choices).contains(node.textValue())) {
+            error(field, message);
+            return null;
+        }
+        return node.textValue();
+    }
+
+    /** ChoiceField de enteros: compara el valor como texto, así que "7" y 7 son lo mismo. */
+    public Integer choice(String field, List<Integer> choices) {
+        JsonNode node = value(field, true);
+        if (node == null) {
+            return null;
+        }
+        String text = node.isTextual() ? node.textValue() : pythonText(node);
+        for (Integer choice : choices) {
+            if (choice.toString().equals(text)) {
+                return choice;
+            }
+        }
+        error(field, "\"" + text + "\" is not a valid choice.");
+        return null;
+    }
+
+    /** repr() de Python, para los valores que los mensajes de Django muestran tal cual. */
+    private static String pythonText(JsonNode node) {
+        if (node.isArray()) {
+            return StreamSupport.stream(node.spliterator(), false).map(RequestFields::pythonText)
+                    .collect(Collectors.joining(", ", "[", "]"));
+        }
+        if (node.isObject()) {
+            return node.properties().stream()
+                    .map(entry -> "'" + entry.getKey() + "': " + pythonText(entry.getValue()))
+                    .collect(Collectors.joining(", ", "{", "}"));
+        }
+        if (node.isBoolean()) {
+            return node.booleanValue() ? "True" : "False";
+        }
+        if (node.isNull()) {
+            return "None";
+        }
+        return node.isTextual() ? "'" + node.textValue() + "'" : node.asText();
+    }
+
+    /** Valor presente y no nulo; si falta o es null, anota el error que corresponda. */
+    private JsonNode value(String field, boolean required) {
+        if (!body.has(field)) {
+            if (required) {
+                error(field, messages.required());
+            }
+            return null;
+        }
+        if (body.get(field).isNull()) {
+            error(field, messages.nullValue());
+            return null;
+        }
+        return body.get(field);
     }
 
     public void error(String field, String message) {

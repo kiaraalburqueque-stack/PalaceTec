@@ -136,4 +136,85 @@ class RequestFieldsTest {
     void rejectsTheEmailsThatDjangoRejects(String email) {
         assertThat(Emails.isValid(email)).isFalse();
     }
+
+    /** Comparado con IntegerField(min_value=1). */
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', textBlock = """
+            7                              | 7
+            7.0                            | 7
+            "7"                            | 7
+            " 7 "                          | 7
+            "+7"                           | 7
+            "7.00 "                        | 7
+            "1_000"                        | 1000
+            9223372036854775807            | 9223372036854775807
+            1000000000000000000000000000000 | 9223372036854775807
+            """)
+    void readsIntegersLikeDjango(String value, long expected) throws Exception {
+        RequestFields fields = fields("{\"a\": " + value + "}");
+        assertThat(fields.integer("a", true, 1)).isEqualTo(expected);
+        fields.throwIfInvalid();
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', textBlock = """
+            {}            | This field is required.
+            {"a": null}   | This field may not be null.
+            {"a": ""}     | A valid integer is required.
+            {"a": "x"}    | A valid integer is required.
+            {"a": "1.5"}  | A valid integer is required.
+            {"a": 1.5}    | A valid integer is required.
+            {"a": 1e30}   | A valid integer is required.
+            {"a": true}   | A valid integer is required.
+            {"a": [1]}    | A valid integer is required.
+            {"a": 0}      | Ensure this value is greater than or equal to 1.
+            {"a": "-5"}   | Ensure this value is greater than or equal to 1.
+            """)
+    void rejectsIntegersLikeDjango(String json, String message) throws Exception {
+        RequestFields fields = fields(json);
+        assertThat(fields.integer("a", true, 1)).isNull();
+        assertThat(errors(fields)).isEqualTo(Map.of("a", List.of(message)));
+    }
+
+    @Test
+    void optionalIntegersMayBeAbsentAndLongTextsAreRejected() throws Exception {
+        RequestFields absent = fields("{}");
+        assertThat(absent.integer("a", false, 1)).isNull();
+        absent.throwIfInvalid();
+        RequestFields large = fields("{\"a\": \"" + "1".repeat(1001) + "\"}");
+        assertThat(large.integer("a", true, 1)).isNull();
+        assertThat(errors(large)).isEqualTo(Map.of("a", List.of("String value too large.")));
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', textBlock = """
+            "a2e2730e-7942-4db8-b507-6655b8150362"          | a2e2730e-7942-4db8-b507-6655b8150362
+            "A2E2730E79424DB8B5076655B8150362"              | a2e2730e-7942-4db8-b507-6655b8150362
+            "{a2e2730e-7942-4db8-b507-6655b8150362}"        | a2e2730e-7942-4db8-b507-6655b8150362
+            "urn:uuid:a2e2730e-7942-4db8-b507-6655b8150362" | a2e2730e-7942-4db8-b507-6655b8150362
+            5                                               | 00000000-0000-0000-0000-000000000005
+            true                                            | 00000000-0000-0000-0000-000000000001
+            340282366920938463463374607431768211455         | ffffffff-ffff-ffff-ffff-ffffffffffff
+            """)
+    void readsUuidsLikeDjango(String value, String expected) throws Exception {
+        assertThat(fields("{\"a\": " + value + "}").uuid("a")).hasToString(expected);
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', textBlock = """
+            {}           | This field is required.
+            {"a": null}  | This field may not be null.
+            {"a": ""}    | Must be a valid UUID.
+            {"a": "abc"} | Must be a valid UUID.
+            {"a": " a2e2730e-7942-4db8-b507-6655b8150362"} | Must be a valid UUID.
+            {"a": -5}    | Must be a valid UUID.
+            {"a": 1.5}   | Must be a valid UUID.
+            {"a": [1]}   | Must be a valid UUID.
+            {"a": 340282366920938463463374607431768211456} | Must be a valid UUID.
+            """)
+    void rejectsUuidsLikeDjango(String json, String message) throws Exception {
+        RequestFields fields = fields(json);
+        assertThat(fields.uuid("a")).isNull();
+        assertThat(errors(fields)).isEqualTo(Map.of("a", List.of(message)));
+    }
 }

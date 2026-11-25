@@ -47,6 +47,12 @@ public class DailyLimit {
         }
     }
 
+    /** Límite vigente, contando un aumento que ya pasó sus 24 horas aunque todavía no se haya guardado. */
+    public BigDecimal amountAt(Instant now) {
+        boolean increased = amount != null && pendingAmount != null && effectiveAt != null && !effectiveAt.isAfter(now);
+        return increased ? pendingAmount : amount;
+    }
+
     /** Primer límite o reducción: inmediatos. Aumento: en 24 horas; repetir el mismo importe no reinicia la espera. */
     public void request(BigDecimal value, Instant now) {
         if (amount == null || value.compareTo(amount) <= 0) {

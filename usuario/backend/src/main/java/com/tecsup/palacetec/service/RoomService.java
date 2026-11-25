@@ -64,6 +64,13 @@ public class RoomService {
                 Formats.money(room.getMaxBet()), round, RouletteTable.CHIP_VALUES, results, numbers);
     }
 
+    /** get_object_or_404 de las vistas de Django: se revisa antes de validar la solicitud. */
+    public void requireVisible(Long roomId) {
+        if (rooms.findById(roomId).filter(Room::isAvailable).isEmpty()) {
+            throw ApiException.notFound("No Room matches the given query.");
+        }
+    }
+
     static ApiException notAvailable() {
         return ApiException.notFound("Sala no disponible.");
     }

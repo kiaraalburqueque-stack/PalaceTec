@@ -68,6 +68,10 @@ public class GameRound {
         return closesAt;
     }
 
+    public Instant getSettledAt() {
+        return settledAt;
+    }
+
     public Short getWinningNumber() {
         return winningNumber;
     }

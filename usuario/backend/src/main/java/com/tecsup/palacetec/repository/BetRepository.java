@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -22,6 +23,73 @@ public interface BetRepository extends JpaRepository<Bet, Long> {
             select b from Bet b join fetch b.round r join fetch r.room s left join fetch s.game
             where b.userId = :userId and b.id in :ids""")
     List<Bet> findForHistory(Long userId, Collection<Long> ids);
+
+    @Query("""
+            select coalesce(sum(b.amount), 0) as wagered, coalesce(sum(b.payout), 0) as paid from Bet b
+            where b.userId = :userId and b.createdAt >= :start and b.createdAt < :end
+              and b.payout is not null and b.round.status = com.tecsup.palacetec.entity.GameRound.Status.SETTLED""")
+    SettledTotals sumSettled(Long userId, Instant start, Instant end);
+
+    @Query("""
+            select count(case when b.payout > b.amount then 1 end) as won,
+                   count(case when b.payout < b.amount then 1 end) as lost,
+                   count(case when b.payout = b.amount then 1 end) as push
+            from Bet b
+            where b.userId = :userId and b.createdAt >= :start and b.createdAt < :end""")
+    OutcomeCounts countOutcomes(Long userId, Instant start, Instant end);
+
+    /** De mayor a menor ganancia neta; si empatan, primero la más antigua. */
+    @Query("""
+            select b from Bet b join fetch b.round r join fetch r.room s left join fetch s.game
+            where b.userId = :userId and b.payout > b.amount
+            order by b.payout - b.amount desc, b.createdAt, b.id""")
+    List<Bet> findWins(Long userId, Limit limit);
+
+    @Query("""
+            select coalesce(sum(b.amount), 0) as wagered, coalesce(sum(b.payout), 0) as paid from Bet b
+            where b.sessionId = :sessionId and b.payout is not null
+              and b.round.status = com.tecsup.palacetec.entity.GameRound.Status.SETTLED""")
+    SettledTotals sumSettledBySession(Long sessionId);
+
+    @Query("""
+            select count(b.id) as count, coalesce(sum(b.amount), 0) as wagered from Bet b
+            where b.sessionId = :sessionId and b.payout is null""")
+    PendingTotals sumPendingBySession(Long sessionId);
+
+    /** De la más reciente a la más antigua. */
+    @Query("""
+            select b from Bet b join fetch b.round r join fetch r.room s left join fetch s.game
+            where b.userId = :userId and b.createdAt >= :start and b.createdAt < :end
+            order by b.createdAt desc, b.id desc""")
+    List<Bet> findForExport(Long userId, Instant start, Instant end, Limit limit);
+
+    @Query("select b from Bet b join fetch b.round where b.userId = :userId and b.round.id = :roundId order by b.id")
+    List<Bet> findByRound(Long userId, Long roundId);
+
+    @Query("select b from Bet b join fetch b.round where b.repeatOperationId = :operationId order by b.id")
+    List<Bet> findByRepeatOperation(Long operationId);
+
+    /**
+     * Rondas y créditos por juego (null: salas sin juego), de un jugador o, sin él, de todos. Varias apuestas de un
+     * jugador en la misma ronda cuentan como una ronda.
+     */
+    @Query(nativeQuery = true, value = """
+            select g.game_id as gameId, count(*) as rounds, sum(g.total) as wagered from (
+                select s.game_id, b.round_id, b.user_id, sum(b.amount) as total
+                from user_bets b join game_rounds r on r.id = b.round_id join rooms s on s.id = r.room_id
+                where b.created_at >= :start and b.created_at < :end
+                  and (cast(:userId as bigint) is null or b.user_id = cast(:userId as bigint))
+                group by s.game_id, b.round_id, b.user_id
+            ) g group by g.game_id order by g.game_id""")
+    List<RoomActivity> sumActivity(Long userId, Instant start, Instant end);
+
+    interface RoomActivity {
+        Long getGameId();
+
+        long getRounds();
+
+        BigDecimal getWagered();
+    }
 
     long countByUserIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(Long userId, Instant start, Instant end);
 

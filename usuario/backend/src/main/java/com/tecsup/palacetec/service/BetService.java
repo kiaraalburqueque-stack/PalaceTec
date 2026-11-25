@@ -22,6 +22,7 @@ import java.time.Instant;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /** Registro de apuestas, con las mismas reglas y el mismo orden de candados que RouletteService.place_bet. */
@@ -62,11 +63,17 @@ public class BetService {
         User user = users.lockById(player.userId())
                 .orElseThrow(() -> ApiException.unauthorized("Sesión no disponible. Inicia sesión nuevamente."));
         AuthSession session = sessions.check(player, user);
-        Wallet wallet = wallets.lock(user.getId());
+        return place(user, session, room, round, request, null);
+    }
 
+    /** Con la sala, la ronda y el usuario ya bloqueados. round es null si no es de la sala. */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public PlacedBet place(User user, AuthSession session, Room room, GameRound round, BetRequest request,
+                           Long repeatOperationId) {
+        Wallet wallet = wallets.lock(user.getId());
         Bet existing = bets.findByReference(user.getId(), request.reference()).orElse(null);
         if (existing != null) {
-            requireSameBet(existing, roomId, request);
+            requireSameBet(existing, room.getId(), request);
             return new PlacedBet(BetResponse.from(existing), false);
         }
 
@@ -80,8 +87,8 @@ public class BetService {
         BigDecimal amount = BigDecimal.valueOf(request.chips().stream().mapToLong(Integer::longValue).sum());
         requireRoomLimits(room, amount, bets.sumByRound(user.getId(), round.getId()));
         limits.checkAndReserve(user.getId(), amount);
-        Bet bet = bets.save(new Bet(user.getId(), session.getId(), round, request.kind(), request.selection(),
-                request.chips(), amount, request.reference(), now));
+        Bet bet = bets.save(new Bet(user.getId(), session.getId(), repeatOperationId, round, request.kind(),
+                request.selection(), request.chips(), amount, request.reference(), now));
         // La referencia monetaria usa el ID propio de la apuesta, no texto del cliente.
         wallets.debit(wallet, amount, "roulette:bet:" + bet.getId(), now);
         return new PlacedBet(BetResponse.from(bet), true);

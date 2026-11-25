@@ -21,6 +21,9 @@ public class Play {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
+    @Column(name = "session_id")
+    private Long sessionId;
+
     @Column(nullable = false, length = 12)
     private String kind;
 
@@ -39,6 +42,9 @@ public class Play {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
+    @Column(name = "settled_at")
+    private Instant settledAt;
+
     protected Play() {
     }
 
@@ -48,6 +54,10 @@ public class Play {
 
     public String getKind() {
         return kind;
+    }
+
+    public String getKindLabel() {
+        return kind.equals("BLACKJACK") ? "Blackjack" : "Deportes simulados";
     }
 
     public BigDecimal getAmount() {

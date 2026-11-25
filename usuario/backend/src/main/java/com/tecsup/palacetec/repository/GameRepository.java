@@ -2,7 +2,9 @@ package com.tecsup.palacetec.repository;
 
 import com.tecsup.palacetec.entity.Game;
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
@@ -15,6 +17,16 @@ public interface GameRepository extends Repository<Game, Long> {
               and (g.playKind <> '' or exists (select r.id from Room r where r.game = g and r.active = true))
             order by g.id""")
     List<Game> findAvailable();
+
+    @Query("select g from Game g where g.id = :id and g.published = true and g.deletedAt is null")
+    Optional<Game> findPublished(Long id);
+
+    /** También los retirados: su actividad pasada se sigue contando. */
+    List<Game> findByPlayKindNotOrderById(String playKind);
+
+    Optional<Game> findBySlug(String slug);
+
+    List<Game> findByIdIn(Collection<Long> ids);
 
     @Query("""
             select r.game.id as gameId, min(r.minBet) as minBet, max(r.maxBet) as maxBet

@@ -15,6 +15,10 @@ public record DateRange(Instant start, Instant end) {
     private static final Instant MIN = Instant.parse("0001-01-01T00:00:00Z");
     private static final Instant MAX = Instant.parse("9999-12-31T00:00:00Z");
 
+    public static DateRange since(Instant start) {
+        return new DateRange(start, MAX);
+    }
+
     public static DateRange parse(String startDate, String endDate) {
         LocalDate start = date("startDate", startDate);
         LocalDate end = date("endDate", endDate);
@@ -24,6 +28,11 @@ public record DateRange(Instant start, Instant end) {
         if (end != null && end.getYear() == 9999) {
             throw InvalidFieldsException.field("endDate", "La fecha final excede el rango permitido.");
         }
+        return of(start, end);
+    }
+
+    /** Días completos de Lima; null no limita. */
+    public static DateRange of(LocalDate start, LocalDate end) {
         return new DateRange(start == null ? MIN : startOfDay(start), end == null ? MAX : startOfDay(end.plusDays(1)));
     }
 
@@ -31,6 +40,15 @@ public record DateRange(Instant start, Instant end) {
         if (value == null) {
             return null;
         }
+        LocalDate date = parseDate(value);
+        if (date == null) {
+            throw InvalidFieldsException.field(field, "Usa el formato AAAA-MM-DD.");
+        }
+        return date;
+    }
+
+    /** strptime con %Y-%m-%d de Python; null si no es una fecha. */
+    static LocalDate parseDate(String value) {
         Matcher matcher = DATE.matcher(value);
         try {
             if (matcher.matches() && Integer.parseInt(matcher.group(1)) > 0) {
@@ -38,9 +56,9 @@ public record DateRange(Instant start, Instant end) {
                         Integer.parseInt(matcher.group(3)));
             }
         } catch (DateTimeException ignored) {
-            // Fecha inexistente, como 2026-02-30: se informa abajo.
+            // Fecha inexistente, como 2026-02-30.
         }
-        throw InvalidFieldsException.field(field, "Usa el formato AAAA-MM-DD.");
+        return null;
     }
 
     private static Instant startOfDay(LocalDate date) {
