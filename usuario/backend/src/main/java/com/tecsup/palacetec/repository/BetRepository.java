@@ -66,6 +66,10 @@ public interface BetRepository extends JpaRepository<Bet, Long> {
     @Query("select b from Bet b join fetch b.round where b.userId = :userId and b.round.id = :roundId order by b.id")
     List<Bet> findByRound(Long userId, Long roundId);
 
+    /** De la más reciente a la más antigua. */
+    @Query("select b from Bet b join fetch b.round r where b.userId = :userId and r.room.id = :roomId order by b.id desc")
+    List<Bet> findByRoom(Long userId, Long roomId, Limit limit);
+
     @Query("select b from Bet b join fetch b.round where b.repeatOperationId = :operationId order by b.id")
     List<Bet> findByRepeatOperation(Long operationId);
 
