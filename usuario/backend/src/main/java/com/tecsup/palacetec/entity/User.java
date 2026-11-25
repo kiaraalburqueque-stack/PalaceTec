@@ -111,6 +111,12 @@ public class User {
         this.authVersion++;
     }
 
+    /** "No fui yo": no acorta un bloqueo más largo y los JWT emitidos antes dejan de valer. */
+    public void lockAfterReport(Instant until) {
+        lockedUntil = lockedUntil == null || lockedUntil.isBefore(until) ? until : lockedUntil;
+        authVersion++;
+    }
+
     /** Los campos null se conservan. */
     public void updateProfile(String newNickname, String newAvatarUrl, String newFirstName, String newLastName,
                               String newPhone) {

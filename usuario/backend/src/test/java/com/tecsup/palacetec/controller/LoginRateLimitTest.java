@@ -35,6 +35,7 @@ class LoginRateLimitTest extends ApiTest {
             request.setRemoteAddr("198.51.100.7");
             return request;
         })).andExpect(status().isTooManyRequests());
+        browser.create("/api/v1/auth/not-me", Map.of("token", "falso")).andExpect(status().isTooManyRequests());
         browser().from("198.51.100.8").login("unknown@example.test", "wrong").andExpect(status().isUnauthorized());
     }
 }

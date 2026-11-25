@@ -45,6 +45,9 @@ public class LoginHistory {
     @Column(name = "report_token_hash", length = 64)
     private String reportTokenHash;
 
+    @Column(name = "reported_at")
+    private Instant reportedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -66,7 +69,23 @@ public class LoginHistory {
         this.reportTokenHash = tokenHash;
     }
 
+    public void report(Instant now) {
+        reportedAt = now;
+    }
+
     public Long getId() {
         return id;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public Instant getReportedAt() {
+        return reportedAt;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
     }
 }

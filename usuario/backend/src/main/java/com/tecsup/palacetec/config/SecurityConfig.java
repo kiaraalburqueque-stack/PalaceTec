@@ -34,12 +34,13 @@ public class SecurityConfig {
     public static final String CSRF_PATH = "/api/v1/auth/csrf";
     public static final String FORGOT_PASSWORD_PATH = "/api/v1/auth/forgot-password";
     public static final String RESET_PASSWORD_PATH = "/api/v1/auth/reset-password";
+    public static final String NOT_ME_PATH = "/api/v1/auth/not-me";
 
     private static final List<String> PUBLIC_POSTS = List.of(REGISTER_PATH, LOGIN_PATH, LOGOUT_PATH, REFRESH_PATH,
-            FORGOT_PASSWORD_PATH, RESET_PASSWORD_PATH);
+            FORGOT_PASSWORD_PATH, RESET_PASSWORD_PATH, NOT_ME_PATH);
     /** authentication_classes = [] en Django: aquí no se mira el token. Sus POST se protegen con @AuthGuard. */
     public static final Set<String> PUBLIC_PATHS = Set.of(REGISTER_PATH, LOGIN_PATH, LOGOUT_PATH, REFRESH_PATH,
-            CSRF_PATH, FORGOT_PASSWORD_PATH, RESET_PASSWORD_PATH);
+            CSRF_PATH, FORGOT_PASSWORD_PATH, RESET_PASSWORD_PATH, NOT_ME_PATH);
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, RestAuthenticationEntryPoint entryPoint,
