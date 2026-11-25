@@ -8,9 +8,14 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.time.LocalDate;
+import org.hibernate.annotations.DynamicUpdate;
 
-/** accounts.User de Django. La base no tiene valores por defecto: aquí se llenan todas las columnas NOT NULL. */
+/**
+ * accounts.User de Django. La base no tiene valores por defecto: aquí se llenan todas las columnas NOT NULL.
+ * Solo se actualizan las columnas que cambiaron, para no pisar lo que escriba Django.
+ */
 @Entity
+@DynamicUpdate
 @Table(name = "users")
 public class User {
 
@@ -20,7 +25,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 128, updatable = false)
+    @Column(nullable = false, length = 128)
     private String password;
 
     @Column(name = "is_superuser", nullable = false, updatable = false)
@@ -93,6 +98,15 @@ public class User {
     public void registerLoginResult(int failedAttempts, Instant lockedUntil) {
         this.failedAttempts = failedAttempts;
         this.lockedUntil = lockedUntil;
+    }
+
+    /** Mismo password con un hash del algoritmo actual. */
+    public void upgradeHash(String hash) {
+        this.password = hash;
+    }
+
+    public boolean isAdmin() {
+        return staff || superuser;
     }
 
     public Long getId() {

@@ -2,6 +2,7 @@ package com.tecsup.palacetec.security;
 
 import com.tecsup.palacetec.config.SecurityConfig;
 import com.tecsup.palacetec.exception.ApiException;
+import com.tecsup.palacetec.security.WebTokenService.WebToken;
 import com.tecsup.palacetec.service.SessionService;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -10,54 +11,72 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
-import org.springframework.http.HttpHeaders;
+import java.util.Set;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+/** Autentica con el Bearer de la app móvil o, si no lo hay, con la cookie de la web (que además exige CSRF). */
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private static final String SCHEME = "Bearer ";
+    private static final Set<String> SAFE_METHODS = Set.of("GET", "HEAD", "OPTIONS");
 
     private final JwtService jwt;
+    private final WebTokenService webTokens;
+    private final SessionCookies cookies;
+    private final CsrfGuard csrf;
     private final SessionService sessions;
     private final RestAuthenticationEntryPoint errors;
 
-    public JwtAuthenticationFilter(JwtService jwt, SessionService sessions, RestAuthenticationEntryPoint errors) {
+    public JwtAuthenticationFilter(JwtService jwt, WebTokenService webTokens, SessionCookies cookies, CsrfGuard csrf,
+                                   SessionService sessions, RestAuthenticationEntryPoint errors) {
         this.jwt = jwt;
+        this.webTokens = webTokens;
+        this.cookies = cookies;
+        this.csrf = csrf;
         this.sessions = sessions;
         this.errors = errors;
     }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        // Un token viejo en la cabecera no debe impedir registrarse ni volver a entrar.
-        String path = request.getRequestURI();
-        return path.equals(SecurityConfig.LOGIN_PATH) || path.equals(SecurityConfig.REGISTER_PATH);
+        // Un token viejo no debe impedir registrarse, volver a entrar, renovar ni cerrar la sesión.
+        return SecurityConfig.PUBLIC_PATHS.contains(request.getRequestURI());
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (header != null && header.regionMatches(true, 0, SCHEME, 0, SCHEME.length())) {
-            try {
-                authenticate(header.substring(SCHEME.length()).trim());
-            } catch (JwtException | IllegalArgumentException exception) {
-                ApiException error = ApiException.unauthorized("El token no es válido o venció.");
-                errors.write(response, error.getStatus(), error.body());
-                return;
-            } catch (ApiException exception) {
-                errors.write(response, exception.getStatus(), exception.body());
-                return;
+        try {
+            String bearer = Clients.bearer(request);
+            String access = cookies.access(request);
+            if (bearer != null) {
+                authenticate(parse(bearer));
+            } else if (access != null) {
+                WebToken token = webTokens.parse(access, WebTokenService.Type.ACCESS);
+                authenticate(PlayerPrincipal.web(token));
+                if (!SAFE_METHODS.contains(request.getMethod())) {
+                    csrf.enforce(request);
+                }
             }
+        } catch (ApiException exception) {
+            SecurityContextHolder.clearContext();
+            errors.write(response, exception.getStatus(), exception.body());
+            return;
         }
         chain.doFilter(request, response);
     }
 
-    private void authenticate(String token) {
-        PlayerPrincipal player = jwt.parse(token);
+    private PlayerPrincipal parse(String bearer) {
+        try {
+            return jwt.parse(bearer);
+        } catch (JwtException | IllegalArgumentException exception) {
+            throw ApiException.unauthorized("El token no es válido o venció.");
+        }
+    }
+
+    private void authenticate(PlayerPrincipal player) {
         sessions.check(player);
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(UsernamePasswordAuthenticationToken.authenticated(player, null, List.of()));

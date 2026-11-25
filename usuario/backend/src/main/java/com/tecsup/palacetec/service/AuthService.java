@@ -1,5 +1,6 @@
 package com.tecsup.palacetec.service;
 
+import com.tecsup.palacetec.config.TimeConfig;
 import com.tecsup.palacetec.dto.Emails;
 import com.tecsup.palacetec.dto.LoginRequest;
 import com.tecsup.palacetec.dto.LoginResponse;
@@ -13,6 +14,8 @@ import com.tecsup.palacetec.exception.LoginRejectedException;
 import com.tecsup.palacetec.repository.AuthSessionRepository;
 import com.tecsup.palacetec.repository.UserRepository;
 import com.tecsup.palacetec.security.JwtService;
+import com.tecsup.palacetec.security.WebTokenService;
+import com.tecsup.palacetec.security.WebTokenService.WebToken;
 import java.sql.SQLException;
 import java.time.Clock;
 import java.time.Duration;
@@ -39,17 +42,23 @@ public class AuthService {
     private final ExclusionService exclusions;
     private final PasswordEncoder passwords;
     private final JwtService jwt;
+    private final WebTokenService webTokens;
     private final Clock clock;
 
     public AuthService(UserRepository users, AuthSessionRepository sessions, RegistrationService registration,
-                       ExclusionService exclusions, PasswordEncoder passwords, JwtService jwt, Clock clock) {
+                       ExclusionService exclusions, PasswordEncoder passwords, JwtService jwt,
+                       WebTokenService webTokens, Clock clock) {
         this.users = users;
         this.sessions = sessions;
         this.registration = registration;
         this.exclusions = exclusions;
         this.passwords = passwords;
         this.jwt = jwt;
+        this.webTokens = webTokens;
         this.clock = clock;
+    }
+
+    public record WebLogin(Long userId, String email, WebToken access, WebToken refresh) {
     }
 
     public RegisterResponse register(RegisterRequest request) {
@@ -78,10 +87,29 @@ public class AuthService {
         }
     }
 
-    /** Bloquea la fila del usuario para no perder incrementos del contador entre intentos simultáneos. */
+    /** Login de la app móvil. */
     @Transactional(noRollbackFor = LoginRejectedException.class)
     public LoginResponse login(LoginRequest request) {
-        User user = users.lockByEmail(Emails.normalize(request.email())).orElse(null);
+        User user = authenticate(request);
+        JwtService.IssuedToken token = jwt.issue(user);
+        sessions.save(new AuthSession(user.getId(), token.jti(), token.issuedAt(), token.expiresAt(), null));
+        return new LoginResponse(user.getId(), user.getEmail(), token.value(), "Bearer", token.expiresIn());
+    }
+
+    /** Login de la web: acceso de 15 minutos renovable durante 8 horas. */
+    @Transactional(noRollbackFor = LoginRejectedException.class)
+    public WebLogin loginWeb(LoginRequest request) {
+        User user = authenticate(request);
+        WebToken access = webTokens.startSession(user);
+        WebToken refresh = webTokens.issueRefresh(user, access.sid());
+        sessions.save(new AuthSession(user.getId(), access.sid(), TimeConfig.now(clock), access.expiresAt(),
+                refresh.expiresAt()));
+        return new WebLogin(user.getId(), user.getEmail(), access, refresh);
+    }
+
+    /** Bloquea la fila del usuario para no perder incrementos del contador entre intentos simultáneos. */
+    private User authenticate(LoginRequest request) {
+        User user = users.lockByEmail(request.email()).orElse(null);
         if (user == null) {
             // Calcula igual un hash para reducir la diferencia de tiempo con una cuenta existente.
             passwords.encode(request.password());
@@ -96,14 +124,15 @@ public class AuthService {
             registerFailure(user, failedAttempts + 1, now);
             throw LoginRejectedException.invalidCredentials();
         }
+        if (passwords.upgradeEncoding(user.getPassword())) {
+            user.upgradeHash(passwords.encode(request.password()));
+        }
         if (!user.isActive()) {
             throw LoginRejectedException.suspended();
         }
         exclusions.ensureUserAllowed(user);
         user.registerLoginResult(0, null);
-        JwtService.IssuedToken token = jwt.issue(user);
-        sessions.save(new AuthSession(user.getId(), token.jti(), token.issuedAt(), token.expiresAt()));
-        return new LoginResponse(user.getId(), user.getEmail(), token.value(), "Bearer", token.expiresIn());
+        return user;
     }
 
     private static void registerFailure(User user, int failedAttempts, Instant now) {

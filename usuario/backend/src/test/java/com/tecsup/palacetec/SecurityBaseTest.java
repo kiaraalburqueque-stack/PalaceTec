@@ -25,7 +25,7 @@ class SecurityBaseTest extends ApiTest {
     }
 
     @Test
-    void writesRequireLoginAndNotCsrf() throws Exception {
+    void writesWithoutCookiesRequireLoginAndNotCsrf() throws Exception {
         mvc.perform(post("/api/v1/rooms/1/bets")).andExpect(status().isUnauthorized());
         mvc.perform(post("/api/v1/responsible-gaming/daily-limit")).andExpect(status().isUnauthorized());
     }

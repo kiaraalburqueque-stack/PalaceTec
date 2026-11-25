@@ -7,7 +7,9 @@ import com.tecsup.palacetec.repository.AuthSessionRepository;
 import com.tecsup.palacetec.repository.UserRepository;
 import com.tecsup.palacetec.security.PlayerPrincipal;
 import java.time.Clock;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /** Un JWT solo vale mientras su sesión siga vigente en la base que comparte con Django. */
@@ -29,25 +31,43 @@ public class SessionService {
 
     @Transactional(readOnly = true)
     public void check(PlayerPrincipal player) {
-        check(player, users.findById(player.userId()).orElseThrow(SessionService::unavailable));
+        check(player, users.findById(player.userId()).orElseThrow(() -> unknownUser(player)));
     }
 
     /** Igual que check, con el usuario ya bloqueado por quien va a escribir. */
     @Transactional(readOnly = true)
     public AuthSession check(PlayerPrincipal player, User user) {
         if (!user.isActive()) {
-            throw unavailable();
+            throw player.web() ? unauthorized("user_inactive", "User is inactive") : unavailable(player);
         }
         exclusions.ensureUserAllowed(user);
         if (player.version() != user.getAuthVersion()) {
-            throw unavailable();
+            throw unavailable(player);
         }
         return sessions.findByJti(player.jti())
                 .filter(session -> session.isUsableBy(user.getId(), clock.instant()))
-                .orElseThrow(SessionService::unavailable);
+                .orElseThrow(() -> unavailable(player));
     }
 
-    private static ApiException unavailable() {
-        return ApiException.unauthorized("Sesión no disponible. Inicia sesión nuevamente.");
+    /** Bloquea la fila del usuario antes de escribir y revisa que su sesión siga vigente. */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public User lock(PlayerPrincipal player) {
+        User user = users.lockById(player.userId()).orElseThrow(() -> unknownUser(player));
+        check(player, user);
+        return user;
+    }
+
+    private static ApiException unknownUser(PlayerPrincipal player) {
+        return player.web() ? unauthorized("user_not_found", "User not found") : unavailable(player);
+    }
+
+    /** La web recibe los textos de Django y la app móvil, los del MVP. */
+    private static ApiException unavailable(PlayerPrincipal player) {
+        return ApiException.unauthorized(player.web() ? "Sesion no disponible."
+                : "Sesión no disponible. Inicia sesión nuevamente.");
+    }
+
+    private static ApiException unauthorized(String code, String detail) {
+        return new ApiException(HttpStatus.UNAUTHORIZED, code, detail);
     }
 }

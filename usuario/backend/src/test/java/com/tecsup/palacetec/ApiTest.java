@@ -63,6 +63,10 @@ public abstract class ApiTest {
         }
     }
 
+    protected Browser browser() {
+        return new Browser(mvc, mapper);
+    }
+
     protected Player newPlayer() {
         sequence++;
         String email = "jugador" + sequence + "@example.test";

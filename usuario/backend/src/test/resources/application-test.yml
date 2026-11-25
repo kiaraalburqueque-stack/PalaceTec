@@ -14,3 +14,7 @@ palacetec:
   exclusion-hmac-key: clave-hmac-ficticia-de-pruebas
   media-base-url: http://localhost:8000
   cors-allowed-origins: http://localhost:5173
+  web:
+    cookie-secure: false
+    # El límite real se prueba aparte, sin acumular intentos entre casos.
+    login-rate-limit: 1000

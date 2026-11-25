@@ -26,7 +26,7 @@ class JwtServiceTest {
 
     private static JwtService service(String secret, Instant now) {
         var properties = new PalaceTecProperties(new PalaceTecProperties.Jwt(secret, Duration.ofHours(8)), "hmac",
-                "http://localhost:8000", List.of("http://localhost:5173"));
+                "http://localhost:8000", List.of("http://localhost:5173"), new PalaceTecProperties.Web(false, 30));
         return new JwtService(properties, Clock.fixed(now, ZoneOffset.UTC));
     }
 

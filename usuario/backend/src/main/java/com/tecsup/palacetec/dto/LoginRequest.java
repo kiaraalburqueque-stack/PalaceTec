@@ -1,16 +1,15 @@
 package com.tecsup.palacetec.dto;
 
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import com.fasterxml.jackson.databind.JsonNode;
 
-public record LoginRequest(
-        @NotNull(message = RegisterRequest.REQUIRED) @Size(max = 254, message = "Usa como máximo 254 caracteres.")
-        @Pattern(regexp = Emails.PATTERN, message = Emails.MESSAGE) String email,
-        @NotEmpty(message = RegisterRequest.REQUIRED) String password) {
+/** Credenciales con formato válido. */
+public record LoginRequest(String email, String password) {
 
-    public LoginRequest {
-        email = Emails.strip(email);
+    public static LoginRequest from(JsonNode body, FieldMessages messages) {
+        RequestFields fields = RequestFields.of(body, messages);
+        String email = fields.text("email", TextRule.required().max(254).email());
+        String password = fields.text("password", TextRule.required().keepSpaces());
+        fields.throwIfInvalid();
+        return new LoginRequest(Emails.normalize(email), password);
     }
 }
