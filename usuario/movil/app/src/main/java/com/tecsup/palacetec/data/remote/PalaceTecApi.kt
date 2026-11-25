@@ -51,4 +51,16 @@ interface PalaceTecApi {
     @Multipart
     @POST("api/v1/users/avatar")
     suspend fun uploadAvatar(@Part avatar: MultipartBody.Part): Profile
+
+    @GET("api/v1/responsible-gaming/session-summary")
+    suspend fun sessionSummary(): SessionSummary
+
+    @GET("api/v1/responsible-gaming/risk-alerts")
+    suspend fun riskAlerts(): RiskAlerts
+
+    @POST("api/v1/responsible-gaming/pause")
+    suspend fun pause(@Body request: PauseRequest): PauseResponse
+
+    @POST("api/v1/responsible-gaming/self-exclude")
+    suspend fun selfExclude(@Body request: SelfExclusionRequest): SelfExclusionResponse
 }

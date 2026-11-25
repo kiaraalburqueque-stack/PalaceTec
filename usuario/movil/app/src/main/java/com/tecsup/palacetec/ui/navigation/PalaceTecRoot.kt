@@ -41,6 +41,7 @@ import com.tecsup.palacetec.ui.bets.BetsScreen
 import com.tecsup.palacetec.ui.home.HomeScreen
 import com.tecsup.palacetec.ui.profile.ProfileLink
 import com.tecsup.palacetec.ui.profile.ProfileScreen
+import com.tecsup.palacetec.ui.responsible.ResponsibleScreen
 import com.tecsup.palacetec.ui.roulette.RouletteScreen
 import com.tecsup.palacetec.ui.settings.PushPermissionRequest
 import com.tecsup.palacetec.ui.settings.SettingsScreen
@@ -63,6 +64,7 @@ enum class Tab(val route: String, val label: String, val title: String, @param:D
 /** Pantallas que se abren encima de una pestaña, con flecha para volver. */
 enum class Section(val route: String, val title: String) {
     PROFILE("profile", "Mi perfil"),
+    RESPONSIBLE("responsible", "Juego responsable"),
     SETTINGS("settings", "Ajustes"),
 }
 
@@ -118,17 +120,26 @@ private fun PlayerFlow(onLogout: () -> Unit) {
         NavHost(
             nav, startDestination = Tab.HOME.route, modifier = Modifier.padding(padding).consumeWindowInsets(padding),
         ) {
-            composable(Tab.HOME.route) { HomeScreen(onPlayRoulette = { nav.openTab(Tab.ROULETTE) }) }
+            composable(Tab.HOME.route) {
+                HomeScreen(
+                    onPlayRoulette = { nav.openTab(Tab.ROULETTE) },
+                    onResponsible = { nav.openSection(Section.RESPONSIBLE) },
+                )
+            }
             composable(Tab.ROULETTE.route) { RouletteScreen() }
             composable(Tab.BETS.route) { BetsScreen() }
             composable(Tab.WALLET.route) { WalletScreen() }
             composable(Section.PROFILE.route) {
                 ProfileScreen(
                     links = listOf(
+                        ProfileLink("Juego responsable", R.drawable.ic_shield) {
+                            nav.openSection(Section.RESPONSIBLE)
+                        },
                         ProfileLink("Ajustes", R.drawable.ic_settings) { nav.openSection(Section.SETTINGS) },
                     ),
                 )
             }
+            composable(Section.RESPONSIBLE.route) { ResponsibleScreen() }
             composable(Section.SETTINGS.route) { SettingsScreen() }
         }
     }

@@ -31,6 +31,13 @@ class AuthRepository(
         analytics.signUp()
     }
 
+    /** Para cuando el backend ya cerró la sesión; el motivo se muestra en el login. */
+    suspend fun endSession(notice: String) {
+        val token = sessionStore.token ?: return
+        historyDao.deleteAll()
+        sessionStore.clearIfCurrent(token, notice)
+    }
+
     /** El backend no tiene logout: basta con olvidar el token y lo guardado en el celular. */
     suspend fun logout() {
         sessionStore.clear()

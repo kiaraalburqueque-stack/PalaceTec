@@ -20,6 +20,7 @@ import com.tecsup.palacetec.data.repository.DailyLimitRepository
 import com.tecsup.palacetec.data.repository.HistoryRepository
 import com.tecsup.palacetec.data.repository.ProfileRepository
 import com.tecsup.palacetec.data.repository.PushRepository
+import com.tecsup.palacetec.data.repository.ResponsibleRepository
 import com.tecsup.palacetec.data.repository.RouletteRepository
 import com.tecsup.palacetec.data.repository.WalletRepository
 import com.tecsup.palacetec.push.PushNotifications
@@ -63,6 +64,7 @@ class AppContainer(app: Application) {
     val walletRepository = WalletRepository(api)
     val catalogRepository = CatalogRepository(api)
     val dailyLimitRepository = DailyLimitRepository(api)
+    val responsibleRepository = ResponsibleRepository(api)
     val rouletteRepository = RouletteRepository(api, analytics)
     val profileRepository = ProfileRepository(api, AndroidAvatarSource(app), BuildConfig.BASE_URL)
     val historyRepository = HistoryRepository(api, historyDao, owner = { sessionStore.email })
