@@ -21,6 +21,9 @@ public class Play {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
+    @Column(name = "session_id")
+    private Long sessionId;
+
     @Column(nullable = false, length = 12)
     private String kind;
 

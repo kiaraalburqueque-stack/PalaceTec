@@ -45,6 +45,17 @@ public interface BetRepository extends JpaRepository<Bet, Long> {
             order by b.payout - b.amount desc, b.createdAt, b.id""")
     List<Bet> findWins(Long userId, Limit limit);
 
+    @Query("""
+            select coalesce(sum(b.amount), 0) as wagered, coalesce(sum(b.payout), 0) as paid from Bet b
+            where b.sessionId = :sessionId and b.payout is not null
+              and b.round.status = com.tecsup.palacetec.entity.GameRound.Status.SETTLED""")
+    SettledTotals sumSettledBySession(Long sessionId);
+
+    @Query("""
+            select count(b.id) as count, coalesce(sum(b.amount), 0) as wagered from Bet b
+            where b.sessionId = :sessionId and b.payout is null""")
+    PendingTotals sumPendingBySession(Long sessionId);
+
     /** De la más reciente a la más antigua. */
     @Query("""
             select b from Bet b join fetch b.round r join fetch r.room s left join fetch s.game

@@ -15,6 +15,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.springframework.http.HttpStatus;
 
 /**
@@ -253,6 +255,42 @@ public final class RequestFields {
             return null;
         }
         return node.textValue();
+    }
+
+    /** ChoiceField de enteros: compara el valor como texto, así que "7" y 7 son lo mismo. */
+    public Integer choice(String field, List<Integer> choices) {
+        JsonNode node = value(field, true);
+        if (node == null) {
+            return null;
+        }
+        String text = node.isTextual() ? node.textValue() : pythonText(node);
+        for (Integer choice : choices) {
+            if (choice.toString().equals(text)) {
+                return choice;
+            }
+        }
+        error(field, "\"" + text + "\" is not a valid choice.");
+        return null;
+    }
+
+    /** repr() de Python, para los valores que los mensajes de Django muestran tal cual. */
+    private static String pythonText(JsonNode node) {
+        if (node.isArray()) {
+            return StreamSupport.stream(node.spliterator(), false).map(RequestFields::pythonText)
+                    .collect(Collectors.joining(", ", "[", "]"));
+        }
+        if (node.isObject()) {
+            return node.properties().stream()
+                    .map(entry -> "'" + entry.getKey() + "': " + pythonText(entry.getValue()))
+                    .collect(Collectors.joining(", ", "{", "}"));
+        }
+        if (node.isBoolean()) {
+            return node.booleanValue() ? "True" : "False";
+        }
+        if (node.isNull()) {
+            return "None";
+        }
+        return node.isTextual() ? "'" + node.textValue() + "'" : node.asText();
     }
 
     /** Valor presente y no nulo; si falta o es null, anota el error que corresponda. */

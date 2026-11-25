@@ -73,10 +73,10 @@ public class User {
     @Column(nullable = false, length = 20)
     private String phone;
 
-    @Column(name = "pause_until", updatable = false)
+    @Column(name = "pause_until")
     private Instant pauseUntil;
 
-    @Column(name = "self_excluded_until", updatable = false)
+    @Column(name = "self_excluded_until")
     private Instant selfExcludedUntil;
 
     protected User() {
@@ -115,6 +115,17 @@ public class User {
     public void lockAfterReport(Instant until) {
         lockedUntil = lockedUntil == null || lockedUntil.isBefore(until) ? until : lockedUntil;
         authVersion++;
+    }
+
+    /** No se puede cancelar antes; los JWT emitidos antes dejan de valer. */
+    public void selfExclude(Instant until) {
+        selfExcludedUntil = until;
+        authVersion++;
+    }
+
+    /** No acorta una pausa más larga. */
+    public void pause(Instant until) {
+        pauseUntil = pauseUntil == null || pauseUntil.isBefore(until) ? until : pauseUntil;
     }
 
     /** Los campos null se conservan. */
