@@ -166,14 +166,14 @@ private fun PauseCard(state: ResponsibleUiState, onPause: () -> Unit) {
             )
         } else if (offer != null) {
             Text(
-                "El ${limaDateTime(offer.createdAt)} notamos un ritmo de juego intenso. " +
+                "El ${limaDateTime(offer.createdAt)} notamos que subías tus apuestas después de perder. " +
                     "Te sugerimos una pausa de ${duration(offer.suggestedPauseSeconds)}.",
             )
             state.pauseError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             PrimaryButton("Tomar la pausa", onPause, loading = state.pausing)
         } else {
             Text("No hay pausas sugeridas por ahora.")
-            Note("Cuando detectemos un ritmo de juego intenso podrás tomar aquí una pausa de 10 minutos.")
+            Note("Si notamos que subes tus apuestas después de perder, podrás tomar aquí una pausa de 10 minutos.")
         }
     }
 }
