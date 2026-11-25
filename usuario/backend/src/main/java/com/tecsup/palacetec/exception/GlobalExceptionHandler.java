@@ -2,12 +2,16 @@ package com.tecsup.palacetec.exception;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies.SnakeCaseStrategy;
+import com.tecsup.palacetec.media.AvatarImages;
+import com.tecsup.palacetec.security.RestAuthenticationEntryPoint;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -18,6 +22,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
@@ -29,11 +35,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<Object> api(ApiException exception) {
         ResponseEntity.BodyBuilder response = ResponseEntity.status(exception.getStatus());
-        Map<String, Object> body = exception.body();
-        if (body.containsKey("retry_after")) {
-            response.header("Retry-After", body.get("retry_after").toString());
+        if (exception.getRetryAfter() != null) {
+            response.header(HttpHeaders.RETRY_AFTER, exception.getRetryAfter().toString());
         }
-        return response.body(body);
+        // Un login rechazado no pide autenticarse: en Django es una respuesta normal, no una excepción.
+        if (exception.getStatus() == HttpStatus.UNAUTHORIZED && !(exception instanceof LoginRejectedException)) {
+            response.header(HttpHeaders.WWW_AUTHENTICATE, RestAuthenticationEntryPoint.CHALLENGE);
+        }
+        return response.body(exception.body());
     }
 
     @ExceptionHandler(InvalidFieldsException.class)
@@ -55,6 +64,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(errors);
     }
 
+    /** Supera lo que el servidor acepta recibir, muy por encima del límite de la foto: el único archivo que se sube. */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Object> tooBig(MaxUploadSizeExceededException exception) {
+        return fields(InvalidFieldsException.field("avatar", AvatarImages.TOO_BIG));
+    }
+
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<Object> multipart(MultipartException exception) {
+        return ResponseEntity.badRequest().body(Map.of("detail", "Multipart form parse error."));
+    }
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<Object> unreadable(HttpMessageNotReadableException exception) {
         // Un tipo equivocado se informa en su campo; un JSON mal formado, en detail.
@@ -73,12 +93,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<Object> method(HttpRequestMethodNotSupportedException exception) {
-        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(Map.of("detail", "Método no permitido."));
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).headers(exception.getHeaders())
+                .body(Map.of("detail", "Method \"" + exception.getMethod() + "\" not allowed."));
     }
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     public ResponseEntity<Object> mediaType(HttpMediaTypeNotSupportedException exception) {
-        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(Map.of("detail", "Envía application/json."));
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(Map.of("detail",
+                "Unsupported media type \"" + Objects.toString(exception.getContentType(), "") + "\" in request."));
     }
 
     @ExceptionHandler(Exception.class)

@@ -27,6 +27,11 @@ public class LoginRejectedException extends ApiException {
     }
 
     @Override
+    public Long getRetryAfter() {
+        return retryAfter;
+    }
+
+    @Override
     public Map<String, Object> body() {
         Map<String, Object> body = super.body();
         if (retryAfter != null) {

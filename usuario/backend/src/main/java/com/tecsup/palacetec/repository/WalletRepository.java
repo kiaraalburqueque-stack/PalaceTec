@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface WalletRepository extends JpaRepository<Wallet, Long> {
 
+    Optional<Wallet> findByUserId(Long userId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select w from Wallet w where w.userId = :userId")
     Optional<Wallet> lockByUserId(Long userId);

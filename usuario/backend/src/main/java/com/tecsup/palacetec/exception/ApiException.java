@@ -24,6 +24,10 @@ public class ApiException extends RuntimeException {
         return new ApiException(HttpStatus.UNAUTHORIZED, null, detail);
     }
 
+    public static ApiException forbidden(String detail) {
+        return new ApiException(HttpStatus.FORBIDDEN, null, detail);
+    }
+
     public static ApiException notFound(String detail) {
         return new ApiException(HttpStatus.NOT_FOUND, null, detail);
     }
@@ -34,6 +38,11 @@ public class ApiException extends RuntimeException {
 
     public String getCode() {
         return code;
+    }
+
+    /** Segundos de la cabecera Retry-After, o null si no corresponde. */
+    public Long getRetryAfter() {
+        return null;
     }
 
     public Map<String, Object> body() {

@@ -37,7 +37,8 @@ public @interface StrongPassword {
             return false;
         }
 
-        private static String problem(String value) {
+        /** Primer requisito que no se cumple, o null. */
+        public static String problem(String value) {
             if (value.codePointCount(0, value.length()) < 8) {
                 return "La contraseña debe tener al menos 8 caracteres.";
             }

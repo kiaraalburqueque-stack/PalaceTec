@@ -9,9 +9,13 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
+    Optional<User> findByEmailAndActiveTrue(String email);
+
     boolean existsByEmail(String email);
 
     boolean existsByDni(String dni);
+
+    boolean existsByNicknameAndIdNot(String nickname, Long id);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select u from User u where u.email = :email")

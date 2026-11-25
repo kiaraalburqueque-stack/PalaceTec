@@ -2,10 +2,18 @@
 # Ver application-example.yml.
 server:
   port: 8080
+  tomcat:
+    # Permite responder con un error JSON a una foto demasiado grande, en vez de cortar la conexión.
+    max-swallow-size: 50MB
 
 spring:
   application:
     name: palacetec-usuario
+  servlet:
+    multipart:
+      # El límite de la foto (2 MB) lo revisa AvatarImages, con el mensaje de Django.
+      max-file-size: 10MB
+      max-request-size: 11MB
   config:
     import: optional:file:./application-local.yml
   datasource:
@@ -41,4 +49,14 @@ palacetec:
   exclusion-hmac-key: ${EXCLUSION_HMAC_KEY:}
   # Django sirve las portadas de los juegos.
   media-base-url: ${MEDIA_BASE_URL:http://localhost:8000}
-  cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  # Orígenes del frontend React del jugador: CORS con cookies y CSRF.
+  cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
+  web:
+    # true cuando el sitio se sirva por HTTPS. Equivale a DEBUG=False en Django.
+    cookie-secure: ${COOKIE_SECURE:false}
+    # LOGIN_RATE_LIMIT de Django: solicitudes por minuto y por IP.
+    login-rate-limit: ${LOGIN_RATE_LIMIT:30}
+    # Frontend React al que apuntan los enlaces de los correos.
+    frontend-url: ${FRONTEND_URL:http://localhost:5173}
+    # Carpeta media de Django (relativa a usuario/backend): avatar_url es común a los dos backends.
+    media-root: ${MEDIA_ROOT:../../administracion/backend/media}

@@ -7,9 +7,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import org.hibernate.annotations.DynamicUpdate;
 
-/** Una sesión por JWT. Django la revoca al cerrar sesión, cambiar la contraseña, suspender o autoexcluir. */
+/** Una sesión por login. La revocan los dos backends al cerrarla, cambiar la contraseña, suspender o autoexcluir. */
 @Entity
+@DynamicUpdate
 @Table(name = "accounts_authsession")
 public class AuthSession {
 
@@ -23,10 +25,14 @@ public class AuthSession {
     @Column(name = "started_at", nullable = false, updatable = false)
     private Instant startedAt;
 
-    @Column(name = "expires_at", nullable = false, updatable = false)
+    @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
 
-    @Column(name = "revoked_at", updatable = false)
+    /** Fin de la sesión web, que las renovaciones no extienden. La app móvil no renueva: queda en null. */
+    @Column(name = "refresh_expires_at", updatable = false)
+    private Instant refreshExpiresAt;
+
+    @Column(name = "revoked_at")
     private Instant revokedAt;
 
     @Column(name = "user_id", nullable = false, updatable = false)
@@ -35,18 +41,43 @@ public class AuthSession {
     protected AuthSession() {
     }
 
-    public AuthSession(Long userId, String jti, Instant startedAt, Instant expiresAt) {
+    public AuthSession(Long userId, String jti, Instant startedAt, Instant expiresAt, Instant refreshExpiresAt) {
         this.userId = userId;
         this.jti = jti;
         this.startedAt = startedAt;
         this.expiresAt = expiresAt;
+        this.refreshExpiresAt = refreshExpiresAt;
     }
 
     public boolean isUsableBy(Long user, Instant now) {
         return userId.equals(user) && revokedAt == null && expiresAt.isAfter(now);
     }
 
+    public boolean isRenewableBy(Long user, Instant now) {
+        return userId.equals(user) && revokedAt == null && refreshExpiresAt != null && refreshExpiresAt.isAfter(now);
+    }
+
+    public void renew(Instant newExpiresAt) {
+        expiresAt = newExpiresAt;
+    }
+
+    public void revoke(Instant now) {
+        revokedAt = now;
+    }
+
     public Long getId() {
         return id;
+    }
+
+    public String getJti() {
+        return jti;
+    }
+
+    public Instant getStartedAt() {
+        return startedAt;
+    }
+
+    public Instant getRefreshExpiresAt() {
+        return refreshExpiresAt;
     }
 }
