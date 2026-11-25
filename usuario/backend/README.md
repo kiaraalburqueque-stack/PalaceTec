@@ -1,7 +1,7 @@
 # Backend del jugador (Spring Boot)
 
-API del jugador de PalaceTec en Java 21 y Spring Boot 3.5 (Web, Data JPA, Security, Validation, PostgreSQL, jjwt y
-webp-imageio). La usan el frontend React, con cookies, y la app móvil, con Bearer.
+API del jugador de PalaceTec en Java 21 y Spring Boot 3.5 (Web, Data JPA, Security, Validation, PostgreSQL, jjwt,
+webp-imageio, Apache POI y OpenPDF). La usan el frontend React, con cookies, y la app móvil, con Bearer.
 Usa **la misma base PostgreSQL que Django** (`administracion/backend`): no crea ni modifica tablas
 (`ddl-auto=validate`). Créditos virtuales, sin dinero real.
 
@@ -83,10 +83,27 @@ Para usar React con este backend: `$env:VITE_API_BASE_URL = "http://localhost:80
 | POST `/notifications/read-all` | | `{updated, unread_count}` |
 | GET `/responsible-gaming/daily-limit` | | configured, limit, spent, remaining, pending_limit, effective_at, date, timezone |
 | POST `/responsible-gaming/daily-limit` | `{amount}` | Igual que el GET. Primer límite o reducción: inmediatos; aumento: en 24 horas |
+| POST `/responsible-gaming/self-exclude` | `{days}`: 7, 30 o 90 | `{self_excluded_until, detail}`. Cierra todas las sesiones y no se puede cancelar |
+| GET `/responsible-gaming/session-summary` | | Lo apostado, pagado y pendiente en la sesión actual, y su duración |
+| GET `/responsible-gaming/risk-alerts` | | `{pause_until, results}` con las 20 últimas alertas |
+| POST `/responsible-gaming/pause` | `{incident_id}` | `{pause_until}`. Pausa de 10 minutos; cada alerta da una sola |
 | GET `/games` | `?category=ruleta\|cartas\|deportes\|otros&search=` | Catálogo con límites, portada e is_favorite |
+| GET `/games/categories` | `?search=` | `{total, categories, favorites}`: cantidad de juegos por categoría |
+| GET `/games/favorites` | `?search=` | Favoritos disponibles, del más reciente al más antiguo |
+| POST `/games/{id}/favorite` | | `{game_id, is_favorite}`. Lo marca o lo quita |
+| GET `/games/featured` | | Hasta 5 destacados, con play_room_id |
+| GET `/games/recommendations` | | `{results, blocked, personalized}`: hasta 4 juegos con el motivo |
+| GET `/games/{id}/rules` | | Reglas, tabla de pagos, RTP y ventaja de la casa |
 | GET `/rooms` | `?game=ID` | id, name, min_bet, max_bet, players |
 | GET `/rooms/{id}/state` | | Ronda actual, fichas, diez últimos resultados y números |
 | POST `/rooms/{id}/bets` | `{round_id, kind, selection, chips, reference}` | 201 al aceptar; 200 si se repite la misma referencia |
+| GET `/rooms/{id}/bets/previous` | | `{source_round_id, bets}`: apuestas propias de la última ronda liquidada |
+| POST `/rooms/{id}/bets/repeat` | `{round_id, reference, source_round_id}`, el último opcional | 201 con las apuestas repetidas, todas o ninguna; 200 si se repite la misma referencia |
+| GET `/users/bets/{id}` | | Detalle de una apuesta propia y de su ronda |
+| GET `/users/bets-history/export` | `?format=xlsx\|pdf&startDate=&endDate=` | Archivo con las apuestas propias |
+| GET `/stats/summary`, `/stats/win-rate`, `/stats/top-games` | `?startDate=&endDate=` | Totales, porcentaje de apuestas ganadas y los 5 juegos más jugados |
+| GET `/stats/biggest-win` | | `{record}` con la mayor ganancia neta, o null |
+| GET `/stats/balance-history` | `?period=7\|30` | Saldo al cierre de cada día de Lima |
 | GET `/users/bets-history` | `?startDate=&endDate=&page=&page_size=` | `{count, next, previous, results}` (ruleta y casino) |
 
 Antes de la primera apuesta hay que fijar el límite diario.
@@ -101,11 +118,12 @@ Django: ahí están los enlaces para restablecer la contraseña.
 | 400 `{campo: ["mensaje"]}` | Datos inválidos |
 | 400 `{code, detail}` | `invalid_token` (enlace del correo), `bets_closed`, `insufficient_balance`, `daily_limit_required`, `daily_limit_exceeded`, `pause_active` |
 | 400 `{amount: "mensaje"}` | Fuera del mínimo o del máximo acumulado de la sala |
+| 400 `{source_round_id: "mensaje"}` | No hay una ronda anterior que repetir, o no es esa |
 | 401 `{detail}` | Sin sesión, vencida o revocada; credenciales inválidas. Una cookie inválida agrega `code` y `messages`, como SimpleJWT |
 | 403 `{code, detail}` | `access_not_allowed` (excluido o autoexcluido), `account_suspended` |
 | 403 `{detail: "CSRF: ..."}` | Escritura de la web sin un token CSRF válido o desde otro origen |
-| 404 `{detail}` | Sala o página inexistente |
-| 409 | Correo o DNI repetidos; `reference_conflict` si la referencia ya es de otra apuesta |
+| 404 `{detail}` | Sala, juego, apuesta, alerta o página inexistente, o de otro jugador |
+| 409 | Correo o DNI repetidos; `reference_conflict` si la referencia ya es de otra apuesta o repetición |
 | 429 `{detail, retry_after}` | Cuenta bloqueada: 15 minutos tras 5 intentos fallidos o 24 horas con "No fui yo" |
 | 429 `{detail}` | Más de 30 solicitudes de autenticación por minuto desde una IP |
 
@@ -119,6 +137,8 @@ Django: ahí están los enlaces para restablecer la contraseña.
 - **Cookies:** se llaman igual en los dos backends y no distinguen puertos. En un mismo navegador, entrar en uno
   reemplaza la sesión del otro en `localhost` (por ejemplo, la del panel de administración).
 - **Fotos:** `avatar_url` y la carpeta `media` son comunes.
+- **Repetir apuesta:** la referencia es común. Si se repite en un backend y se reintenta en el otro, responde la misma
+  operación sin un segundo cargo.
 - **Apuestas:** los candados siguen el orden de Django (sala, ronda, usuario, billetera) y la referencia, el cupo diario
   y el saldo son comunes a los dos backends.
 
@@ -151,8 +171,18 @@ vuelve a correr `migrate` sobre ella.
 
 - No hay WebSockets: aquí no se emiten `wallet:update`, `notification:new` ni `session:revoked`. La web ve los cambios al
   volver a consultar.
-- Siguen solo en Django casino, asistente, estadísticas, detalle y exportación del historial, y el resto de juego
-  responsable.
+- Siguen solo en Django el casino (blackjack y deportes), el asistente, `GET /rooms/{id}/bets` y
+  `POST /responsible-gaming/excluded-people`, que es del administrador.
+- Las alertas de riesgo las crea Django al liquidar; aquí se consultan y se acepta su pausa.
+- Exportar el historial: con más de 5000 apuestas se conservan las más recientes (Django, las más antiguas). El correo y
+  el título del juego salen siempre como texto y sin caracteres de control; en Django, un correo con `<` da un error 500
+  en el PDF, un carácter de control da un error 500 en el Excel y un título que empieza con `=` queda como fórmula.
+- `win-rate` y `biggest-win` cuentan apuestas, igual que Django, aunque la web las llame rondas: dos apuestas en la misma
+  ronda son dos. `top-games` y las recomendaciones sí cuentan rondas.
+- Recomendaciones: si dos juegos de la misma categoría empatan en rondas, "Porque jugaste..." nombra el de menor id, con
+  los de ruleta primero. En Django depende del orden en que responda la base.
+- `GET /games` y `GET /users/bets-history` conservan los mensajes de validación en español de la app móvil, y el segundo
+  rechaza una fecha vacía. Las demás rutas usan los de Django, que ignora las fechas vacías.
 - Repetir el enlace de "No fui yo" después de restablecer la contraseña responde 200 con `locked_until` nulo; Django
   da un error 500.
 - No se escribe la auditoría (`admin_audit_logs`) de lo que un administrador haga en estas rutas.
