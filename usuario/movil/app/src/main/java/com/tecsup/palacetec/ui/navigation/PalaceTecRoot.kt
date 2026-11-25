@@ -50,6 +50,7 @@ import com.tecsup.palacetec.ui.responsible.ResponsibleScreen
 import com.tecsup.palacetec.ui.roulette.RouletteScreen
 import com.tecsup.palacetec.ui.settings.PushPermissionRequest
 import com.tecsup.palacetec.ui.settings.SettingsScreen
+import com.tecsup.palacetec.ui.stats.StatsScreen
 import com.tecsup.palacetec.ui.wallet.WalletScreen
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -70,6 +71,7 @@ enum class Tab(val route: String, val label: String, val title: String, @param:D
 enum class Section(val route: String, val title: String) {
     NOTIFICATIONS("notifications", "Notificaciones"),
     PROFILE("profile", "Mi perfil"),
+    STATS("stats", "Estadísticas"),
     RESPONSIBLE("responsible", "Juego responsable"),
     SETTINGS("settings", "Ajustes"),
 }
@@ -148,6 +150,7 @@ private fun PlayerFlow(
             composable(Section.PROFILE.route) {
                 ProfileScreen(
                     links = listOf(
+                        ProfileLink("Estadísticas", R.drawable.ic_stats) { nav.openSection(Section.STATS) },
                         ProfileLink("Juego responsable", R.drawable.ic_shield) {
                             nav.openSection(Section.RESPONSIBLE)
                         },
@@ -155,6 +158,7 @@ private fun PlayerFlow(
                     ),
                 )
             }
+            composable(Section.STATS.route) { StatsScreen() }
             composable(Section.RESPONSIBLE.route) { ResponsibleScreen() }
             composable(Section.SETTINGS.route) { SettingsScreen() }
         }

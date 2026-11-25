@@ -31,6 +31,7 @@ class TestServer {
     private val server = MockWebServer()
     private val responses = ConcurrentHashMap<String, () -> MockResponse>()
     val requests = CopyOnWriteArrayList<Pair<String, String>>()
+    private val queries = CopyOnWriteArrayList<Pair<String, String>>()
     val rejected = CopyOnWriteArrayList<Pair<String, String?>>()
     @Volatile var token: String? = "token-de-prueba"
     @Volatile var lastAuthorization: String? = null
@@ -42,6 +43,7 @@ class TestServer {
             override fun dispatch(request: RecordedRequest): MockResponse {
                 val key = "${request.method} ${request.path.orEmpty().substringBefore('?').removePrefix("/api/v1")}"
                 requests += key to request.body.readUtf8()
+                queries += key to request.path.orEmpty().substringAfter('?', "")
                 lastAuthorization = request.getHeader("Authorization")
                 return responses[key]?.invoke() ?: MockResponse().setResponseCode(404)
             }
@@ -67,6 +69,8 @@ class TestServer {
     fun count(key: String) = requests.count { it.first == key }
 
     fun bodies(key: String) = requests.filter { it.first == key }.map { it.second }
+
+    fun queries(key: String) = queries.filter { it.first == key }.map { it.second }
 
     fun close() = server.shutdown()
 }

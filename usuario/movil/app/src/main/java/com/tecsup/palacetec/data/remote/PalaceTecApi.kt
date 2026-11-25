@@ -72,4 +72,17 @@ interface PalaceTecApi {
 
     @POST("api/v1/notifications/read-all")
     suspend fun markAllNotificationsRead(): UnreadCount
+
+    @GET("api/v1/stats/win-rate")
+    suspend fun winRate(): WinRate
+
+    @GET("api/v1/stats/biggest-win")
+    suspend fun biggestWin(): BiggestWinResponse
+
+    /** period: 7 o 30 días. */
+    @GET("api/v1/stats/balance-history")
+    suspend fun balanceHistory(@Query("period") period: Int): BalanceHistory
+
+    @GET("api/v1/stats/top-games")
+    suspend fun topGames(): TopGames
 }

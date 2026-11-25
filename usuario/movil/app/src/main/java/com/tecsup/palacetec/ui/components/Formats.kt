@@ -60,3 +60,20 @@ fun fraction(part: String, total: String?): Float {
     val value = part.toBigDecimalOrNull() ?: BigDecimal.ZERO
     return value.divide(whole, 4, RoundingMode.HALF_UP).toFloat().coerceIn(0f, 1f)
 }
+
+/** 33.33 -> "33.33 %". */
+fun percent(value: Double): String =
+    DecimalFormat("0.##", DecimalFormatSymbols(Locale.US)).format(value) + " %"
+
+/** "2026-11-25" -> "25/11". */
+fun dayMonth(date: String): String = date.split("-").let { if (it.size == 3) "${it[2]}/${it[1]}" else date }
+
+/** Valores del eje: 1,000 · 12.5K · 2M. */
+fun compact(value: Long): String {
+    val symbols = DecimalFormatSymbols(Locale.US)
+    return when {
+        value < 10_000 -> DecimalFormat("#,##0", symbols).format(value)
+        value < 1_000_000 -> DecimalFormat("0.##", symbols).format(value / 1_000.0) + "K"
+        else -> DecimalFormat("0.##", symbols).format(value / 1_000_000.0) + "M"
+    }
+}
