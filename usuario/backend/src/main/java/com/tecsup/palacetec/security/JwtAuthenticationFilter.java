@@ -2,6 +2,7 @@ package com.tecsup.palacetec.security;
 
 import com.tecsup.palacetec.config.SecurityConfig;
 import com.tecsup.palacetec.exception.ApiException;
+import com.tecsup.palacetec.media.MediaStorage;
 import com.tecsup.palacetec.security.WebTokenService.WebToken;
 import com.tecsup.palacetec.service.SessionService;
 import io.jsonwebtoken.JwtException;
@@ -42,7 +43,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         // Un token viejo no debe impedir registrarse, volver a entrar, renovar ni cerrar la sesión.
-        return SecurityConfig.PUBLIC_PATHS.contains(request.getRequestURI());
+        String path = request.getRequestURI();
+        return SecurityConfig.PUBLIC_PATHS.contains(path) || path.startsWith(MediaStorage.URL);
     }
 
     @Override

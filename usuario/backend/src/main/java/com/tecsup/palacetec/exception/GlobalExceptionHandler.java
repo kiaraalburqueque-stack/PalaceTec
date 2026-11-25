@@ -2,6 +2,7 @@ package com.tecsup.palacetec.exception;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies.SnakeCaseStrategy;
+import com.tecsup.palacetec.media.AvatarImages;
 import com.tecsup.palacetec.security.RestAuthenticationEntryPoint;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -21,6 +22,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
@@ -59,6 +62,17 @@ public class GlobalExceptionHandler {
             }
         }
         return ResponseEntity.badRequest().body(errors);
+    }
+
+    /** Supera lo que el servidor acepta recibir, muy por encima del límite de la foto: el único archivo que se sube. */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Object> tooBig(MaxUploadSizeExceededException exception) {
+        return fields(InvalidFieldsException.field("avatar", AvatarImages.TOO_BIG));
+    }
+
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<Object> multipart(MultipartException exception) {
+        return ResponseEntity.badRequest().body(Map.of("detail", "Multipart form parse error."));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)

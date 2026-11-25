@@ -1,5 +1,6 @@
 package com.tecsup.palacetec.config;
 
+import com.tecsup.palacetec.media.MediaStorage;
 import com.tecsup.palacetec.security.CsrfGuard;
 import com.tecsup.palacetec.security.JwtAuthenticationFilter;
 import com.tecsup.palacetec.security.JwtService;
@@ -58,7 +59,7 @@ public class SecurityConfig {
                         UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(HttpMethod.POST, PUBLIC_POSTS.toArray(String[]::new)).permitAll()
-                        .requestMatchers(HttpMethod.GET, CSRF_PATH).permitAll()
+                        .requestMatchers(HttpMethod.GET, CSRF_PATH, MediaStorage.URL + "**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated())
                 .build();

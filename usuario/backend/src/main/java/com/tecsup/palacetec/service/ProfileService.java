@@ -6,6 +6,7 @@ import com.tecsup.palacetec.dto.ProfileResponse;
 import com.tecsup.palacetec.entity.User;
 import com.tecsup.palacetec.exception.ApiException;
 import com.tecsup.palacetec.exception.InvalidFieldsException;
+import com.tecsup.palacetec.media.MediaStorage;
 import com.tecsup.palacetec.repository.UserRepository;
 import com.tecsup.palacetec.security.PlayerPrincipal;
 import java.util.List;
@@ -22,11 +23,14 @@ public class ProfileService {
 
     private final UserRepository users;
     private final SessionService sessions;
+    private final MediaStorage media;
     private final TransactionTemplate transaction;
 
-    public ProfileService(UserRepository users, SessionService sessions, TransactionTemplate transaction) {
+    public ProfileService(UserRepository users, SessionService sessions, MediaStorage media,
+                          TransactionTemplate transaction) {
         this.users = users;
         this.sessions = sessions;
+        this.media = media;
         this.transaction = transaction;
     }
 
@@ -42,8 +46,13 @@ public class ProfileService {
                 User user = sessions.lock(player);
                 ProfileChanges changes = ProfileChanges.from(body, user.getAvatarUrl(),
                         nickname -> users.existsByNicknameAndIdNot(nickname, user.getId()));
+                String previousAvatar = user.getAvatarUrl();
                 user.updateProfile(changes.nickname(), changes.avatarUrl(), changes.firstName(), changes.lastName(),
                         changes.phone());
+                if (!previousAvatar.equals(user.getAvatarUrl())) {
+                    // Al volver a un avatar predeterminado se borra la foto subida.
+                    media.replaceAvatar(previousAvatar, user.getAvatarUrl());
+                }
                 users.flush();
                 return ProfileResponse.from(user);
             });

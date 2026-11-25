@@ -32,7 +32,9 @@ public record PalaceTecProperties(
      * @param cookieSecure cookies solo por HTTPS; en desarrollo local, sin HTTPS, debe ser false
      * @param loginRateLimit solicitudes de autenticación por minuto y por IP
      * @param frontendUrl adonde apuntan los enlaces de los correos
+     * @param mediaRoot carpeta media de Django, donde se guardan las fotos de avatar
      */
-    public record Web(boolean cookieSecure, @Min(1) int loginRateLimit, @NotBlank String frontendUrl) {
+    public record Web(boolean cookieSecure, @Min(1) int loginRateLimit, @NotBlank String frontendUrl,
+                      @NotBlank String mediaRoot) {
     }
 }

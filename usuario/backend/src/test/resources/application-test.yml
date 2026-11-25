@@ -19,3 +19,4 @@ palacetec:
     # El límite real se prueba aparte, sin acumular intentos entre casos.
     login-rate-limit: 1000
     frontend-url: http://localhost:5173
+    media-root: ${java.io.tmpdir}/palacetec-spring-test-media

@@ -2,10 +2,18 @@
 # Ver application-example.yml.
 server:
   port: 8080
+  tomcat:
+    # Permite responder con un error JSON a una foto demasiado grande, en vez de cortar la conexión.
+    max-swallow-size: 50MB
 
 spring:
   application:
     name: palacetec-usuario
+  servlet:
+    multipart:
+      # El límite de la foto (2 MB) lo revisa AvatarImages, con el mensaje de Django.
+      max-file-size: 10MB
+      max-request-size: 11MB
   config:
     import: optional:file:./application-local.yml
   datasource:
@@ -50,3 +58,5 @@ palacetec:
     login-rate-limit: ${LOGIN_RATE_LIMIT:30}
     # Frontend React al que apuntan los enlaces de los correos.
     frontend-url: ${FRONTEND_URL:http://localhost:5173}
+    # Carpeta media de Django (relativa a usuario/backend): avatar_url es común a los dos backends.
+    media-root: ${MEDIA_ROOT:../../administracion/backend/media}
