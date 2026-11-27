@@ -6,6 +6,7 @@ import { getWalletSummary } from '../services/walletService';
 import { formatCredits } from '../utils/walletUtils';
 import LowBalanceNotice from './LowBalanceNotice';
 import NotificationCenter from './NotificationCenter';
+import Icon, { BrandMark } from './Icon';
 
 export default function Header() {
   const { user, setUser } = useUser();
@@ -33,20 +34,22 @@ export default function Header() {
 
   return (
     <header className="main-header">
-      <div className="header-brand">
-        <span className="brand-icon">♛</span>
-        <span>PalaceTec</span>
-      </div>
+      <div className="header-inner">
+        <a className="header-brand" href="/">
+          <BrandMark />
+          <span className="brand-name">PalaceTec</span>
+        </a>
 
-      <nav className="header-navigation" aria-label="Navegación principal">
-        <span>Casino Virtual</span>
-      </nav>
+        <nav className="header-navigation" aria-label="Navegación principal">
+          <span>Casino Virtual</span>
+        </nav>
 
-      <div className="header-account">
-        {wallet?.is_low_balance && <LowBalanceNotice key={user.id} threshold={wallet.low_balance_threshold} />}
-        {user && <div className="header-wallet" aria-label="Saldo de billetera"><span>MI SALDO</span><strong>{wallet ? formatCredits(Number(wallet.balance)) : 'Consultando…'}</strong></div>}
-        {user && <NotificationCenter key={user.id} userId={user.id} />}
-        <UserProfileDropdown user={user} wallet={wallet} />
+        <div className="header-account">
+          {wallet?.is_low_balance && <LowBalanceNotice key={user.id} threshold={wallet.low_balance_threshold} />}
+          {user && <div className="header-wallet" aria-label="Saldo de billetera"><Icon name="coin" size={22} className="wallet-icon" /><span>MI SALDO</span><strong>{wallet ? formatCredits(Number(wallet.balance)) : 'Consultando…'}</strong></div>}
+          {user && <NotificationCenter key={user.id} userId={user.id} />}
+          <UserProfileDropdown user={user} wallet={wallet} />
+        </div>
       </div>
     </header>
   );

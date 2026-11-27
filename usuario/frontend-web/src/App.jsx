@@ -23,6 +23,7 @@ import ResetPassword from './pages/ResetPassword';
 import NotMePage from './pages/NotMePage';
 import NotificationSettings from './pages/NotificationSettings';
 import AssistantChat from './components/AssistantChat';
+import Icon, { BrandMark } from './components/Icon';
 
 import './App.css';
 
@@ -34,26 +35,23 @@ function App() {
         <Header />
 
         <nav className="app-page-navigation" aria-label="Páginas de PalaceTec">
-          <NavLink to="/deportes">Deportes virtuales</NavLink>
-          <NavLink to="/blackjack">Blackjack</NavLink>
-          <NavLink to="/juego-responsable">Mis límites</NavLink>
-          <NavLink to="/historial">Mi historial</NavLink>
-          <NavLink to="/estadisticas">Mis estadísticas</NavLink>
-          <NavLink to="/" end>
-            Inicio
-          </NavLink>
-
-          <NavLink to="/ruleta">
-            Ruleta
-          </NavLink>
-
-          <NavLink to="/registro">
-            Registro
-          </NavLink>
-
-          <NavLink to="/login">
-            Iniciar sesión
-          </NavLink>
+          <div className="nav-inner">
+            <div className="nav-group">
+              <NavLink to="/" end><Icon name="home" />Inicio</NavLink>
+              <NavLink to="/ruleta"><Icon name="roulette" />Ruleta</NavLink>
+              <NavLink to="/blackjack"><Icon name="cards" />Blackjack</NavLink>
+              <NavLink to="/deportes"><Icon name="ball" />Deportes virtuales</NavLink>
+            </div>
+            <div className="nav-group">
+              <NavLink to="/historial"><Icon name="history" />Mi historial</NavLink>
+              <NavLink to="/estadisticas"><Icon name="stats" />Mis estadísticas</NavLink>
+              <NavLink to="/juego-responsable" className="nav-responsible"><Icon name="shield" />Mis límites</NavLink>
+            </div>
+            <div className="nav-group nav-auth">
+              <NavLink to="/registro"><Icon name="userPlus" />Registro</NavLink>
+              <NavLink to="/login"><Icon name="login" />Iniciar sesión</NavLink>
+            </div>
+          </div>
         </nav>
 
         <div className="app-content">
@@ -79,7 +77,19 @@ function App() {
             <Route path="*" element={<HomePage />} />
           </Routes>
         </div>
-        <footer className="app-footer"><span>♛ PalaceTec · Casino virtual</span><span>Créditos simulados. Sin dinero real. Solo mayores de 18 años.</span></footer>
+        <footer className="app-footer">
+          <div className="footer-inner">
+            <div className="footer-brand">
+              <span className="footer-logo"><BrandMark size={28} />PalaceTec · Casino virtual</span>
+              <span>Créditos simulados. Sin dinero real. Solo mayores de 18 años.</span>
+            </div>
+            <div className="footer-responsible">
+              <span className="age-badge" aria-hidden="true">18+</span>
+              <p>Juega con responsabilidad. Define tu límite diario, toma pausas y, si lo necesitas, solicita la autoexclusión.</p>
+              <NavLink to="/juego-responsable">Herramientas de juego responsable</NavLink>
+            </div>
+          </div>
+        </footer>
       </div>
       <AssistantChat />
     </UserProvider>
