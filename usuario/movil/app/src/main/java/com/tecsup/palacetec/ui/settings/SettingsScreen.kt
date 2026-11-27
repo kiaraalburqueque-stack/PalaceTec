@@ -12,6 +12,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -21,6 +22,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
@@ -28,13 +31,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tecsup.palacetec.BuildConfig
+import com.tecsup.palacetec.R
 import com.tecsup.palacetec.ui.appViewModel
 
 @Composable
@@ -59,15 +65,33 @@ fun SettingsScreen(
 @Composable
 private fun NotificationsCard(enabled: Boolean) {
     val context = LocalContext.current
-    Card(Modifier.fillMaxWidth()) {
+    Card(
+        Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+    ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Notificaciones", fontWeight = FontWeight.Bold)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    painterResource(R.drawable.ic_notifications), contentDescription = null,
+                    tint = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    "Notificaciones", style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(start = 12.dp).weight(1f),
+                )
+                Text(
+                    if (enabled) "ACTIVAS" else "APAGADAS",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             Text(
                 if (enabled) "Están activadas en este celular."
                 else "Están desactivadas: no recibirás avisos en este celular.",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            OutlinedButton(onClick = { context.openNotificationSettings() }) {
+            OutlinedButton(onClick = { context.openNotificationSettings() }, shape = MaterialTheme.shapes.small) {
                 Text(if (enabled) "Cambiar en el sistema" else "Activar en el sistema")
             }
         }
@@ -77,7 +101,11 @@ private fun NotificationsCard(enabled: Boolean) {
 @Composable
 private fun DebugCard(state: SettingsUiState, onCrash: () -> Unit) {
     val context = LocalContext.current
-    OutlinedCard(Modifier.fillMaxWidth(), border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)) {
+    OutlinedCard(
+        Modifier.fillMaxWidth(),
+        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+    ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Pruebas (solo debug)", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
             Text("Token de FCM para el mensaje de prueba de la consola:")
