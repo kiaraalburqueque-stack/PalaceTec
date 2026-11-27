@@ -53,8 +53,8 @@ import com.tecsup.palacetec.ui.components.LoadingBox
 import com.tecsup.palacetec.ui.components.PrimaryButton
 import com.tecsup.palacetec.ui.components.betLabel
 import com.tecsup.palacetec.ui.components.credits
-import com.tecsup.palacetec.ui.theme.Marfil
-import com.tecsup.palacetec.ui.theme.Naranja
+import com.tecsup.palacetec.ui.theme.Texto
+import com.tecsup.palacetec.ui.theme.Dorado
 import com.tecsup.palacetec.ui.theme.NegroRuleta
 import com.tecsup.palacetec.ui.theme.RojoRuleta
 import com.tecsup.palacetec.ui.theme.VerdeGanancia
@@ -242,7 +242,7 @@ private fun NumberCircle(number: Int, color: String, size: Int) {
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            number.toString(), color = Marfil, fontWeight = FontWeight.Bold,
+            number.toString(), color = Texto, fontWeight = FontWeight.Bold,
             style = if (size >= 48) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.labelMedium,
         )
     }
@@ -333,7 +333,7 @@ private fun OptionCell(option: Option, selected: Boolean, onSelect: (String) -> 
             .selectable(selected = selected, role = Role.RadioButton) { onSelect(option.value) },
         contentAlignment = Alignment.Center,
     ) {
-        Text(option.label, color = Marfil, fontWeight = FontWeight.Bold)
+        Text(option.label, color = Texto, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -390,11 +390,11 @@ private fun Chip(value: Int, enabled: Boolean, onClick: () -> Unit) {
             .size(52.dp)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.primaryContainer)
-            .border(3.dp, if (value >= 100) Naranja else MaterialTheme.colorScheme.primary, CircleShape)
+            .border(3.dp, if (value >= 100) Dorado else MaterialTheme.colorScheme.primary, CircleShape)
             .clickable(enabled = enabled, role = Role.Button, onClickLabel = "Agregar ficha de $value", onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text(value.toString(), color = Marfil, fontWeight = FontWeight.Bold)
+        Text(value.toString(), color = Texto, fontWeight = FontWeight.Bold)
     }
 }
 

@@ -60,7 +60,7 @@ import com.tecsup.palacetec.ui.components.dayMonth
 import com.tecsup.palacetec.ui.components.limaDateTime
 import com.tecsup.palacetec.ui.components.percent
 import com.tecsup.palacetec.ui.components.signedCredits
-import com.tecsup.palacetec.ui.theme.MarfilTenue
+import com.tecsup.palacetec.ui.theme.TextoTenue
 import com.tecsup.palacetec.ui.theme.RojoPerdida
 import com.tecsup.palacetec.ui.theme.VerdeGanancia
 
@@ -130,7 +130,7 @@ private fun WinRateCard(rate: WinRate) {
         )
         val parts = listOf(
             Triple("Ganadas", rate.won, VerdeGanancia),
-            Triple("Empates", rate.push, MarfilTenue),
+            Triple("Empates", rate.push, TextoTenue),
             Triple("Perdidas", rate.lost, RojoPerdida),
         )
         Row(Modifier.fillMaxWidth().height(8.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {

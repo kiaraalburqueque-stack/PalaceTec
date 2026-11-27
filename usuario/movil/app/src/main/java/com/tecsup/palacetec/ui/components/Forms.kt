@@ -53,6 +53,7 @@ fun FormField(
         keyboardActions = KeyboardActions(onDone = { onDone() }),
         visualTransformation = visualTransformation,
         trailingIcon = trailingIcon,
+        shape = MaterialTheme.shapes.small,
         modifier = modifier.fillMaxWidth(),
     )
 }
@@ -100,9 +101,15 @@ fun PrimaryButton(
     Button(
         onClick = onClick,
         enabled = enabled && !loading,
+        shape = MaterialTheme.shapes.small,
         modifier = modifier.fillMaxWidth().height(52.dp),
     ) {
-        if (loading) CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp)
-        else Text(text, fontWeight = FontWeight.Bold)
+        if (loading) {
+            CircularProgressIndicator(
+                Modifier.size(22.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary,
+            )
+        } else {
+            Text(text, fontWeight = FontWeight.ExtraBold)
+        }
     }
 }
