@@ -1,17 +1,22 @@
 package com.tecsup.palacetec.ui.navigation
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -23,9 +28,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.key
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -43,6 +49,8 @@ import com.tecsup.palacetec.ui.auth.LoginScreen
 import com.tecsup.palacetec.ui.auth.RegisterScreen
 import com.tecsup.palacetec.ui.auth.SplashScreen
 import com.tecsup.palacetec.ui.bets.BetsScreen
+import com.tecsup.palacetec.ui.components.PalaceTecLogo
+import com.tecsup.palacetec.ui.components.PalaceTecWordmark
 import com.tecsup.palacetec.ui.home.HomeScreen
 import com.tecsup.palacetec.ui.notifications.NotificationsScreen
 import com.tecsup.palacetec.ui.notifications.UnreadViewModel
@@ -68,14 +76,14 @@ object Routes {
 enum class Tab(val route: String, val label: String, val title: String, @param:DrawableRes val icon: Int) {
     HOME("home", "Inicio", "PalaceTec", R.drawable.ic_home),
     ROULETTE("roulette", "Ruleta", "Ruleta", R.drawable.ic_roulette),
-    BETS("bets", "Apuestas", "Mis apuestas", R.drawable.ic_bets),
+    BETS("bets", "Historial", "Historial de apuestas", R.drawable.ic_history),
     WALLET("wallet", "Billetera", "Billetera", R.drawable.ic_wallet),
+    PROFILE("profile", "Perfil", "Mi perfil", R.drawable.ic_person),
 }
 
 /** Pantallas que se abren encima de una pestaña, con flecha para volver. */
 enum class Section(val route: String, val title: String) {
     NOTIFICATIONS("notifications", "Notificaciones"),
-    PROFILE("profile", "Mi perfil"),
     STATS("stats", "Estadísticas"),
     RESPONSIBLE("responsible", "Juego responsable"),
     SETTINGS("settings", "Ajustes"),
@@ -142,7 +150,7 @@ private fun PlayerFlow(
     Scaffold(
         topBar = {
             if (section != null) SectionTopBar(section.title, onBack = { nav.popBackStack() })
-            else PlayerTopBar(currentTab.title, unread, onOpen = { nav.openSection(it) }, onLogout)
+            else PlayerTopBar(currentTab, unread, onNotifications = { nav.openSection(Section.NOTIFICATIONS) }, onLogout)
         },
         bottomBar = { if (section == null) PlayerNavigationBar(currentTab) { nav.openTab(it) } },
     ) { padding ->
@@ -159,7 +167,7 @@ private fun PlayerFlow(
             composable(Tab.BETS.route) { BetsScreen() }
             composable(Tab.WALLET.route) { WalletScreen() }
             composable(Section.NOTIFICATIONS.route) { NotificationsScreen() }
-            composable(Section.PROFILE.route) {
+            composable(Tab.PROFILE.route) {
                 ProfileScreen(
                     links = listOf(
                         ProfileLink("Estadísticas", R.drawable.ic_stats) { nav.openSection(Section.STATS) },
@@ -198,17 +206,17 @@ private fun NavHostController.openSection(section: Section) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun topBarColors() = TopAppBarDefaults.topAppBarColors(
-    containerColor = MaterialTheme.colorScheme.surfaceContainer,
-    titleContentColor = MaterialTheme.colorScheme.primary,
-    navigationIconContentColor = MaterialTheme.colorScheme.secondary,
-    actionIconContentColor = MaterialTheme.colorScheme.secondary,
+    containerColor = MaterialTheme.colorScheme.background,
+    titleContentColor = MaterialTheme.colorScheme.onSurface,
+    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+    actionIconContentColor = MaterialTheme.colorScheme.onSurface,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SectionTopBar(title: String, onBack: () -> Unit) {
     TopAppBar(
-        title = { Text(title, fontWeight = FontWeight.Bold) },
+        title = { Text(title, style = MaterialTheme.typography.titleLarge) },
         colors = topBarColors(),
         navigationIcon = {
             IconButton(onClick = onBack) {
@@ -218,23 +226,38 @@ private fun SectionTopBar(title: String, onBack: () -> Unit) {
     )
 }
 
+/** En Inicio va la marca; en las demás pestañas, el nombre de la pestaña. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun PlayerTopBar(title: String, unread: Long, onOpen: (Section) -> Unit, onLogout: () -> Unit) {
+private fun PlayerTopBar(tab: Tab, unread: Long, onNotifications: () -> Unit, onLogout: () -> Unit) {
     TopAppBar(
-        title = { Text(title, fontWeight = FontWeight.Bold) },
+        title = {
+            if (tab == Tab.HOME) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    PalaceTecLogo(30.dp)
+                    PalaceTecWordmark(style = MaterialTheme.typography.titleLarge)
+                }
+            } else {
+                Text(tab.title, style = MaterialTheme.typography.titleLarge)
+            }
+        },
         colors = topBarColors(),
         actions = {
-            IconButton(onClick = { onOpen(Section.NOTIFICATIONS) }) {
-                BadgedBox(badge = { if (unread > 0) Badge { Text(if (unread > 99) "99+" else "$unread") } }) {
+            IconButton(onClick = onNotifications) {
+                BadgedBox(
+                    badge = {
+                        if (unread > 0) {
+                            Badge(containerColor = MaterialTheme.colorScheme.tertiary) {
+                                Text(if (unread > 99) "99+" else "$unread")
+                            }
+                        }
+                    },
+                ) {
                     Icon(
                         painterResource(R.drawable.ic_notifications),
                         contentDescription = if (unread > 0) "Notificaciones: $unread sin leer" else "Notificaciones",
                     )
                 }
-            }
-            IconButton(onClick = { onOpen(Section.PROFILE) }) {
-                Icon(painterResource(R.drawable.ic_person), contentDescription = "Mi perfil")
             }
             IconButton(onClick = onLogout) {
                 Icon(painterResource(R.drawable.ic_logout), contentDescription = "Cerrar sesión")
@@ -245,14 +268,24 @@ private fun PlayerTopBar(title: String, unread: Long, onOpen: (Section) -> Unit,
 
 @Composable
 private fun PlayerNavigationBar(current: Tab, onSelect: (Tab) -> Unit) {
-    NavigationBar {
-        Tab.entries.forEach { tab ->
-            NavigationBarItem(
-                selected = tab == current,
-                onClick = { onSelect(tab) },
-                icon = { Icon(painterResource(tab.icon), contentDescription = null) },
-                label = { Text(tab.label) },
-            )
+    Column {
+        HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+        NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer, tonalElevation = 0.dp) {
+            Tab.entries.forEach { tab ->
+                NavigationBarItem(
+                    selected = tab == current,
+                    onClick = { onSelect(tab) },
+                    icon = { Icon(painterResource(tab.icon), contentDescription = null) },
+                    label = { Text(tab.label, maxLines = 1) },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                        indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
+                )
+            }
         }
     }
 }
