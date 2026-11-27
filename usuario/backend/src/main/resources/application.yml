@@ -60,6 +60,10 @@ palacetec:
     frontend-url: ${FRONTEND_URL:http://localhost:5173}
     # Carpeta media de Django (relativa a usuario/backend): avatar_url es común a los dos backends.
     media-root: ${MEDIA_ROOT:../../administracion/backend/media}
+  # WebSockets ws/roulette/<sala>/ y ws/notifications/: cada cuánto se leen de la base los cambios de runroulette.
+  realtime:
+    polling: true
+    poll-interval-ms: ${REALTIME_POLL_MS:1000}
   # Asistente virtual, con las variables de Django. Sin clave responde con preguntas frecuentes.
   assistant:
     provider: ${ASSISTANT_PROVIDER:faq}

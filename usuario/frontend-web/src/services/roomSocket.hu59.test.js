@@ -1,6 +1,6 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { connectRoom, reconnectDelay } from './roomSocket';
-vi.mock('./api', () => ({ API_BASE_URL: 'http://localhost:8000', refreshSession: vi.fn().mockResolvedValue({}), endSession: vi.fn() }));
+vi.mock('./api', () => ({ API_BASE_URL: 'http://localhost:8080', refreshSession: vi.fn().mockResolvedValue({}), endSession: vi.fn() }));
 vi.mock('./notificationService', () => ({ forceDisconnect: vi.fn() }));
 afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
 it('HU59 usa retroceso exponencial con tope de 30 segundos', () => {
