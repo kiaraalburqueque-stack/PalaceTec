@@ -44,7 +44,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) {
         // Un token viejo no debe impedir registrarse, volver a entrar, renovar ni cerrar la sesión.
         String path = request.getRequestURI();
-        return SecurityConfig.PUBLIC_PATHS.contains(path) || path.startsWith(MediaStorage.URL);
+        // Los WebSockets leen la cookie en su propio handshake, para cerrar con 4401 como Django.
+        return SecurityConfig.PUBLIC_PATHS.contains(path) || path.startsWith(MediaStorage.URL)
+                || path.startsWith(SecurityConfig.WEBSOCKET_PATHS);
     }
 
     @Override

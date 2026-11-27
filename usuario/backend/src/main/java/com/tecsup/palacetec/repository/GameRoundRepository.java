@@ -12,6 +12,9 @@ public interface GameRoundRepository extends Repository<GameRound, Long> {
 
     Optional<GameRound> findFirstByRoomIdOrderByIdDesc(Long roomId);
 
+    /** La ronda que el WebSocket ya conocía y las que se abrieron después. */
+    List<GameRound> findByRoomIdAndIdGreaterThanEqualOrderByIdAsc(Long roomId, Long id);
+
     List<GameRound> findTop10ByRoomIdAndStatusOrderBySettledAtDescIdDesc(Long roomId, GameRound.Status status);
 
     /** Última ronda liquidada de la sala en la que apostó el jugador. */

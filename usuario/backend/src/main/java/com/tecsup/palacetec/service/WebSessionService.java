@@ -6,6 +6,7 @@ import com.tecsup.palacetec.dto.MeResponse;
 import com.tecsup.palacetec.entity.AuthSession;
 import com.tecsup.palacetec.entity.User;
 import com.tecsup.palacetec.exception.ApiException;
+import com.tecsup.palacetec.realtime.SessionsRevoked;
 import com.tecsup.palacetec.repository.AuthSessionRepository;
 import com.tecsup.palacetec.repository.UserRepository;
 import com.tecsup.palacetec.security.JwtService;
@@ -17,6 +18,7 @@ import io.jsonwebtoken.JwtException;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Optional;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,15 +32,18 @@ public class WebSessionService {
     private final WebTokenService webTokens;
     private final JwtService jwt;
     private final Clock clock;
+    private final ApplicationEventPublisher events;
 
     public WebSessionService(UserRepository users, AuthSessionRepository sessions, ExclusionService exclusions,
-                             WebTokenService webTokens, JwtService jwt, Clock clock) {
+                             WebTokenService webTokens, JwtService jwt, Clock clock,
+                             ApplicationEventPublisher events) {
         this.users = users;
         this.sessions = sessions;
         this.exclusions = exclusions;
         this.webTokens = webTokens;
         this.jwt = jwt;
         this.clock = clock;
+        this.events = events;
     }
 
     /** Nuevo token de acceso y el inicio, que no cambia, de su sesión. */
@@ -84,7 +89,10 @@ public class WebSessionService {
     /** El mismo bloqueo de usuario serializa el cierre de sesión con sus escrituras. */
     private void revoke(Long userId, String jti) {
         users.lockById(userId).flatMap(user -> sessions.findByJti(jti))
-                .ifPresent(session -> session.revoke(TimeConfig.now(clock)));
+                .ifPresent(session -> {
+                    session.revoke(TimeConfig.now(clock));
+                    events.publishEvent(new SessionsRevoked(userId, jti));
+                });
     }
 
     private Optional<PlayerPrincipal> findBearer(String bearer) {

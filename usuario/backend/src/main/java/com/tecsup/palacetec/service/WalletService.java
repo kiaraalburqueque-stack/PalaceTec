@@ -9,11 +9,13 @@ import com.tecsup.palacetec.dto.WalletSummaryResponse;
 import com.tecsup.palacetec.entity.Wallet;
 import com.tecsup.palacetec.entity.WalletTransaction;
 import com.tecsup.palacetec.exception.ApiException;
+import com.tecsup.palacetec.realtime.WalletChanged;
 import com.tecsup.palacetec.repository.WalletBalanceRepository;
 import com.tecsup.palacetec.repository.WalletRepository;
 import com.tecsup.palacetec.repository.WalletTransactionRepository;
 import java.math.BigDecimal;
 import java.time.Instant;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,12 +27,14 @@ public class WalletService {
     private final WalletRepository wallets;
     private final WalletBalanceRepository balances;
     private final WalletTransactionRepository transactions;
+    private final ApplicationEventPublisher events;
 
     public WalletService(WalletRepository wallets, WalletBalanceRepository balances,
-                         WalletTransactionRepository transactions) {
+                         WalletTransactionRepository transactions, ApplicationEventPublisher events) {
         this.wallets = wallets;
         this.balances = balances;
         this.transactions = transactions;
+        this.events = events;
     }
 
     @Transactional(readOnly = true)
@@ -73,6 +77,7 @@ public class WalletService {
         wallet.debit(amount);
         transactions.save(new WalletTransaction(wallet.getId(), WalletTransaction.Type.BET, amount,
                 wallet.getBalance(), reference, now));
+        changed(wallet);
     }
 
     /** Con la billetera ya bloqueada, como debit. */
@@ -81,5 +86,12 @@ public class WalletService {
         wallet.credit(amount);
         transactions.save(new WalletTransaction(wallet.getId(), WalletTransaction.Type.WIN, amount,
                 wallet.getBalance(), reference, now));
+        changed(wallet);
+    }
+
+    /** wallet:update de Django: se envía al confirmarse la transacción. */
+    private void changed(Wallet wallet) {
+        events.publishEvent(new WalletChanged(wallet.getUserId(), WalletSummaryResponse.of(wallet.getBalance(),
+                wallet.getBonusBalance(), wallet.getBalance().subtract(wallet.getBonusBalance()))));
     }
 }

@@ -49,6 +49,10 @@ public class Wallet {
         return id;
     }
 
+    public Long getUserId() {
+        return userId;
+    }
+
     public BigDecimal getBalance() {
         return balance;
     }
