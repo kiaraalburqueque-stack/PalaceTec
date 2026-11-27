@@ -1,29 +1,34 @@
 package com.tecsup.palacetec.ui.auth
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
@@ -31,11 +36,14 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.tecsup.palacetec.R
 import com.tecsup.palacetec.ui.appViewModel
 import com.tecsup.palacetec.ui.components.FormField
+import com.tecsup.palacetec.ui.components.PalaceTecLogo
+import com.tecsup.palacetec.ui.components.PalaceTecWordmark
 import com.tecsup.palacetec.ui.components.PasswordField
 import com.tecsup.palacetec.ui.components.PrimaryButton
+import com.tecsup.palacetec.ui.theme.Fondo
+import com.tecsup.palacetec.ui.theme.VerdeOscuro
 
 @Composable
 fun LoginScreen(
@@ -46,6 +54,7 @@ fun LoginScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val notice by viewModel.notice.collectAsStateWithLifecycle()
     AuthLayout("Inicia sesión para jugar", modifier) {
+        Text("Bienvenido de vuelta", style = MaterialTheme.typography.titleLarge)
         if (state.error == null) notice?.let { ErrorText(it) }
         FormField(
             state.email, viewModel::onEmail, "Correo electrónico", state.emailError,
@@ -57,7 +66,10 @@ fun LoginScreen(
         )
         state.error?.let { ErrorText(it) }
         PrimaryButton("Ingresar", viewModel::submit, loading = state.loading)
-        TextButton(onClick = onRegister, enabled = !state.loading) { Text("¿No tienes cuenta? Regístrate") }
+        OutlinedButton(
+            onClick = onRegister, enabled = !state.loading, shape = MaterialTheme.shapes.small,
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+        ) { Text("Crear cuenta nueva") }
     }
 }
 
@@ -69,6 +81,7 @@ fun RegisterScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     AuthLayout("Crea tu cuenta de jugador", modifier) {
+        Text("Regístrate", style = MaterialTheme.typography.titleLarge)
         if (state.registered) {
             Text("Tu cuenta fue creada. Ya puedes iniciar sesión.", textAlign = TextAlign.Center)
             PrimaryButton("Ir a iniciar sesión", onBackToLogin)
@@ -108,36 +121,47 @@ private fun AuthLayout(subtitle: String, modifier: Modifier, content: @Composabl
     Column(
         modifier
             .fillMaxSize()
-            .imePadding()
+            .background(Brush.verticalGradient(0f to VerdeOscuro, 0.45f to Fondo))
+            .safeDrawingPadding()
             .verticalScroll(rememberScrollState())
-            .padding(24.dp),
+            .padding(horizontal = 20.dp, vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(Modifier.height(40.dp))
-        Icon(
-            painterResource(R.drawable.ic_roulette), contentDescription = null,
-            tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(72.dp),
-        )
-        Spacer(Modifier.height(12.dp))
-        Text(
-            "PalaceTec", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-        )
-        Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.height(28.dp))
-        Column(
-            Modifier.widthIn(max = 480.dp).fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            content = content,
-        )
         Spacer(Modifier.height(24.dp))
-        Text(
-            "Solo mayores de 18 años. Créditos virtuales, sin dinero real.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
+        PalaceTecLogo(88.dp)
+        Spacer(Modifier.height(14.dp))
+        PalaceTecWordmark(style = MaterialTheme.typography.displaySmall)
+        Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+        Spacer(Modifier.height(28.dp))
+        Card(
+            Modifier.widthIn(max = 480.dp).fillMaxWidth(),
+            shape = MaterialTheme.shapes.large,
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        ) {
+            Column(
+                Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                content = content,
+            )
+        }
+        Spacer(Modifier.height(24.dp))
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                "+18",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier
+                    .border(1.dp, MaterialTheme.colorScheme.secondary, CircleShape)
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+            )
+            Text(
+                "Solo mayores de 18 años. Créditos virtuales, sin dinero real.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 

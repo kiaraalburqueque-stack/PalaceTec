@@ -1,13 +1,11 @@
 package com.tecsup.palacetec.ui.navigation
 
 import androidx.annotation.DrawableRes
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -19,9 +17,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.key
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -40,6 +41,7 @@ import com.tecsup.palacetec.data.repository.AuthRepository
 import com.tecsup.palacetec.ui.appViewModel
 import com.tecsup.palacetec.ui.auth.LoginScreen
 import com.tecsup.palacetec.ui.auth.RegisterScreen
+import com.tecsup.palacetec.ui.auth.SplashScreen
 import com.tecsup.palacetec.ui.bets.BetsScreen
 import com.tecsup.palacetec.ui.home.HomeScreen
 import com.tecsup.palacetec.ui.notifications.NotificationsScreen
@@ -52,8 +54,11 @@ import com.tecsup.palacetec.ui.settings.PushPermissionRequest
 import com.tecsup.palacetec.ui.settings.SettingsScreen
 import com.tecsup.palacetec.ui.stats.StatsScreen
 import com.tecsup.palacetec.ui.wallet.WalletScreen
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+
+private const val SPLASH_MILLIS = 1_200L
 
 object Routes {
     const val LOGIN = "login"
@@ -88,10 +93,18 @@ class SessionViewModel(private val auth: AuthRepository) : ViewModel() {
 @Composable
 fun PalaceTecRoot(viewModel: SessionViewModel = appViewModel { SessionViewModel(it.authRepository) }) {
     val session by viewModel.session.collectAsStateWithLifecycle()
+    // La marca se ve un momento al abrir la app aunque la sesión se lea al instante.
+    var splashShown by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(SPLASH_MILLIS)
+        splashShown = true
+    }
+    if (!splashShown) {
+        SplashScreen()
+        return
+    }
     when (val current = session) {
-        Session.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
+        Session.Loading -> SplashScreen()
         Session.LoggedOut -> AuthFlow()
         // Otra sesión parte de cero: no hereda pestañas ni datos del jugador anterior.
         is Session.LoggedIn -> key(current.token) { PlayerFlow(viewModel::logout) }
@@ -101,10 +114,9 @@ fun PalaceTecRoot(viewModel: SessionViewModel = appViewModel { SessionViewModel(
 @Composable
 private fun AuthFlow() {
     val nav = rememberNavController()
-    Scaffold { padding ->
-        NavHost(
-            nav, startDestination = Routes.LOGIN, modifier = Modifier.padding(padding).consumeWindowInsets(padding),
-        ) {
+    // Cada pantalla de acceso pinta su fondo detrás de las barras del sistema y se aparta de ellas.
+    Scaffold(contentWindowInsets = WindowInsets(0)) { padding ->
+        NavHost(nav, startDestination = Routes.LOGIN, modifier = Modifier.padding(padding)) {
             composable(Routes.LOGIN) { LoginScreen(onRegister = { nav.navigate(Routes.REGISTER) }) }
             composable(Routes.REGISTER) { RegisterScreen(onBackToLogin = { nav.popBackStack() }) }
         }
