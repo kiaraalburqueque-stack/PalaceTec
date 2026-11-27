@@ -1,5 +1,6 @@
 package com.tecsup.palacetec.ui.stats
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -19,8 +20,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -31,6 +34,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -60,9 +64,11 @@ import com.tecsup.palacetec.ui.components.dayMonth
 import com.tecsup.palacetec.ui.components.limaDateTime
 import com.tecsup.palacetec.ui.components.percent
 import com.tecsup.palacetec.ui.components.signedCredits
+import com.tecsup.palacetec.ui.theme.Dorado
 import com.tecsup.palacetec.ui.theme.TextoTenue
 import com.tecsup.palacetec.ui.theme.RojoPerdida
 import com.tecsup.palacetec.ui.theme.VerdeGanancia
+import com.tecsup.palacetec.ui.theme.VerdeOscuro
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -100,9 +106,16 @@ fun StatsScreen(
 
 @Composable
 private fun StatCard(title: String, content: @Composable ColumnScope.() -> Unit) {
-    Card(Modifier.fillMaxWidth()) {
+    Card(
+        Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+    ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(
+                title.uppercase(), style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             content()
         }
     }
@@ -125,8 +138,7 @@ private fun WinRateCard(rate: WinRate) {
             return@StatCard
         }
         Text(
-            percent(rate.winRate), style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
+            percent(rate.winRate), style = MaterialTheme.typography.displaySmall, color = Dorado,
         )
         val parts = listOf(
             Triple("Ganadas", rate.won, VerdeGanancia),
@@ -182,6 +194,15 @@ private fun BalanceCard(state: StatsUiState, viewModel: StatsViewModel) {
                     selected = state.period == days,
                     onClick = { viewModel.selectPeriod(days) },
                     label = { Text("$days días") },
+                    shape = CircleShape,
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                    ),
+                    border = FilterChipDefaults.filterChipBorder(
+                        enabled = true, selected = state.period == days,
+                        borderColor = MaterialTheme.colorScheme.outline,
+                    ),
                 )
             }
         }
@@ -197,7 +218,7 @@ private fun BalanceCard(state: StatsUiState, viewModel: StatsViewModel) {
             return@StatCard
         }
         Column {
-            Text(credits(point.balance), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(credits(point.balance), style = MaterialTheme.typography.headlineSmall, color = Dorado)
             Note(
                 dayMonth(point.date) + when (point.movements) {
                     0 -> " · sin movimientos"
@@ -317,7 +338,8 @@ private fun TopGamesCard(top: TopGames) {
                         .fillMaxWidth(game.rounds.toFloat() / most)
                         .height(8.dp)
                         .background(
-                            MaterialTheme.colorScheme.primary, RoundedCornerShape(topEnd = 4.dp, bottomEnd = 4.dp),
+                            Brush.horizontalGradient(listOf(VerdeOscuro, MaterialTheme.colorScheme.primary)),
+                            RoundedCornerShape(topEnd = 4.dp, bottomEnd = 4.dp),
                         ),
                 )
                 Note("Apostado: ${credits(game.wagered)}")
