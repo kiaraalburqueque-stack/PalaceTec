@@ -43,7 +43,7 @@ export default function LoginPage() {
 
   return (
     <main className="main-sections">
-      <section className="bet-controls">
+      <section className="bet-controls auth-form">
         <h1>Iniciar sesión</h1>
         {notice && <p role="status">{notice}</p>}
         <p>Ingresa a tu cuenta de PalaceTec.</p>

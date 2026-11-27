@@ -24,7 +24,7 @@ export default function HistoryPage() {
   function go(value) { setLoading(true); setPage(value); }
   if (sessionLoading) return <p role="status">Consultando sesión...</p>;
   if (!user) return <Navigate to="/login" replace />;
-  return <main className="main-sections"><section className="bet-controls history-panel"><h1>Mi historial de apuestas</h1>
+  return <main className="main-sections account-page"><section className="bet-controls history-panel"><h1>Mi historial de apuestas</h1>
     <DateRangeFilter disabled={loading} onApply={(value) => { setLoading(true); setPage(1); setFilters(value); }} />
     <ExportButtons filters={filters} />
     {loading && <p role="status">Consultando apuestas...</p>}

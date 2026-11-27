@@ -32,7 +32,7 @@ export default function StatsPage() {
   }, [user, filters]);
   if (sessionLoading) return <p role="status">Consultando sesión...</p>;
   if (!user) return <Navigate to="/login" replace />;
-  return <main className="main-sections"><section className="bet-controls"><h1>Mis estadísticas</h1>
+  return <main className="main-sections account-page"><section className="bet-controls stats-summary"><h1>Mis estadísticas</h1>
     <p>Solo apuestas liquidadas de tu cuenta. Los montos pendientes no se incluyen.</p>
     <DateRangeFilter disabled={loading} onApply={(value) => { setLoading(true); setFilters(value); }} />
     {loading && <p role="status">Consultando estadísticas...</p>}

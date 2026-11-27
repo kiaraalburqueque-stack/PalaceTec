@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 // HU51: gráfico circular de rondas ganadas y perdidas, sin dependencias externas.
-const COLORS = { won: '#3ccf8e', lost: '#e5534b', push: '#8b96a8' };
+const COLORS = { won: '#00C853', lost: '#E53935', push: '#7F8B9B' };
 const LABELS = { won: 'Ganadas', lost: 'Perdidas', push: 'Empates' };
 
 export function winRateSlices(data) {

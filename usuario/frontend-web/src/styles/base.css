@@ -348,6 +348,7 @@ small[role="alert"] { font-size: 0.88rem; }
 
 /* ---------- Tablas ---------- */
 .table-scroll {
+  position: relative;
   width: 100%;
   max-width: 100%;
   overflow-x: auto;
@@ -355,7 +356,7 @@ small[role="alert"] { font-size: 0.88rem; }
   border-radius: var(--radius);
 }
 
-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+table { position: relative; width: 100%; border-collapse: collapse; font-size: 0.88rem; }
 
 caption {
   padding: 12px 14px;

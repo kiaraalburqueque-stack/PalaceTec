@@ -45,5 +45,5 @@ export default function ProfilePage() {
   }
   if (loading) return <p role="status">Consultando sesión...</p>;
   if (!user) return <Navigate to="/login" replace />;
-  return <main className="main-sections">{error && <p role="alert">{error}</p>}{profile ? <><ProfileForm key={profile.avatar_url} profile={profile} onSaved={saved} /><AvatarUpload onUploaded={saved} /></> : !error && <p role="status">Consultando perfil...</p>}</main>;
+  return <main className="main-sections profile-page">{error && <p role="alert">{error}</p>}{profile ? <><ProfileForm key={profile.avatar_url} profile={profile} onSaved={saved} /><AvatarUpload onUploaded={saved} /></> : !error && <p role="status">Consultando perfil...</p>}</main>;
 }
