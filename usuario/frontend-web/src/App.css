@@ -1,3 +1,4 @@
 /* Hojas de estilo de PalaceTec por sección. Las variables del tema están en index.css. */
 @import './styles/base.css';
 @import './styles/layout.css';
+@import './styles/lobby.css';
