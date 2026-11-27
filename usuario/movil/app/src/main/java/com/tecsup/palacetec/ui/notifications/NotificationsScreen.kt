@@ -1,6 +1,7 @@
 package com.tecsup.palacetec.ui.notifications
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,6 +43,7 @@ import com.tecsup.palacetec.ui.appViewModel
 import com.tecsup.palacetec.ui.components.ErrorBox
 import com.tecsup.palacetec.ui.components.LoadingBox
 import com.tecsup.palacetec.ui.components.limaDateTime
+import com.tecsup.palacetec.ui.theme.Dorado
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,10 +78,17 @@ fun NotificationsScreen(
                 state.actionError?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
                 if (state.items.isEmpty()) {
                     item {
-                        Text(
-                            "No tienes notificaciones.", textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth().padding(top = 48.dp),
-                        )
+                        Column(
+                            Modifier.fillMaxWidth().padding(top = 64.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            Icon(
+                                painterResource(R.drawable.ic_notifications), contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(56.dp),
+                            )
+                            Text("No tienes notificaciones.", textAlign = TextAlign.Center)
+                        }
                     }
                 }
             }
@@ -101,19 +110,28 @@ private fun Summary(unread: Long, markingAll: Boolean, onMarkAll: () -> Unit) {
 
 @Composable
 private fun NotificationCard(item: PlayerNotification, onClick: () -> Unit) {
+    // Las sin leer resaltan con un fondo más claro y borde verde.
     val container = if (item.isRead) MaterialTheme.colorScheme.surfaceContainer
-    else MaterialTheme.colorScheme.surfaceContainerHighest
+    else MaterialTheme.colorScheme.surfaceContainerHigh
+    val border = if (item.isRead) MaterialTheme.colorScheme.outline
+    else MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
     Card(
         onClick = onClick,
         colors = CardDefaults.cardColors(containerColor = container),
+        border = BorderStroke(1.dp, border),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(Modifier.padding(16.dp)) {
             val (icon, category) = categoryStyle(item.category)
-            Icon(
-                painterResource(icon), contentDescription = category,
-                tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp),
-            )
+            Box(
+                Modifier.size(40.dp).background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painterResource(icon), contentDescription = category,
+                    tint = categoryColor(item.category), modifier = Modifier.size(22.dp),
+                )
+            }
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(item.title, fontWeight = if (item.isRead) FontWeight.Normal else FontWeight.Bold)
@@ -132,7 +150,7 @@ private fun NotificationCard(item: PlayerNotification, onClick: () -> Unit) {
                     Modifier
                         .padding(top = 6.dp)
                         .size(10.dp)
-                        .background(MaterialTheme.colorScheme.secondary, CircleShape)
+                        .background(MaterialTheme.colorScheme.primary, CircleShape)
                         .semantics { contentDescription = "Sin leer" },
                 )
             }
@@ -143,6 +161,14 @@ private fun NotificationCard(item: PlayerNotification, onClick: () -> Unit) {
 private class CategoryStyle(@param:DrawableRes val icon: Int, val label: String) {
     operator fun component1() = icon
     operator fun component2() = label
+}
+
+@Composable
+private fun categoryColor(category: String) = when (category) {
+    "PROMOTION" -> Dorado
+    "SECURITY" -> MaterialTheme.colorScheme.error
+    "GAME" -> MaterialTheme.colorScheme.primary
+    else -> MaterialTheme.colorScheme.onSurfaceVariant
 }
 
 private fun categoryStyle(category: String) = when (category) {
