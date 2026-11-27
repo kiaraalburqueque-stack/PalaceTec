@@ -20,8 +20,8 @@ const OUTSIDE = {
   'DOZEN:2': { x: X0 + (CELL + GAP) * 4, y: ROW1, w: (CELL + GAP) * 4 - GAP, h: 34, label: '2ª docena' },
   'DOZEN:3': { x: X0 + (CELL + GAP) * 8, y: ROW1, w: (CELL + GAP) * 4 - GAP, h: 34, label: '3ª docena' },
   'PARITY:par': { x: X0 + SIX + GAP, y: ROW2, w: SIX, h: 34, label: 'Par' },
-  'COLOR:rojo': { x: X0 + (SIX + GAP) * 2, y: ROW2, w: SIX, h: 34, label: 'Rojo', fill: '#bb2737' },
-  'COLOR:negro': { x: X0 + (SIX + GAP) * 3, y: ROW2, w: SIX, h: 34, label: 'Negro', fill: '#202633' },
+  'COLOR:rojo': { x: X0 + (SIX + GAP) * 2, y: ROW2, w: SIX, h: 34, label: 'Rojo', fill: '#E53935' },
+  'COLOR:negro': { x: X0 + (SIX + GAP) * 3, y: ROW2, w: SIX, h: 34, label: 'Negro', fill: '#1A1E24' },
   'PARITY:impar': { x: X0 + (SIX + GAP) * 4, y: ROW2, w: SIX, h: 34, label: 'Impar' },
   'COLUMN:3': { x: X0 + 12 * (CELL + GAP), y: Y0, w: CELL + 8, h: CELL, label: '2:1' },
   'COLUMN:2': { x: X0 + 12 * (CELL + GAP), y: Y0 + CELL + GAP, w: CELL + 8, h: CELL, label: '2:1' },
@@ -42,12 +42,12 @@ export function BetTable({ bet }) {
   return <svg viewBox={`0 0 ${width} ${height}`} className="bet-detail-table" role="img"
     aria-label={`Tapete con ${bet.chips.length} fichas en ${KINDS[bet.kind]} ${bet.selection}`}>
     {Array.from({ length: 37 }, (_, number) => { const cell = numberCell(number);
-      const fill = number === 0 ? '#16834a' : RED.has(number) ? '#bb2737' : '#202633';
+      const fill = number === 0 ? '#00A152' : RED.has(number) ? '#E53935' : '#1A1E24';
       return <g key={number}><rect x={cell.x} y={cell.y} width={cell.w} height={cell.h} rx="4" fill={fill}
-        stroke={winning === number ? '#ffd76a' : '#e8dcc0'} strokeWidth={winning === number ? 3 : 1} />
+        stroke={winning === number ? '#FFC107' : '#E8DCC0'} strokeWidth={winning === number ? 3 : 1} />
         <text x={cell.x + cell.w / 2} y={cell.y + cell.h / 2 + 5} textAnchor="middle" className="table-number">{number}</text></g>; })}
     {Object.entries(OUTSIDE).map(([key, cell]) => <g key={key}><rect x={cell.x} y={cell.y} width={cell.w} height={cell.h} rx="4"
-      fill={cell.fill || '#1d5a40'} stroke="#e8dcc0" strokeWidth="1" />
+      fill={cell.fill || '#0D6B3D'} stroke="#e8dcc0" strokeWidth="1" />
       <text x={cell.x + cell.w / 2} y={cell.y + cell.h / 2 + 5} textAnchor="middle" className="table-number small">{cell.label}</text></g>)}
     {target && bet.chips.slice(0, 8).map((chip, index) => <g key={index} className="table-chip" transform={`translate(${cx} ${cy - index * 4})`}>
       <circle r="13" /><circle r="9" className="chip-inner" />

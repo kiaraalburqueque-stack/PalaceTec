@@ -25,7 +25,7 @@ export default function RepeatBets({ roomId, roundId, open, balance, remaining, 
     } catch (err) { if (err.status && err.status < 500) setPending(null); setError(err.message); }
     finally { setSaving(false); }
   }
-  return <section className="prebet-balance"><h2>Repetir apuestas</h2>
+  return <section className="prebet-balance repeat-bets"><h2>Repetir apuestas</h2>
     {previous?.bets.length ? <><p>Ronda anterior {previous.source_round_id}: {previous.bets.length} apuestas · Total {total.toFixed(2)} CRD</p>
       <button disabled={saving || (!pending && (!open || !roundId || total > balance || total > Number(remaining)))} onClick={repeat}>{saving ? 'Repitiendo...' : pending ? 'Reintentar repetición pendiente' : 'Repetir conjunto anterior'}</button>
       <p>Se repite todo el conjunto o no se registra ninguna apuesta.</p>

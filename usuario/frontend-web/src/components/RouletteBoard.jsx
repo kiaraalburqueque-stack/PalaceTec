@@ -7,8 +7,8 @@ const RED_NUMBERS = new Set([
 const NUMBERS = Array.from({ length: 37 }, (_, number) => number);
 
 function getNumberColor(number) {
-  if (number === 0) return '#16834a';
-  return RED_NUMBERS.has(number) ? '#bb2737' : '#202633';
+  if (number === 0) return '#00A152';
+  return RED_NUMBERS.has(number) ? '#E53935' : '#1A1E24';
 }
 
 export default function RouletteBoard({
@@ -83,8 +83,8 @@ export default function RouletteBoard({
                 height={height}
                 rx="6"
                 fill={getNumberColor(number)}
-                stroke={winningNumber === number ? '#4ade80' : selected ? '#ffd21a' : '#c9a227'}
-                strokeWidth={winningNumber === number || selected ? 5 : 2}
+                stroke={winningNumber === number ? '#4ADE80' : selected ? '#FFC107' : 'rgba(255, 255, 255, 0.55)'}
+                strokeWidth={winningNumber === number || selected ? 5 : 1.5}
                 opacity={disabled ? 0.5 : 1}
               />
 

@@ -96,16 +96,16 @@ function RoomSession({ roomId, user }) {
   const open = roundOpen && dailyLimit?.configured && Number(dailyLimit.remaining) >= Number(state?.min_bet || 10) && !paused;
   return <main className="main-sections roulette-page">
     <h1>Ruleta europea · Sala {roomId}</h1>
-    <p>Conexión: {status}</p><Link to="/">Volver a salas</Link>
+    <p className={`room-connection ${status === 'En vivo' ? 'is-live' : ''}`}>Conexión: {status}</p><Link className="room-back" to="/">Volver a salas</Link>
     {reconnecting && <div className="reconnect-banner" role="status"><span className="spinner" aria-hidden="true" />Conexión perdida. Reconectando… tu mesa y tus apuestas se conservan.</div>}
     {recovered?.reconnected && !recovered.dismissed && <div className="recovered-banner" role="status">
       <span>Reconectado. {recovered.bets.length ? `Recuperamos ${recovered.bets.length} apuesta${recovered.bets.length === 1 ? '' : 's'} de la ronda ${recovered.round_id} (${recovered.total_amount} CRD).` : 'No tenías apuestas activas en la ronda actual.'}</span>
       <button type="button" className="link-button" onClick={dismissRecovered}>Entendido</button></div>}
     {error && <p role="alert">{error}</p>}
-    <p><Link to="/juego-responsable">Mis límites y juego responsable</Link> · {dailyLimit?.configured ? `Cupo diario disponible: ${dailyLimit.remaining} CRD` : 'Configura tu límite diario para apostar.'}</p>
+    <p className="room-limits"><Link to="/juego-responsable">Mis límites y juego responsable</Link> · {dailyLimit?.configured ? `Cupo diario disponible: ${dailyLimit.remaining} CRD` : 'Configura tu límite diario para apostar.'}</p>
     <section className="prebet-balance round-panel"><h2>Ronda {round?.id || 'pendiente'}</h2>
       <p role="timer" aria-label="Tiempo para apostar">{seconds} segundos</p>
-      <strong>{roundOpen ? 'Apuestas abiertas' : 'NO VA MÁS · Apuestas cerradas'}</strong>
+      <strong className={`round-status ${roundOpen ? 'is-open' : 'is-closed'}`}>{roundOpen ? 'Apuestas abiertas' : 'NO VA MÁS · Apuestas cerradas'}</strong>
       {paused && <p role="status">Tu pausa está activa. No puedes apostar hasta {new Date(pauseUntil).toLocaleTimeString('es-PE', { timeZone: 'America/Lima' })} (Lima).</p>}
       {dailyLimit?.configured && Number(dailyLimit.remaining) < Number(state?.min_bet || 10) && <p role="status">Tu cupo diario no alcanza para la apuesta mínima.</p>}
       {state && <p>Mínimo por apuesta: {state.min_bet} CRD · Máximo acumulado: {state.max_bet} CRD</p>}
@@ -119,7 +119,7 @@ function RoomSession({ roomId, user }) {
     {wallet ? <><div className="wallet-panel"><PreBetBalance balance={Number(wallet.balance)} /><p>Bono: {wallet.bonus_balance} CRD · Ganancias: {wallet.winnings_balance} CRD</p></div>
       <BetControls key={`bets-${roomId}`} balance={Number(wallet.balance)} roomId={roomId} onBetPlaced={refresh} roundOpen={open} currentRound={round ? { ...round, remaining_seconds: seconds } : null} winningNumber={result} />
     </> : <p role="status">Consultando saldo...</p>}
-    {prize && <section role={Number(prize.payout) > 0 ? 'dialog' : 'status'} aria-label="Resultado de tu ronda" className="prebet-balance">
+    {prize && <section role={Number(prize.payout) > 0 ? 'dialog' : 'status'} aria-label="Resultado de tu ronda" className="prebet-balance prize-panel">
       <h2>{Number(prize.payout) > 0 ? '¡Ganaste!' : 'Ronda terminada'}</h2><p>Ronda {prize.round_id}: pago total {prize.payout} CRD</p>
       <button onClick={() => setPrize(null)}>Cerrar resultado</button>
     </section>}
