@@ -16,7 +16,7 @@ export default function SelfExclusion() {
     } catch (err) { setError(err.message); }
     finally { setSaving(false); }
   }
-  return <section className="bet-controls auth-form"><h2>Autoexclusión</h2>
+  return <section className="bet-controls auth-form self-exclusion"><h2>Autoexclusión</h2>
     <p>Bloquea el acceso y las apuestas durante el período elegido. No se puede cancelar anticipadamente; tus apuestas aceptadas se liquidarán.</p>
     <form onSubmit={submit}>
       <label>Duración<select value={days} onChange={(e) => { setDays(e.target.value); setConfirmed(false); }}>{[7, 30, 90].map((n) => <option key={n} value={n}>{n} días</option>)}</select></label>

@@ -586,6 +586,16 @@ button.profile-button:hover { background: var(--color-surface-3); border-color: 
 }
 
 @media (max-width: 420px) {
+  .header-inner { gap: 6px; padding-inline: 10px; }
+  .header-account { gap: 6px; }
+  .header-brand { font-size: 1.05rem; gap: 6px; }
+  .header-brand .brand-mark { width: 28px; height: 28px; }
+  .header-wallet { padding: 4px 10px 4px 6px; column-gap: 6px; }
+  .header-wallet strong { font-size: 0.85rem; }
+  .bell-button { width: 38px; height: 38px; }
+  .profile-button { min-height: 38px; padding: 2px; }
+  .profile-avatar { width: 32px; height: 32px; }
+  .profile-chevron { display: none; }
   .header-wallet > span { display: none; }
   .header-wallet { grid-template-rows: auto; }
   .wallet-icon { grid-row: auto; }

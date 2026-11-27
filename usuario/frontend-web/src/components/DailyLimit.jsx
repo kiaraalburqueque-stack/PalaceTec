@@ -17,7 +17,7 @@ export default function DailyLimit() {
     catch (err) { setError(err.message); }
     finally { setSaving(false); }
   }
-  return <section className="bet-controls auth-form"><h2>Mis límites diarios</h2>
+  return <section className="bet-controls auth-form daily-limit"><h2>Mis límites diarios</h2>
     <p>Define cuánto puedes apostar al día. Los premios no restauran el cupo. El día se calcula en Lima.</p>
     {summary ? <>
       <p>{summary.configured ? `Límite: ${summary.limit} CRD · Apostado: ${summary.spent} CRD · Disponible: ${summary.remaining} CRD` : 'Configura tu límite antes de apostar.'}</p>
