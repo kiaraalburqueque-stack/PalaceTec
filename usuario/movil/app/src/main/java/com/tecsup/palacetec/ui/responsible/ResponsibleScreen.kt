@@ -5,14 +5,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -22,12 +24,15 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tecsup.palacetec.R
 import com.tecsup.palacetec.data.remote.DailyLimit
 import com.tecsup.palacetec.data.remote.SessionSummary
 import com.tecsup.palacetec.ui.appViewModel
@@ -70,6 +75,7 @@ fun ResponsibleScreen(
             Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            Intro()
             state.error?.let { ErrorBox(it, viewModel::load) }
             state.summary?.let { SessionCard(it) }
             state.limit?.let { LimitCard(it, viewModel::openLimitDialog) }
@@ -94,11 +100,38 @@ fun ResponsibleScreen(
     }
 }
 
+/** Sin colores de juego: aquí lo importante es que se lea con calma. */
 @Composable
-private fun SectionCard(title: String, content: @Composable ColumnScope.() -> Unit) {
-    Card(Modifier.fillMaxWidth()) {
+private fun Intro() {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            painterResource(R.drawable.ic_shield), contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(28.dp),
+        )
+        Text(
+            "Herramientas para jugar con control. Solo mayores de 18 años; " +
+                "los créditos son virtuales y no tienen valor en dinero real.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 12.dp),
+        )
+    }
+}
+
+@Composable
+private fun SectionCard(
+    title: String,
+    border: Color = MaterialTheme.colorScheme.outline,
+    titleColor: Color = MaterialTheme.colorScheme.onSurface,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    OutlinedCard(
+        Modifier.fillMaxWidth(),
+        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        border = BorderStroke(1.dp, border),
+    ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(title, style = MaterialTheme.typography.titleMedium, color = titleColor)
             content()
         }
     }
@@ -142,7 +175,10 @@ private fun LimitCard(limit: DailyLimit, onChange: () -> Unit) {
             Line("Usado hoy", credits(limit.spent))
             Line("Te quedan", credits(limit.remaining))
             LinearProgressIndicator(
-                progress = { fraction(limit.spent, limit.limit) }, modifier = Modifier.fillMaxWidth(),
+                progress = { fraction(limit.spent, limit.limit) },
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
             )
         } else {
             Text("Define tu límite diario para poder apostar.")
@@ -151,13 +187,16 @@ private fun LimitCard(limit: DailyLimit, onChange: () -> Unit) {
             val since = limit.effectiveAt?.let { " Se aplica el ${limaDateTime(it)}." }.orEmpty()
             Note("Aumento a ${credits(pending)} pendiente.$since")
         }
-        OutlinedButton(onClick = onChange) { Text(if (limit.configured) "Cambiar límite" else "Definir límite") }
+        OutlinedButton(onClick = onChange, shape = MaterialTheme.shapes.small) {
+            Text(if (limit.configured) "Cambiar límite" else "Definir límite")
+        }
     }
 }
 
 @Composable
 private fun PauseCard(state: ResponsibleUiState, onPause: () -> Unit) {
-    SectionCard("Pausa") {
+    val paused = state.pauseUntil != null || state.pauseOffer != null
+    SectionCard("Pausa", border = if (paused) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.outline) {
         val offer = state.pauseOffer
         if (state.pauseUntil != null) {
             Text(
@@ -180,19 +219,18 @@ private fun PauseCard(state: ResponsibleUiState, onPause: () -> Unit) {
 
 @Composable
 private fun ExclusionCard(onSelect: (Int) -> Unit) {
-    OutlinedCard(Modifier.fillMaxWidth(), border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
-                "Autoexclusión", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.error,
-            )
-            Text("Bloquea tu cuenta por un plazo. Se cierran todas tus sesiones y no se puede cancelar antes.")
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ResponsibleViewModel.EXCLUSION_DAYS.forEach { days ->
-                    OutlinedButton(onClick = { onSelect(days) }, modifier = Modifier.weight(1f)) {
-                        Text("$days días")
-                    }
-                }
+    SectionCard(
+        "Autoexclusión", border = MaterialTheme.colorScheme.error, titleColor = MaterialTheme.colorScheme.error,
+    ) {
+        Text("Bloquea tu cuenta por un plazo. Se cierran todas tus sesiones y no se puede cancelar antes.")
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ResponsibleViewModel.EXCLUSION_DAYS.forEach { days ->
+                OutlinedButton(
+                    onClick = { onSelect(days) },
+                    shape = MaterialTheme.shapes.small,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+                    modifier = Modifier.weight(1f),
+                ) { Text("$days días", color = MaterialTheme.colorScheme.error) }
             }
         }
     }
