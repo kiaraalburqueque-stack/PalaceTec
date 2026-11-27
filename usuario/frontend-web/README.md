@@ -27,8 +27,22 @@ Antes de apostar, configurar el limite diario en **Mis limites**.
 npm test
 npm run lint
 npm run build
-npm run test:e2e
+npm run test:e2e          # contra Django con fixtures (SQLite temporal)
+npm run test:e2e:spring   # contra runroulette + Spring reales (ver abajo)
 ```
+
+### Recorrido contra Spring (`test:e2e:spring`)
+
+Levanta `runroulette`, Spring (8080) y Vite (5173) con el reloj real de 15 segundos y recorre: registro, login, límite
+diario, cuatro apuestas en la ruleta, rechazo por límite, liquidación en vivo, notificación e historial. Usa una base
+PostgreSQL propia, **`palacetec_e2e`**, para no escribir en `palacetec`. Una sola vez, desde `administracion/backend`:
+
+```powershell
+.\.venv\Scripts\python.exe -c "import os,psycopg; from dotenv import load_dotenv; load_dotenv('.env'); c=psycopg.connect(dbname='postgres',user=os.getenv('DB_USER'),password=os.getenv('DB_PASSWORD'),host='localhost',autocommit=True); c.execute('create database palacetec_e2e')"
+$env:DB_NAME = "palacetec_e2e"; $env:USE_REDIS = "false"; .\.venv\Scripts\python.exe manage.py migrate
+```
+
+Después, con `JAVA_HOME` apuntando a un JDK 21 y los puertos 5173 y 8080 libres: `npm run test:e2e:spring`.
 
 `npm test` usa jsdom para React. `test:e2e` necesita Microsoft Edge,
 Python y las dependencias instaladas en `../../administracion/backend/.venv`. Los puertos 5173 y
