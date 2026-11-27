@@ -6,6 +6,7 @@
   "scripts": {
     "test": "vitest run --environment jsdom src",
     "test:e2e": "playwright test",
+    "test:e2e:spring": "playwright test -c playwright.spring.config.js",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",

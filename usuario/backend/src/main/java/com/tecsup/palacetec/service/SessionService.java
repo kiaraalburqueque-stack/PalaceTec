@@ -4,10 +4,12 @@ import com.tecsup.palacetec.config.TimeConfig;
 import com.tecsup.palacetec.entity.AuthSession;
 import com.tecsup.palacetec.entity.User;
 import com.tecsup.palacetec.exception.ApiException;
+import com.tecsup.palacetec.realtime.SessionsRevoked;
 import com.tecsup.palacetec.repository.AuthSessionRepository;
 import com.tecsup.palacetec.repository.UserRepository;
 import com.tecsup.palacetec.security.PlayerPrincipal;
 import java.time.Clock;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -21,13 +23,15 @@ public class SessionService {
     private final AuthSessionRepository sessions;
     private final ExclusionService exclusions;
     private final Clock clock;
+    private final ApplicationEventPublisher events;
 
     public SessionService(UserRepository users, AuthSessionRepository sessions, ExclusionService exclusions,
-                          Clock clock) {
+                          Clock clock, ApplicationEventPublisher events) {
         this.users = users;
         this.sessions = sessions;
         this.exclusions = exclusions;
         this.clock = clock;
+        this.events = events;
     }
 
     @Transactional(readOnly = true)
@@ -58,10 +62,11 @@ public class SessionService {
         return user;
     }
 
-    /** Cierra todas las sesiones de los dos clientes. */
+    /** Cierra todas las sesiones de los dos clientes y, al confirmarse, sus WebSockets (session:revoked). */
     @Transactional(propagation = Propagation.MANDATORY)
     public void revokeAll(User user) {
         sessions.revokeAll(user.getId(), TimeConfig.now(clock));
+        events.publishEvent(SessionsRevoked.all(user.getId()));
     }
 
     private static ApiException unknownUser(PlayerPrincipal player) {
