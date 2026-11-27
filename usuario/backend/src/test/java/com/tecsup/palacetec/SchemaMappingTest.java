@@ -32,7 +32,8 @@ class SchemaMappingTest extends ApiTest {
                 "responsible_dailyspending", "responsible_excludedperson", "favorite_games", "room_connections",
                 "casino_play", "notifications", "notification_settings", "login_history",
                 "password_reset_tokens", "roulette_repeatoperation", "responsible_selfexclusion",
-                "responsible_riskincident");
+                "responsible_riskincident", "casino_blackjackhand", "casino_sportevent", "casino_sportticket",
+                "assistant_messages");
     }
 
     @Test

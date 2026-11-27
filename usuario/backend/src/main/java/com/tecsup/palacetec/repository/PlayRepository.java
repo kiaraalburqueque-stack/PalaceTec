@@ -5,11 +5,18 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.domain.Limit;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.Repository;
 
-public interface PlayRepository extends Repository<Play, Long> {
+public interface PlayRepository extends JpaRepository<Play, Long> {
+
+    Optional<Play> findByUserIdAndReference(Long userId, UUID reference);
+
+    /** Las últimas jugadas con resultado de una misma clase, de la más reciente a la más antigua. */
+    List<Play> findTop4ByUserIdAndKindAndSettledAtIsNotNullOrderBySettledAtDescIdDesc(Long userId, String kind);
 
     List<Play> findByUserIdAndIdIn(Long userId, Collection<Long> ids);
 

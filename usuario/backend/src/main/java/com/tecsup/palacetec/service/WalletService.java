@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Saldos y débitos de apuestas. Los premios los acredita Django al liquidar la ronda. */
+/** Saldos, débitos de apuestas y premios de blackjack. Los de ruleta y deportes los acredita Django al liquidar. */
 @Service
 public class WalletService {
 
@@ -72,6 +72,14 @@ public class WalletService {
         }
         wallet.debit(amount);
         transactions.save(new WalletTransaction(wallet.getId(), WalletTransaction.Type.BET, amount,
+                wallet.getBalance(), reference, now));
+    }
+
+    /** Con la billetera ya bloqueada, como debit. */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void credit(Wallet wallet, BigDecimal amount, String reference, Instant now) {
+        wallet.credit(amount);
+        transactions.save(new WalletTransaction(wallet.getId(), WalletTransaction.Type.WIN, amount,
                 wallet.getBalance(), reference, now));
     }
 }

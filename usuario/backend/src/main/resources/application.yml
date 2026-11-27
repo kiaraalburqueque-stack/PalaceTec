@@ -60,3 +60,11 @@ palacetec:
     frontend-url: ${FRONTEND_URL:http://localhost:5173}
     # Carpeta media de Django (relativa a usuario/backend): avatar_url es común a los dos backends.
     media-root: ${MEDIA_ROOT:../../administracion/backend/media}
+  # Asistente virtual, con las variables de Django. Sin clave responde con preguntas frecuentes.
+  assistant:
+    provider: ${ASSISTANT_PROVIDER:faq}
+    api-key: ${ASSISTANT_API_KEY:}
+    model: ${ASSISTANT_MODEL:}
+    base-url: ${ASSISTANT_BASE_URL:}
+    timeout: ${ASSISTANT_TIMEOUT:10}
+    rate-limit: 20

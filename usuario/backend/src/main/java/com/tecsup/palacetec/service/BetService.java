@@ -19,7 +19,9 @@ import com.tecsup.palacetec.security.PlayerPrincipal;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
+import org.springframework.data.domain.Limit;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -28,6 +30,8 @@ import org.springframework.transaction.annotation.Transactional;
 /** Registro de apuestas, con las mismas reglas y el mismo orden de candados que RouletteService.place_bet. */
 @Service
 public class BetService {
+
+    private static final int LIST_LIMIT = 100;
 
     private final RoomRepository rooms;
     private final GameRoundRepository rounds;
@@ -48,6 +52,12 @@ public class BetService {
         this.wallets = wallets;
         this.limits = limits;
         this.clock = clock;
+    }
+
+    /** Las últimas apuestas propias en la sala. */
+    @Transactional(readOnly = true)
+    public List<BetResponse> list(Long userId, Long roomId) {
+        return bets.findByRoom(userId, roomId, Limit.of(LIST_LIMIT)).stream().map(BetResponse::from).toList();
     }
 
     /** created es false cuando la referencia repite una apuesta ya aceptada: no hay un segundo cargo. */

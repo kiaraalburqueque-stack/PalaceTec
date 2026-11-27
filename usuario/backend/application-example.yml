@@ -12,3 +12,9 @@ EXCLUSION_HMAC_KEY: replace_with_the_same_key_used_by_django
 # COOKIE_SECURE: false
 # FRONTEND_URL: http://localhost:5173
 # MEDIA_ROOT: ../../administracion/backend/media
+# Opcionales del asistente virtual, con los nombres de Django: faq (por defecto), gemini u openai. Sin clave siempre
+# responde con las preguntas frecuentes. La clave va solo en application-local.yml o en una variable de entorno.
+# ASSISTANT_PROVIDER: gemini
+# ASSISTANT_API_KEY: replace_with_your_own_key
+# ASSISTANT_MODEL: gemini-3.6-flash
+# ASSISTANT_TIMEOUT: 10

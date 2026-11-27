@@ -15,7 +15,7 @@ import java.time.Instant;
 @Table(name = "wallet_transactions")
 public class WalletTransaction {
 
-    /** WIN solo lo escribe Django al liquidar. */
+    /** WIN lo escribe Django al liquidar la ruleta y los deportes, y Spring al terminar una mano de blackjack. */
     public enum Type { WELCOME_BONUS, BET, WIN }
 
     @Id
