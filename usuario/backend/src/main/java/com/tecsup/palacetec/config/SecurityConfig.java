@@ -35,6 +35,8 @@ public class SecurityConfig {
     public static final String FORGOT_PASSWORD_PATH = "/api/v1/auth/forgot-password";
     public static final String RESET_PASSWORD_PATH = "/api/v1/auth/reset-password";
     public static final String NOT_ME_PATH = "/api/v1/auth/not-me";
+    /** ws/roulette/&lt;sala&gt;/ y ws/notifications/: el handshake (SessionHandshake) revisa origen y cookie. */
+    public static final String WEBSOCKET_PATHS = "/ws/";
 
     private static final List<String> PUBLIC_POSTS = List.of(REGISTER_PATH, LOGIN_PATH, LOGOUT_PATH, REFRESH_PATH,
             FORGOT_PASSWORD_PATH, RESET_PASSWORD_PATH, NOT_ME_PATH);
@@ -61,6 +63,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(HttpMethod.POST, PUBLIC_POSTS.toArray(String[]::new)).permitAll()
                         .requestMatchers(HttpMethod.GET, CSRF_PATH, MediaStorage.URL + "**").permitAll()
+                        .requestMatchers(HttpMethod.GET, WEBSOCKET_PATHS + "**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated())
                 .build();

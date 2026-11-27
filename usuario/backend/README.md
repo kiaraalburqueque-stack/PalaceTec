@@ -62,7 +62,42 @@ Base `/api/v1`, sin barra final. Rutas, campos JSON y mensajes son los de Django
 En login y registro se considera app móvil a quien no envía ninguna cabecera propia de un navegador (`Origin`,
 `Referer`, `Cookie`, `Sec-Fetch-Site`, `X-CSRFToken`). A ese cliente nunca se le ponen cookies.
 
-Para usar React con este backend: `$env:VITE_API_BASE_URL = "http://localhost:8080"; npm run dev`.
+React usa este backend por defecto (`http://localhost:8080`): `usuario/frontend-web` ya apunta aquí para la API, los
+WebSockets, las cookies, el CSRF y las fotos `/media/`. Con `npm run dev` desde `usuario/frontend-web` basta. Para usar
+Django en su lugar: `$env:VITE_API_BASE_URL = "http://localhost:8000"; npm run dev`.
+
+## WebSockets
+
+`ws://localhost:8080/ws/roulette/<sala>/` y `ws://localhost:8080/ws/notifications/`, con las mismas rutas, mensajes
+`{"event": ..., "data": ...}`, códigos de cierre (4401 sesión, 4403 cuenta suspendida, 4404 sala no disponible, 1009
+mensaje demasiado largo) y cookie `access_token` que Django Channels. El handshake exige un `Origin` de
+`CORS_ALLOWED_ORIGINS`; sin sesión válida el socket se abre y se cierra con 4401, para que React renueve la sesión.
+
+**Eventos.** `runroulette` (Django) abre y liquida las rondas y Spring no recibe sus mensajes de Channels, así que
+`RealtimePoller` lee la base cada segundo (`REALTIME_POLL_MS`, por defecto `1000`) y envía solo lo que cambió. Solo
+trabaja si hay sockets abiertos. Lo que hace Spring mismo se publica al confirmar la transacción, sin esperar al
+sondeo: `session:revoked` (autoexclusión, logout, cambio o recuperación de contraseña, "No fui yo") y `wallet:update`
+(apuestas y premios de blackjack).
+
+| Evento | Lo detecta |
+| --- | --- |
+| `room:state`, `RECONNECT_SUCCESS`, `pong`, `error`, `room:user_joined`, `room:user_left`, `notification:count` | El socket, al conectarse o al recibir `room:sync`, `room:resume` y `ping` |
+| `timer:start`, `timer:tick`, `bets:closed`, `timer:stop`, `round:result` | Sondeo de `game_rounds` |
+| `round:winnings` | Sondeo, al liquidarse una ronda: para quien apostó en ella |
+| `wallet:update` | Sondeo de `wallet_balances`, o al instante si el saldo lo movió Spring |
+| `notification:new` | Sondeo de `notifications` (con `unread_count`) |
+| `responsible:risk-alert` | Sondeo de `responsible_riskincident` |
+| `room:limits`, `room:closed` | Sondeo de `rooms` y `roulette_game` |
+| `session:revoked`, `FORCE_DISCONNECT` | Sondeo de `accounts_authsession` y `users`, además del aviso inmediato de Spring |
+
+Un evento de Django llega con hasta ~1 s de retraso. Diferencias con Django:
+
+- Al desactivarse el juego de una sala, Django corta con 4401 sin enviar `room:closed` (su consumer revisa la sala
+  antes de reenviar), así que React nunca muestra el aviso. Spring envía `room:closed` y cierra con 4404.
+- `room:user_joined` y `room:user_left` solo se reparten entre los sockets de Spring. Las conexiones se registran en
+  `room_connections` (con `channel_name` que empieza por `spring.`), así que sí cuentan en `players` de `/rooms`.
+- Una sesión sin cookie válida se cierra con 4401 después de abrirse; Django rechaza el handshake.
+
 
 | Método y ruta | Entrada | Respuesta |
 | --- | --- | --- |
