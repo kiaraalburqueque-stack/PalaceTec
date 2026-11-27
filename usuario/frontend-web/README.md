@@ -12,10 +12,13 @@ npm ci
 npm run dev
 ```
 
-Abrir `http://localhost:5173`. La API usa `http://localhost:8000` por defecto;
-`VITE_API_BASE_URL` permite cambiarlo. Usar el mismo host para las cookies.
-Para la aplicacion integrada, preparar PostgreSQL, Redis, las migraciones y
-los procesos HTTP/WebSocket y `runroulette` segun el README del backend.
+Abrir `http://localhost:5173`. La API (REST, WebSockets y fotos `/media/`) es el
+backend Spring en `http://localhost:8080` por defecto; `VITE_API_BASE_URL`
+permite cambiarlo (por ejemplo, `http://localhost:8000` para usar Django). Usar
+el mismo host para las cookies: `localhost` en el navegador y en la URL.
+Para la aplicacion integrada, levantar PostgreSQL con las migraciones de Django,
+Spring (`usuario/backend`) y `python manage.py runroulette`, que abre y liquida
+las rondas (ver el README de `usuario/backend`).
 Antes de apostar, configurar el limite diario en **Mis limites**.
 
 ## Verificar
