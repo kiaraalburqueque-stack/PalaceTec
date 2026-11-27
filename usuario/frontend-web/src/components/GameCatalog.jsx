@@ -7,7 +7,9 @@ import FavoriteButton from './FavoriteButton';
 import GameRulesModal from './GameRulesModal';
 import SearchInput from './SearchInput';
 import useDebounce from '../hooks/useDebounce';
+import Icon from './Icon';
 const CATEGORIES = { RULETA: 'Ruleta', CARTAS: 'Cartas', DEPORTES: 'Deportes virtuales', OTROS: 'Otros' };
+const COVER_ICONS = { RULETA: 'roulette', CARTAS: 'cards', DEPORTES: 'ball' };
 
 export default function GameCatalog() {
   // HU61: la categoría elegida vive en la URL (?categoria=cartas) y se filtra sin recargar la página.
@@ -68,8 +70,9 @@ export default function GameCatalog() {
       <div className="empty-suggestions">{(counts?.categories || []).map((item) => <button key={item.slug} type="button" className="rules-button"
         onClick={() => { setText(''); changeCategory(item.slug); }}>{item.label}</button>)}</div></div>
       : <p>{category === 'favoritos' ? 'Aún no tienes favoritos. Toca el corazón de un juego para guardarlo aquí.' : 'No hay juegos publicados en esta categoría.'}</p>)}
-    <div className="casino-room-grid catalog-fade" key={category}>{games?.map((game) => <article className="bet-controls" key={game.id}>
-      {game.cover_url && <img className="game-cover" src={game.cover_url} alt={`Portada de ${game.title}`} loading="lazy" />}
+    <div className="casino-room-grid catalog-fade" key={category}>{games?.map((game) => <article className="game-card" key={game.id}>
+      {game.cover_url ? <img className="game-cover" src={game.cover_url} alt={`Portada de ${game.title}`} loading="lazy" />
+        : <div className={`game-cover game-cover-art cover-${(game.category || 'otros').toLowerCase()}`} aria-hidden="true"><Icon name={COVER_ICONS[game.category] || 'coin'} size={64} /></div>}
       <div className="game-card-title"><h3>{game.title}</h3><FavoriteButton game={game} onChange={favoriteChanged} /></div>
       {game.category && <p className="game-meta"><span className="game-category">{CATEGORIES[game.category] || game.category}</span>{game.rtp && <span>RTP {game.rtp}%</span>}</p>}
       <p>Desde {game.min_bet} hasta {game.max_bet} CRD</p>
