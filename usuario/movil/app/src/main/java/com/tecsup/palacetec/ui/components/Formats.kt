@@ -1,5 +1,7 @@
 package com.tecsup.palacetec.ui.components
 
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.text.ParseException
@@ -25,12 +27,53 @@ fun betLabel(kind: String, selection: String): String = when (kind) {
 
 /** Fecha ISO del backend (con o sin microsegundos) -> "24/11/2026 11:30" en hora de Lima. */
 fun limaDateTime(iso: String): String {
-    val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US)
     val shown = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.US)
     shown.timeZone = TimeZone.getTimeZone("America/Lima")
-    return try {
-        parser.parse(iso.replace(Regex("[.][0-9]+"), ""))?.let { shown.format(it) } ?: iso
-    } catch (_: ParseException) {
-        iso
+    return isoMillis(iso)?.let { shown.format(it) } ?: iso
+}
+
+/** Milisegundos de una fecha ISO del backend, o null si no es válida. */
+fun isoMillis(iso: String): Long? = try {
+    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US).parse(iso.replace(Regex("[.][0-9]+"), ""))?.time
+} catch (_: ParseException) {
+    null
+}
+
+/** "1250.00" -> "+1,250.00"; las pérdidas ya traen su signo. */
+fun signedCredits(value: String): String =
+    if ((value.toBigDecimalOrNull() ?: BigDecimal.ZERO).signum() > 0) "+" + credits(value) else credits(value)
+
+/** 4530 -> "1 h 15 min". */
+fun duration(seconds: Long): String {
+    val minutes = seconds / 60
+    return when {
+        minutes == 0L -> "$seconds s"
+        minutes < 60 -> "$minutes min"
+        else -> "${minutes / 60} h ${minutes % 60} min"
+    }
+}
+
+/** Parte de total, entre 0 y 1. Un total de cero ya está completo. */
+fun fraction(part: String, total: String?): Float {
+    val whole = total?.toBigDecimalOrNull() ?: BigDecimal.ZERO
+    if (whole.signum() <= 0) return 1f
+    val value = part.toBigDecimalOrNull() ?: BigDecimal.ZERO
+    return value.divide(whole, 4, RoundingMode.HALF_UP).toFloat().coerceIn(0f, 1f)
+}
+
+/** 33.33 -> "33.33 %". */
+fun percent(value: Double): String =
+    DecimalFormat("0.##", DecimalFormatSymbols(Locale.US)).format(value) + " %"
+
+/** "2026-11-25" -> "25/11". */
+fun dayMonth(date: String): String = date.split("-").let { if (it.size == 3) "${it[2]}/${it[1]}" else date }
+
+/** Valores del eje: 1,000 · 12.5K · 2M. */
+fun compact(value: Long): String {
+    val symbols = DecimalFormatSymbols(Locale.US)
+    return when {
+        value < 10_000 -> DecimalFormat("#,##0", symbols).format(value)
+        value < 1_000_000 -> DecimalFormat("0.##", symbols).format(value / 1_000.0) + "K"
+        else -> DecimalFormat("0.##", symbols).format(value / 1_000_000.0) + "M"
     }
 }

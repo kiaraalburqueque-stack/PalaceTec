@@ -35,6 +35,7 @@ class ViewModelsTest {
 
     private lateinit var server: TestServer
     private val dao = FakeHistoryDao()
+    private val analytics = FakeAnalytics()
     private val room = RouletteRoom(1, "Ruleta baja", "10.00", "500.00", 0)
 
     @Before
@@ -58,7 +59,7 @@ class ViewModelsTest {
     private fun history() = HistoryRepository(server.api, dao) { "a@example.com" }
 
     private fun roulette() = RouletteViewModel(
-        RouletteRepository(server.api), WalletRepository(server.api), history(), DailyLimitRepository(server.api),
+        RouletteRepository(server.api, analytics), WalletRepository(server.api), history(), DailyLimitRepository(server.api),
     )
 
     private fun readyToBet() = roulette().apply {
@@ -266,12 +267,12 @@ class ViewModelsTest {
 
     @Test
     fun sinConexionElHistorialSaleDeLaCacheDelMismoJugador() {
-        BetsViewModel(history()).run {
+        BetsViewModel(history(), analytics).run {
             refresh()
             assertEquals(3, state.await { !it.loading }.items.size)
         }
         server.disconnect("GET /users/bets-history")
-        BetsViewModel(history()).run {
+        BetsViewModel(history(), analytics).run {
             refresh()
             val offline = state.await { !it.loading }
             assertTrue(offline.fromCache)
@@ -279,7 +280,7 @@ class ViewModelsTest {
             assertEquals(listOf(10), offline.items.first().chips)
             assertNotNull(offline.error)
         }
-        BetsViewModel(HistoryRepository(server.api, dao) { "otro@example.com" }).run {
+        BetsViewModel(HistoryRepository(server.api, dao) { "otro@example.com" }, analytics).run {
             refresh()
             assertTrue(state.await { !it.loading }.items.isEmpty())
         }
@@ -288,7 +289,7 @@ class ViewModelsTest {
     @Test
     fun elHistorialPaginaSinRepetir() {
         server.reply("GET /users/bets-history", "12b_history_pagina1")
-        val vm = BetsViewModel(history())
+        val vm = BetsViewModel(history(), analytics)
         vm.refresh()
         assertTrue(vm.state.await { !it.loading }.hasMore)
         server.reply("GET /users/bets-history", "12_history_resultado")

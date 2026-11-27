@@ -1,8 +1,12 @@
 package com.tecsup.palacetec.data.remote
 
+import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.PUT
+import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -37,4 +41,48 @@ interface PalaceTecApi {
 
     @GET("api/v1/users/bets-history")
     suspend fun betsHistory(@Query("page") page: Int, @Query("page_size") pageSize: Int): HistoryPage
+
+    @GET("api/v1/users/me")
+    suspend fun profile(): Profile
+
+    @PUT("api/v1/users/me")
+    suspend fun updateProfile(@Body request: ProfileUpdate): Profile
+
+    @Multipart
+    @POST("api/v1/users/avatar")
+    suspend fun uploadAvatar(@Part avatar: MultipartBody.Part): Profile
+
+    @GET("api/v1/responsible-gaming/session-summary")
+    suspend fun sessionSummary(): SessionSummary
+
+    @GET("api/v1/responsible-gaming/risk-alerts")
+    suspend fun riskAlerts(): RiskAlerts
+
+    @POST("api/v1/responsible-gaming/pause")
+    suspend fun pause(@Body request: PauseRequest): PauseResponse
+
+    @POST("api/v1/responsible-gaming/self-exclude")
+    suspend fun selfExclude(@Body request: SelfExclusionRequest): SelfExclusionResponse
+
+    @GET("api/v1/notifications")
+    suspend fun notifications(): NotificationList
+
+    @POST("api/v1/notifications/{id}/read")
+    suspend fun markNotificationRead(@Path("id") id: Long): UnreadCount
+
+    @POST("api/v1/notifications/read-all")
+    suspend fun markAllNotificationsRead(): UnreadCount
+
+    @GET("api/v1/stats/win-rate")
+    suspend fun winRate(): WinRate
+
+    @GET("api/v1/stats/biggest-win")
+    suspend fun biggestWin(): BiggestWinResponse
+
+    /** period: 7 o 30 días. */
+    @GET("api/v1/stats/balance-history")
+    suspend fun balanceHistory(@Query("period") period: Int): BalanceHistory
+
+    @GET("api/v1/stats/top-games")
+    suspend fun topGames(): TopGames
 }

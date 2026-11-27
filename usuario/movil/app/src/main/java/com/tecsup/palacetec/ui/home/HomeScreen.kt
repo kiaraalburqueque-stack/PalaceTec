@@ -44,6 +44,7 @@ import com.tecsup.palacetec.ui.components.credits
 @Composable
 fun HomeScreen(
     onPlayRoulette: () -> Unit,
+    onResponsible: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = appViewModel {
         HomeViewModel(it.walletRepository, it.catalogRepository, it.dailyLimitRepository)
@@ -71,7 +72,7 @@ fun HomeScreen(
         ) {
             state.error?.let { message -> item { ErrorBox(message, viewModel::load) } }
             state.wallet?.let { wallet -> item { BalanceCard(wallet.balance, wallet.isLowBalance) } }
-            item { ResponsibleGamingCard(state.dailyLimit, viewModel::openLimitDialog) }
+            item { ResponsibleGamingCard(state.dailyLimit, viewModel::openLimitDialog, onResponsible) }
             item { Text("Catálogo", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
             if (state.games.isEmpty() && state.error == null) {
                 item { Text("No hay juegos disponibles por ahora.") }
@@ -90,7 +91,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun ResponsibleGamingCard(limit: DailyLimit?, onChange: () -> Unit) {
+private fun ResponsibleGamingCard(limit: DailyLimit?, onChange: () -> Unit, onMore: () -> Unit) {
     OutlinedCard(
         Modifier.fillMaxWidth(),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary),
@@ -124,6 +125,9 @@ private fun ResponsibleGamingCard(limit: DailyLimit?, onChange: () -> Unit) {
                 TextButton(onClick = onChange, contentPadding = PaddingValues(0.dp)) {
                     Text(if (limit.configured) "Cambiar límite" else "Definir límite")
                 }
+            }
+            TextButton(onClick = onMore, contentPadding = PaddingValues(0.dp)) {
+                Text("Ver pausa, autoexclusión y sesión")
             }
         }
     }

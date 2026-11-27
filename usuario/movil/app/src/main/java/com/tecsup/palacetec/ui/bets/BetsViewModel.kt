@@ -2,6 +2,7 @@ package com.tecsup.palacetec.ui.bets
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tecsup.palacetec.data.analytics.AnalyticsTracker
 import com.tecsup.palacetec.data.remote.ApiException
 import com.tecsup.palacetec.data.remote.HistoryItem
 import com.tecsup.palacetec.data.repository.HistoryRepository
@@ -23,13 +24,21 @@ data class BetsUiState(
     val fromCache: Boolean = false,
 )
 
-class BetsViewModel(private val history: HistoryRepository) : ViewModel() {
+class BetsViewModel(
+    private val history: HistoryRepository,
+    private val analytics: AnalyticsTracker,
+) : ViewModel() {
 
     private val _state = MutableStateFlow(BetsUiState())
     val state: StateFlow<BetsUiState> = _state.asStateFlow()
 
     private var job: Job? = null
     private var page = 1
+
+    fun onVisible() {
+        analytics.viewHistory()
+        refresh()
+    }
 
     fun refresh() {
         job?.cancel()

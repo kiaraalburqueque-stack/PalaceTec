@@ -13,3 +13,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Firebase: cada quien descarga el suyo de la consola
+google-services*.json

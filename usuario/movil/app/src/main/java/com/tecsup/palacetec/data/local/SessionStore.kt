@@ -1,6 +1,8 @@
 package com.tecsup.palacetec.data.local
 
 import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -15,7 +17,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import java.io.IOException
 
-private val Context.sessionDataStore by preferencesDataStore(name = "session")
+val Context.sessionDataStore: DataStore<Preferences> by preferencesDataStore(name = "session")
 
 sealed interface Session {
     data object Loading : Session
@@ -24,9 +26,7 @@ sealed interface Session {
 }
 
 /** Guarda el JWT en DataStore y lo publica como estado observable. */
-class SessionStore(context: Context, scope: CoroutineScope) {
-
-    private val dataStore = context.applicationContext.sessionDataStore
+class SessionStore(private val dataStore: DataStore<Preferences>, scope: CoroutineScope) {
 
     val session: StateFlow<Session> = dataStore.data
         .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
